@@ -229,3 +229,15 @@ If you have mocha installed globally you can run single test with:
 TEST_DB=local mocha --reporter spec --grep search_phrase
 ```
 In TEST_DB environment variable specify database that PouchDB should use (see package.json)
+
+#### Browser tests
+
+To test in the browser, run
+
+    npm run build-test
+
+Then install mongoose or some similar web server, and run
+
+    mongoose
+
+Then point your browser to http://localhost:8080/test/index.html
