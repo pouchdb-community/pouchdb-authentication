@@ -2,13 +2,13 @@
 /* global sum */
 'use strict';
 
-var Pouch = require('pouchdb');
+var PouchDB = require('pouchdb');
 var Authentication = require('../');
-Pouch.plugin(Authentication);
+PouchDB.plugin(Authentication);
 var chai = require('chai');
 var should = chai.should();
-require("mocha-as-promised")();
-chai.use(require("chai-as-promised"));
+require('mocha-as-promised')();
+chai.use(require('chai-as-promised'));
 var Promise = require('bluebird');
 var all = Promise.all;
 if (process.browser) {
@@ -26,19 +26,76 @@ dbs.split(',').forEach(function (db) {
   });
 });
 
+var users = ['batman', 'superman', 'green_lantern', 'robin'];
 
 function tests(dbName) {
 
-  beforeEach(function () {
-    return new Pouch(dbName);
-  });
-  afterEach(function () {
-    return Pouch.destroy(dbName);
-  });
-
   describe('authentication', function () {
-    it("Test basic authentication", function (done) {
-      done();
+
+    var db;
+
+    beforeEach(function () {
+      db = new PouchDB(dbName);
+      return db;
+    });
+    afterEach(function () {
+      return PouchDB.destroy(dbName).then(function () {
+        var usersUrl = dbName.replace(/\/[^\/]+$/, '/_users');
+        return new PouchDB(usersUrl).allDocs({
+          include_docs : true,
+          keys : users.map(function (user) {
+            return 'org.apache.couchdb:' + user;
+          })
+        }).then(function (rows) {
+          rows = rows.filter(function (row) {
+            return row.doc;
+          });
+          var docs = rows.forEach(function (row) {
+            row.doc._deleted = true;
+            return row.doc;
+          });
+          return db.bulkDocs({docs : docs});
+        });
+      });
+    });
+
+    it('Test signup', function () {
+      return db.signup('batman', 'brucewayne').then(function (res) {
+        res.ok.should.equal(true);
+        res.id.should.equal('org.apache.couchdb:batman');
+      });
+    });
+
+    it('Test signup conflict', function () {
+      return db.signup('superman', 'clarkkent').then(function (res) {
+        res.ok.should.equal(true);
+        return db.signup('superman', 'notclarkkent').then(function (res) {
+          should.not.exist(res);
+        }).catch(function (err) {
+          err.name.should.equal('conflict');
+        });
+      });
+    });
+    
+    it('Test bad signup args', function () {
+      return db.signup().catch(function (err) {
+        should.exist(err);
+      });
+    });
+
+    it('Test bad signup args 2', function () {
+      return db.signup('green_lantern').catch(function (err) {
+        should.exist(err);
+      });
+    });
+
+    it('Test metadata', function () {
+      return db.signup('robin', 'dickgrayson').then(function (res) {
+        res.ok.should.be(true);
+        return db.getSession();
+      }).then(function (session) {
+        session.userCtx.name.should.equal('robin');
+      });
     });
   });
 }

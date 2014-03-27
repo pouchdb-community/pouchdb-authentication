@@ -3,7 +3,7 @@ PouchDB Authentication
 
 Hey, have you heard about this great new security method?  It's called *not trying to write it yourself*.
 
-Luckily for you, CouchDB has an awesome built-in security framework.  It automatically salts and hashes your user passwords with the super-strong PBK25 algorithm, stores a cookie in the user's browser and updates it periodically (10 minute expiration by default), and does it all through good ol' fashioned HTTP. Throw in HTTPS like you're supposed to (that's what it's for), and you have everything you need for your site's user authentication.
+Luckily for you, CouchDB has an awesome built-in security framework.  It automatically salts and hashes your user passwords with the super-strong PBKDF2 algorithm, stores a cookie in the user's browser and updates it periodically (10 minute expiration by default), and does it all through good ol' fashioned HTTP. Throw in HTTPS like you're supposed to (that's what it's for), and you have everything you need for your site's user authentication.
 
 You don't even need to be using CouchDB as your data backend in order for this to be useful. But if you are, and if you're using PouchDB to sync it, then this is a no-brainer.
 
@@ -114,14 +114,12 @@ db.signup('batman', 'brucewayne', function (err, response) {
 
 ##### Options
 
-* **roles** :  List of string roles that the user has.  Typically for non-admins this is empty.
 * **metadata** : Object of metadata you want to store with the username, e.g. an email address or any other info. Can be as deeply structured as you want.
 
 ##### Example:
 
 ```js
 db.signup('robin', 'dickgrayson', {
-  roles : ['sidekick'],
   metadata : {
     email : 'robin@boywonder.com',
     birthday : '1932-03-27T00:00:00.000Z'
