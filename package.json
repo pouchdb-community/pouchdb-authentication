@@ -1,0 +1,47 @@
+{
+  "name": "pouchdb-authentication",
+  "version": "0.1",
+  "description": "PouchDB Authentication",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/pouchdb/authentication.git"
+  },
+  "scripts": {
+    "do_tests": "TEST_DB=testdb,http://localhost:5984/testdb istanbul test ./node_modules/mocha/bin/_mocha test/test.js",
+    "jshint": "jshint -c .jshintrc *.js test/test.js",
+    "test": "npm run jshint && npm run do_tests",
+    "build": "mkdir -p dist && browserify index.js -s authentication -o dist/pouchdb-authentication.js",
+    "build-test": "browserify test/test.js > test/test-bundle.js"
+  },
+  "keywords": [
+    "pouch",
+    "pouchdb",
+    "authentication",
+    "couch",
+    "couchdb"
+  ],
+  "author": "",
+  "license": "Apache",
+  "bugs": {
+    "url": "https://github.com/pouchdb/authentication/issues"
+  },
+  "dependencies": {
+    "lie": "^2.5.3",
+    "inherits": "~2.0.1"
+  },
+  "devDependencies": {
+    "bluebird": "^1.0.7",
+    "browserify": "~2.36.0",
+    "chai": "~1.8.1",
+    "chai-as-promised": "~4.1.0",
+    "istanbul": "~0.1.45",
+    "jshint": "~2.3.0",
+    "mocha": "~1.14.0",
+    "mocha-as-promised": "~2.0.0",
+    "pouchdb": "^2.0.0"
+  },
+  "peerDependencies": {
+    "pouchdb": ">= 2.0.0"
+  }
+}
