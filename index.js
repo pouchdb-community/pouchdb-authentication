@@ -46,7 +46,7 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
     if (err) {
       return callback(err);
     }
-    var url = utils.getHost(pouchUtils, info.db_name) + '/_users/' + encodeURIComponent(userId);
+    var url = utils.getUsersUrl(info.db_name) + '/' + encodeURIComponent(userId);
 
     db.request({
       method : 'PUT',
@@ -57,6 +57,61 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
 });
 
 exports.signUp = exports.signup;
+
+exports.login = utils.toPromise(function (username, password, opts, callback) {
+  var db = this;
+  var PouchDB = db.constructor;
+  if (typeof callback === 'undefined') {
+    callback = opts;
+    opts = {};
+  }
+  if (['http', 'https'].indexOf(db.type()) === -1) {
+    return callback(new AuthError('this plugin only works for the http/https adapter'));
+  }
+
+  if (!username) {
+    return callback(new AuthError('you must provide a username'));
+  } else if (!password) {
+    return callback(new AuthError('you must provide a password'));
+  }
+
+  db.info(function (err, info) {
+    if (err) {
+      return callback(err);
+    }
+
+    db.request({
+      method : 'POST',
+      url : utils.getSessionUrl(info.db_name),
+      body : {name : username, password : password}
+    }, callback);
+  });
+});
+
+exports.logIn = exports.login;
+
+exports.logout = utils.toPromise(function (opts, callback) {
+  var db = this;
+  var PouchDB = db.constructor;
+  var pouchUtils = PouchDB.utils;
+  if (typeof callback === 'undefined') {
+    callback = opts;
+    opts = {};
+  }
+
+  db.info(function (err, info) {
+    if (err) {
+      return callback(err);
+    }
+
+    db.request({
+      method : 'DELETE',
+      url : utils.getSessionUrl(info.db_name)
+    }, callback);
+  });
+});
+
+exports.logOut = exports.logout;
 
 exports.getSession = utils.toPromise(function (opts, callback) {
   var db = this;
