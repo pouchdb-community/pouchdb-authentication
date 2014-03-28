@@ -1,18 +1,18 @@
 PouchDB Authentication
 =====
 
-Hey, have you heard about this great new security method?  It's called *not trying to write it yourself*.
+You know what's hard?  *Security*.  You know what makes security trivially easy?  *CouchDB*.
 
-Luckily for you, CouchDB has an awesome built-in security framework.  It follows all the best practices:
+You might not know this, but CouchDB is more than a database: it's also a REST server with a built-in authentication framework. And it boasts some top-notch security features:
 
-* automatically salts and hashes your user passwords with the absurdly strong PBKDF2 algorithm
+* automatically salts and hashes your user passwords with strong PBKDF2 algorithm
 * stores a cookie in the user's browser
 * refreshes the cookie token periodically
 * expires the token after 10 minutes (default)
 
-And best of all, it does it all with good ol'-fashioned HTTP. Watch the JSON fly back and forth; you're totally in control. No need for some proprietary Facebook/Twitter/Google API, or their little badges that ruin your site's branding.
+And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and you can watch the JSON fly back and forth; you're the one in control. No need for some proprietary Facebook/Twitter/Google API, or their little badges that ruin your site's branding.
 
-Just install CouchDB, throw in a little HTTPS (that's what it's for, folks), and you've got everything you need for your site's user authentication. You don't even need to store any data in CouchDB &mdash; feel free to just use an empty database as a glorified authentication server. Couch won't complain.
+Just install CouchDB, throw in a little HTTPS to encrypt the user's password (that's what it's there for, folks), and you've got everything you need for your site's user authentication. You don't even need to store any data in CouchDB &mdash; feel free to just use an empty database. Couch won't complain.
 
 But if you are using CouchDB, and if you're using PouchDB to sync to it (like a pro), then this module is a total no-brainer.
 
