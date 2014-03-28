@@ -3,9 +3,18 @@ PouchDB Authentication
 
 Hey, have you heard about this great new security method?  It's called *not trying to write it yourself*.
 
-Luckily for you, CouchDB has an awesome built-in security framework.  It automatically salts and hashes your user passwords with the super-strong PBKDF2 algorithm, stores a cookie in the user's browser and updates it periodically (10 minute expiration by default), and does it all through good ol' fashioned HTTP. Throw in HTTPS like you're supposed to (that's what it's for), and you have everything you need for your site's user authentication.
+Luckily for you, CouchDB has an awesome built-in security framework.  It follows all the best practices:
 
-You don't even need to be using CouchDB as your data backend in order for this to be useful. But if you are, and if you're using PouchDB to sync it, then this is a no-brainer.
+* automatically salts and hashes your user passwords with the absurdly strong PBKDF2 algorithm
+* stores a cookie in the user's browser
+* refreshes the cookie token periodically
+* expires the token after 10 minutes (default)
+
+And best of all, it does it all with good ol'-fashioned HTTP. Watch the JSON fly back and forth; you're totally in control. No need for some proprietary Facebook/Twitter/Google API, or their little badges that ruin your site's branding.
+
+Just install CouchDB, throw in a little HTTPS (that's what it's for, folks), and you've got everything you need for your site's user authentication. You don't even need to store any data in CouchDB &mdash; feel free to just use an empty database as a glorified authentication server. Couch won't complain.
+
+But if you are using CouchDB, and if you're using PouchDB to sync to it (like a pro), then this module is a total no-brainer.
 
 Requirements
 -----
@@ -38,14 +47,7 @@ sudo apt-get install couchdb # debian, ubuntu, etc.
 brew install couchdb         # mac
 ```
 
-Or, get yourself a hosted one at Cloudant, IrisCouch, etc.
-
-Check to make sure it's at least v1.3.0 (which contains important security improvements):
-
-```
-curl http://localhost:5984
-{"couchdb":"Welcome","version":"1.5.0", ...}
-```
+Or, get yourself a hosted one at Cloudant, IrisCouch, etc. It works the same.
 
 Set up CORS so that PouchDB can access your CouchDB from any URL, even if it has a different domain:
 
@@ -195,7 +197,6 @@ db.getSession(function (err, response) {
   } else{
     // response.userCtx.name is the current user
   }
-  
 });
 ```
 
@@ -220,16 +221,6 @@ db.getSession(function (err, response) {
 Tests
 ------
 
-Run tests with `npm test` and coverage of tests with `npm test --coverage` install dependencies with `npm install`
-
-If you have mocha installed globally you can run single test with:
-```
-TEST_DB=local mocha --reporter spec --grep search_phrase
-```
-In TEST_DB environment variable specify database that PouchDB should use (see package.json)
-
-#### Browser tests
-
 To test in the browser, run
 
     npm run build-test
@@ -238,4 +229,4 @@ Then install mongoose or some similar web server, and run
 
     mongoose
 
-Then point your browser to http://localhost:8080/test/index.html
+Then point your browser to [http://127.0.0.1:8080/test/index.html](http://127.0.0.1:8080/test/index.html)

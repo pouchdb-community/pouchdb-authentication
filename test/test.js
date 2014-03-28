@@ -5,6 +5,7 @@
 var PouchDB = require('pouchdb');
 var Authentication = require('../');
 PouchDB.plugin(Authentication);
+var utils = require('./utils');
 var chai = require('chai');
 var should = chai.should();
 require('mocha-as-promised')();
@@ -40,21 +41,24 @@ function tests(dbName) {
     });
     afterEach(function () {
       return PouchDB.destroy(dbName).then(function () {
-        var usersUrl = dbName.replace(/\/[^\/]+$/, '/_users');
-        return new PouchDB(usersUrl).allDocs({
-          include_docs : true,
-          keys : users.map(function (user) {
-            return 'org.apache.couchdb:' + user;
-          })
-        }).then(function (rows) {
-          rows = rows.filter(function (row) {
-            return row.doc;
+        var usersUrl = utils.getUsersUrl(dbName);
+        return new PouchDB(usersUrl).then(function (usersDb) {
+          // remove the fake users, hopefully we're in the admin party
+          return usersDb.allDocs({
+            include_docs : true,
+            keys : users.map(function (user) {
+              return 'org.apache.couchdb:' + user;
+            })
+          }).then(function (rows) {
+            rows = rows.filter(function (row) {
+              return row.doc;
+            });
+            var docs = rows.forEach(function (row) {
+              row.doc._deleted = true;
+              return row.doc;
+            });
+            return db.bulkDocs({docs : docs});
           });
-          var docs = rows.forEach(function (row) {
-            row.doc._deleted = true;
-            return row.doc;
-          });
-          return db.bulkDocs({docs : docs});
         });
       });
     });
@@ -90,11 +94,14 @@ function tests(dbName) {
     });
 
     it('Test metadata', function () {
-      return db.signup('robin', 'dickgrayson').then(function (res) {
+      var metadata = {alias : 'boywonder', profession : 'acrobat'};
+      return db.signup('robin', 'dickgrayson', metadata).then(function (res) {
         res.ok.should.be(true);
         return db.getSession();
       }).then(function (session) {
         session.userCtx.name.should.equal('robin');
+        session.userCtx.alias.should.equal('boywonder');
+        session.userCtx.profession.should.equal('acrobat');
       });
     });
   });
