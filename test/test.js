@@ -13,7 +13,7 @@ chai.use(require('chai-as-promised'));
 var Promise = require('bluebird');
 var all = Promise.all;
 if (process.browser) {
-  process.env.TEST_DB = 'http://localhost:5984/testdb';
+  process.env.TEST_DB = 'http://localhost:2020/testdb';
 }
 var dbs = process.env.TEST_DB;
 if (!dbs) {
@@ -49,15 +49,15 @@ function tests(dbName) {
             keys : users.map(function (user) {
               return 'org.apache.couchdb:' + user;
             })
-          }).then(function (rows) {
-            rows = rows.filter(function (row) {
+          }).then(function (res) {
+            var rows = res.rows.filter(function (row) {
               return row.doc;
             });
-            var docs = rows.forEach(function (row) {
+            var docs = rows.map(function (row) {
               row.doc._deleted = true;
               return row.doc;
             });
-            return db.bulkDocs({docs : docs});
+            return usersDb.bulkDocs({docs : docs});
           });
         });
       });
@@ -65,8 +65,9 @@ function tests(dbName) {
 
     it('Test signup', function () {
       return db.signup('batman', 'brucewayne').then(function (res) {
+        console.log(res);
         res.ok.should.equal(true);
-        res.id.should.equal('org.apache.couchdb:batman');
+        res.id.should.equal('testdb_users');
       });
     });
 
@@ -96,7 +97,7 @@ function tests(dbName) {
     it('Test metadata', function () {
       var metadata = {alias : 'boywonder', profession : 'acrobat'};
       return db.signup('robin', 'dickgrayson', metadata).then(function (res) {
-        res.ok.should.be(true);
+        res.ok.should.equal(true);
         return db.getSession();
       }).then(function (session) {
         session.userCtx.name.should.equal('robin');

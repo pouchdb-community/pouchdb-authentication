@@ -7,19 +7,17 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
   var PouchDB = db.constructor;
   var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
-    callback = opts;
+    callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
+      username : password) : opts;
     opts = {};
   }
   if (['http', 'https'].indexOf(db.type()) === -1) {
     return callback(new AuthError('this plugin only works for the http/https adapter'));
-  }
-
-  if (!username) {
+  } else if (!username) {
     return callback(new AuthError('you must provide a username'));
   } else if (!password) {
     return callback(new AuthError('you must provide a password'));
   }
-
 
   var userId = 'org.couchdb.user:' + username;
   var user = {
@@ -47,6 +45,8 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
       return callback(err);
     }
     var url = utils.getUsersUrl(info.db_name) + '/' + encodeURIComponent(userId);
+    console.log(info.db_name);
+    console.log(url);
 
     db.request({
       method : 'PUT',
@@ -125,7 +125,7 @@ exports.getSession = utils.toPromise(function (opts, callback) {
     if (err) {
       return callback(err);
     }
-    var url = utils.getHost(pouchUtils, info.db_name) + '/_session';
+    var url = utils.getSessionUrl(info.db_name);
 
     return db.request({
       method : 'GET',

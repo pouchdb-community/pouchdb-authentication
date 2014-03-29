@@ -12,7 +12,8 @@
     "jshint": "jshint -c .jshintrc *.js test/test.js",
     "test": "npm run jshint && npm run do_tests",
     "build": "mkdir -p dist && browserify index.js -s authentication -o dist/pouchdb-authentication.js",
-    "build-test": "browserify test/test.js > test/test-bundle.js"
+    "dev": "browserify test/test.js > test/test-bundle.js && npm run dev-server",
+    "dev-server": "./bin/dev-server.js"
   },
   "keywords": [
     "pouch",
@@ -28,7 +29,10 @@
   },
   "dependencies": {
     "lie": "^2.5.3",
-    "inherits": "~2.0.1"
+    "inherits": "~2.0.1",
+    "http-proxy": "~0.10.3",
+    "corsproxy": "~0.2.13",
+    "http-server": "~0.5.5"
   },
   "devDependencies": {
     "bluebird": "^1.0.7",
