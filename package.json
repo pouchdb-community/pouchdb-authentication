@@ -8,7 +8,7 @@
     "url": "git://github.com/pouchdb/authentication.git"
   },
   "scripts": {
-    "do_tests": "TEST_DB=testdb,http://localhost:5984/testdb istanbul test ./node_modules/mocha/bin/_mocha test/test.js",
+    "do_tests": "TEST_DB=http://localhost:5984/testdb istanbul test ./node_modules/mocha/bin/_mocha test/test.js",
     "jshint": "jshint -c .jshintrc *.js test/test.js",
     "test": "npm run jshint && npm run do_tests",
     "build": "mkdir -p dist && browserify index.js -s authentication -o dist/pouchdb-authentication.js",

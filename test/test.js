@@ -5,7 +5,7 @@
 var PouchDB = require('pouchdb');
 var Authentication = require('../');
 PouchDB.plugin(Authentication);
-var utils = require('./utils');
+var utils = require('../utils');
 var chai = require('chai');
 var should = chai.should();
 require('mocha-as-promised')();
@@ -13,7 +13,7 @@ chai.use(require('chai-as-promised'));
 var Promise = require('bluebird');
 var all = Promise.all;
 if (process.browser) {
-  process.env.TEST_DB = 'testdb' + Math.random();
+  process.env.TEST_DB = 'http://localhost:5984/testdb' + Math.random();
 }
 var dbs = process.env.TEST_DB;
 if (!dbs) {

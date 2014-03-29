@@ -11,6 +11,18 @@ exports.getUsersUrl = function (url) {
 exports.getSessionUrl = function (url) {
   return getBaseUrl(url) + '_session';
 };
+exports.once = function (fun) {
+  var called = false;
+  return exports.getArguments(function (args) {
+    if (called) {
+      console.trace();
+      throw new Error('once called  more than once');
+    } else {
+      called = true;
+      fun.apply(this, args);
+    }
+  });
+};
 exports.getArguments = function (fun) {
   return function () {
     var len = arguments.length;
