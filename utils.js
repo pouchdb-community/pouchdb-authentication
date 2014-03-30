@@ -2,11 +2,14 @@
 
 var Promise = typeof global.Promise === 'function' ? global.Promise : require('lie');
 
-exports.getUsersUrl = function (url) {
-  return '_users';
+function getBaseUrl(db) {
+  return db.getUrl().replace(/\/[^\/]+\/?$/, '');
+}
+exports.getUsersUrl = function (db) {
+  return getBaseUrl(db) + '/_users';
 };
-exports.getSessionUrl = function (url) {
-  return '_session';
+exports.getSessionUrl = function (db) {
+  return getBaseUrl(db) + '/_session';
 };
 exports.once = function (fun) {
   var called = false;

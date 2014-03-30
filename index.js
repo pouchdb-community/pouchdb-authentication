@@ -40,20 +40,12 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
     user = pouchUtils.extend(true, user, opts.metadata);
   }
 
-  db.info(function (err, info) {
-    if (err) {
-      return callback(err);
-    }
-    var url = utils.getUsersUrl(info.db_name) + '/' + encodeURIComponent(userId);
-    console.log(info.db_name);
-    console.log(url);
-
-    db.request({
-      method : 'PUT',
-      url : url,
-      body : user
-    }, callback);
-  });
+  var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(userId);
+  pouchUtils.ajax({
+    method : 'PUT',
+    url : url,
+    body : user
+  }, callback);
 });
 
 exports.signUp = exports.signup;
@@ -61,6 +53,7 @@ exports.signUp = exports.signup;
 exports.login = utils.toPromise(function (username, password, opts, callback) {
   var db = this;
   var PouchDB = db.constructor;
+  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
@@ -75,17 +68,11 @@ exports.login = utils.toPromise(function (username, password, opts, callback) {
     return callback(new AuthError('you must provide a password'));
   }
 
-  db.info(function (err, info) {
-    if (err) {
-      return callback(err);
-    }
-
-    db.request({
-      method : 'POST',
-      url : utils.getSessionUrl(info.db_name),
-      body : {name : username, password : password}
-    }, callback);
-  });
+  pouchUtils.ajax({
+    method : 'POST',
+    url : utils.getSessionUrl(db),
+    body : {name : username, password : password}
+  }, callback);
 });
 
 exports.logIn = exports.login;
@@ -98,17 +85,10 @@ exports.logout = utils.toPromise(function (opts, callback) {
     callback = opts;
     opts = {};
   }
-
-  db.info(function (err, info) {
-    if (err) {
-      return callback(err);
-    }
-
-    db.request({
-      method : 'DELETE',
-      url : utils.getSessionUrl(info.db_name)
-    }, callback);
-  });
+  pouchUtils.ajax({
+    method : 'DELETE',
+    url : utils.getSessionUrl(db)
+  }, callback);
 });
 
 exports.logOut = exports.logout;
@@ -121,17 +101,12 @@ exports.getSession = utils.toPromise(function (opts, callback) {
     callback = opts;
     opts = {};
   }
-  db.info(function (err, info) {
-    if (err) {
-      return callback(err);
-    }
-    var url = utils.getSessionUrl(info.db_name);
+  var url = utils.getSessionUrl(db);
 
-    return db.request({
-      method : 'GET',
-      url : url
-    }, callback);
-  });
+  pouchUtils.ajax({
+    method : 'GET',
+    url : url
+  }, callback);
 });
 
 

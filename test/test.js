@@ -27,7 +27,7 @@ dbs.split(',').forEach(function (db) {
   });
 });
 
-var users = ['batman', 'superman', 'green_lantern', 'robin'];
+var users = ['batman', 'superman', 'green_lantern', 'robin', 'aquaman'];
 
 function tests(dbName) {
 
@@ -40,24 +40,26 @@ function tests(dbName) {
       return db;
     });
     afterEach(function () {
-      return PouchDB.destroy(dbName).then(function () {
-        var usersUrl = utils.getUsersUrl(dbName);
-        return new PouchDB(usersUrl).then(function (usersDb) {
-          // remove the fake users, hopefully we're in the admin party
-          return usersDb.allDocs({
-            include_docs : true,
-            keys : users.map(function (user) {
-              return 'org.apache.couchdb:' + user;
-            })
-          }).then(function (res) {
-            var rows = res.rows.filter(function (row) {
-              return row.doc;
+      return db.logout().then(function () {
+        return PouchDB.destroy(dbName).then(function () {
+          var usersUrl = utils.getUsersUrl(db);
+          return new PouchDB(usersUrl).then(function (usersDb) {
+            // remove the fake users, hopefully we're in the admin party
+            return usersDb.allDocs({
+              include_docs : true,
+              keys : users.map(function (user) {
+                return 'org.couchdb.user:' + user;
+              })
+            }).then(function (res) {
+              var rows = res.rows.filter(function (row) {
+                return row.doc;
+              });
+              var docs = rows.map(function (row) {
+                row.doc._deleted = true;
+                return row.doc;
+              });
+              return usersDb.bulkDocs({docs : docs});
             });
-            var docs = rows.map(function (row) {
-              row.doc._deleted = true;
-              return row.doc;
-            });
-            return usersDb.bulkDocs({docs : docs});
           });
         });
       });
@@ -67,7 +69,7 @@ function tests(dbName) {
       return db.signup('batman', 'brucewayne').then(function (res) {
         console.log(res);
         res.ok.should.equal(true);
-        res.id.should.equal('testdb_users');
+        res.id.should.equal('org.couchdb.user:batman');
       });
     });
 
@@ -94,12 +96,36 @@ function tests(dbName) {
       });
     });
 
-    it('Test metadata', function () {
-      var metadata = {alias : 'boywonder', profession : 'acrobat'};
-      return db.signup('robin', 'dickgrayson', metadata).then(function (res) {
+    it('Test login/logout', function () {
+      return db.signup('aquaman', 'sleeps_with_fishes').then(function (res) {
+        return db.getSession();
+      }).then(function (res) {
+        should.equal(res.userCtx.name, null);
+        return db.login('aquaman', 'sleeps_with_fishes');
+      }).then(function (res) {
         res.ok.should.equal(true);
         return db.getSession();
+      }).then(function (res) {
+        res.userCtx.name.should.equal('aquaman');
+        return db.logout();
+      }).then(function () {
+        return db.getSession();
+      }).then(function (res) {
+        should.equal(res.userCtx.name, null);
+      });
+    });
+
+    // todo: get user metadata
+    it('Test metadata', function () {
+      var metadata = {alias : 'boywonder', profession : 'acrobat'};
+      var opts = {metadata : metadata};
+      return db.signup('robin', 'dickgrayson', opts).then(function (res) {
+        res.ok.should.equal(true);
+        return db.login('robin', 'dickgrayson');
+      }).then(function () {
+        return db.getSession();
       }).then(function (session) {
+        console.log(session);
         session.userCtx.name.should.equal('robin');
         session.userCtx.alias.should.equal('boywonder');
         session.userCtx.profession.should.equal('acrobat');
