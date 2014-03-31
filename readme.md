@@ -85,6 +85,8 @@ db.doSomething(args).then(function (response){
 });
 ```
 
+Every function also takes a set of `options`.  Unless otherwise noted, the only available option is `ajax`, which corresponds to the standard PouchDB ajax options. (See [the PouchDB API](http://pouchdb.com/api.html) for details.)  Currently the only ajax option is `ajax.cache`, which can be set to `true` to disable cache-busting on IE.
+
 #### db.signup(username, password [, options] [, callback])
 
 Sign up a new user who doesn't exist yet.  Throws an error if the user already exists or if the username is invalid, or if some network error occurred.  CouchDB has some limitations on user names (e.g. they cannot contain the character `:`).
@@ -112,6 +114,8 @@ db.signup('batman', 'brucewayne', function (err, response) {
   "rev":"1-575ed65bb40cbe90dc882ced8044a90f"
 }
 ```
+
+**Note:** Signing up does not automatically log in a user; you will need to call `db.login()` afterwards.
 
 ##### Options
 
@@ -161,7 +165,7 @@ You can also type `logIn()`.
 
 #### db.logout([callback])
 
-Logs out whichever user is currently logged in. Or, does nothing if nobody's logged in.
+Logs out whichever user is currently logged in. If nobody's logged in, it does nothing and just returns `{"ok" : true}`.
 
 ##### Example:
 
@@ -181,7 +185,7 @@ db.logout(function (err, response) {
 
 You can also type `logOut()`.
 
-#### db.getSession([callback])
+#### db.getSession([opts] [, callback])
 
 Returns information about the current session.  In other words, this tells you which user is currently logged in.
 
@@ -217,6 +221,76 @@ db.getSession(function (err, response) {
 
 ```
 
+**Note:** `getSession()` returns basic user information, like name and roles, but doesn't return metadata.  If you need the metadata, use `getUser()`.
+
+#### db.getUser(username [, opts][, callback])
+
+Returns the user document associated with a username.  (CouchDB, in a pleasing show of consistency, stores users as JSON documents in the special `_users` database.) This is the primary way to get metadata about a user.
+
+##### Example:
+
+```js
+db.getUser('aquaman', function (err, response) {
+  if (err) {
+    if (err.name === 'not_found') {
+      // typo, or you don't have the privileges to see this user
+    } else {
+      // some other error
+    }
+  } else {
+    // response is the user object
+  }
+});
+```
+
+##### Example response:
+
+```js
+{
+    "_id": "org.couchdb.user:aquaman", 
+    "_rev": "1-60288b5b056a8af31e910bca2523ea6a", 
+    "derived_key": "05c3314f180faed646af3b77e637ffecf2e3fb93", 
+    "iterations": 10, 
+    "name": "aquaman", 
+    "password_scheme": "pbkdf2", 
+    "roles": [], 
+    "salt": "bce14111a559e00587f3e5f207e4a316", 
+    "type": "user"
+}
+```
+
+**Note:** Only server admins or the user themselves can fetch user data. Otherwise you will get a 404 `not_found` error.
+
+Authentication recipes
+------------
+
+Below is a list of recipes for common authentication use cases.
+
+### First step: disable the Admin Party!
+
+When you first install CouchDB, it will be in the "Admin Party" mode, which means everyone is an admin.  You'll want to disable this and create at least one admin user, so that random people can't mess with your CouchDB settings:
+
+![Admin party][]
+
+### Everybody can read and write everything
+* Example: a public wiki
+
+
+
+
+
+### Everybody can read, only some can write (everything)
+* Example: a blog
+
+### Everybody can read, only some can write (some things)
+
+### Some people can read and write everything
+* Example: a shared company wiki
+
+
+
+
+
 Tests
 ------
 
@@ -229,3 +303,5 @@ Then install mongoose or some similar web server, and run
     mongoose
 
 Then point your browser to [http://127.0.0.1:8080/test/index.html](http://127.0.0.1:8080/test/index.html)
+
+[admin party]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/admin_party.png

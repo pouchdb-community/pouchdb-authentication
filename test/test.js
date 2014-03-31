@@ -123,12 +123,12 @@ function tests(dbName) {
         res.ok.should.equal(true);
         return db.login('robin', 'dickgrayson');
       }).then(function () {
-        return db.getSession();
-      }).then(function (session) {
-        console.log(session);
-        session.userCtx.name.should.equal('robin');
-        session.userCtx.alias.should.equal('boywonder');
-        session.userCtx.profession.should.equal('acrobat');
+        return db.getUser('robin');
+      }).then(function (user) {
+        console.log(user);
+        user.name.should.equal('robin');
+        user.alias.should.equal('boywonder');
+        user.profession.should.equal('acrobat2');
       });
     });
   });

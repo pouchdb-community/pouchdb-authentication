@@ -41,11 +41,12 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
   }
 
   var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(userId);
-  pouchUtils.ajax({
+  var ajaxOpts = pouchUtils.extend(true, {
     method : 'PUT',
     url : url,
     body : user
-  }, callback);
+  }, opts.ajax || {});
+  pouchUtils.ajax(ajaxOpts, callback);
 });
 
 exports.signUp = exports.signup;
@@ -68,11 +69,12 @@ exports.login = utils.toPromise(function (username, password, opts, callback) {
     return callback(new AuthError('you must provide a password'));
   }
 
-  pouchUtils.ajax({
+  var ajaxOpts = pouchUtils.extend(true, {
     method : 'POST',
     url : utils.getSessionUrl(db),
     body : {name : username, password : password}
-  }, callback);
+  }, opts.ajax || {});
+  pouchUtils.ajax(ajaxOpts, callback);
 });
 
 exports.logIn = exports.login;
@@ -85,10 +87,11 @@ exports.logout = utils.toPromise(function (opts, callback) {
     callback = opts;
     opts = {};
   }
-  pouchUtils.ajax({
+  var ajaxOpts = pouchUtils.extend(true, {
     method : 'DELETE',
     url : utils.getSessionUrl(db)
-  }, callback);
+  }, opts.ajax || {});
+  pouchUtils.ajax(ajaxOpts, callback);
 });
 
 exports.logOut = exports.logout;
@@ -103,10 +106,31 @@ exports.getSession = utils.toPromise(function (opts, callback) {
   }
   var url = utils.getSessionUrl(db);
 
-  pouchUtils.ajax({
+  var ajaxOpts = pouchUtils.extend(true, {
     method : 'GET',
     url : url
-  }, callback);
+  }, opts.ajax || {});
+  pouchUtils.ajax(ajaxOpts, callback);
+});
+
+exports.getUser = utils.toPromise(function (username, opts, callback) {
+  var db = this;
+  var PouchDB = db.constructor;
+  var pouchUtils = PouchDB.utils;
+  if (typeof callback === 'undefined') {
+    callback = typeof opts === 'undefined' ? username : opts;
+    opts = {};
+  }
+  if (!username) {
+    return callback(new AuthError('you must provide a username'));
+  }
+
+  var url = utils.getUsersUrl(db);
+  var ajaxOpts = pouchUtils.extend(true, {
+    method : 'GET',
+    url : url + '/' + encodeURIComponent('org.couchdb.user:' + username)
+  }, opts.ajax || {});
+  pouchUtils.ajax(ajaxOpts, callback);
 });
 
 
