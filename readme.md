@@ -1,20 +1,20 @@
 PouchDB Authentication
 =====
 
-You know what's hard?  *Security*.  You know what makes security trivially easy?  *CouchDB*.
+You know what's hard?  Security.  You know what makes security really easy?  CouchDB.
 
-You might not know this, but CouchDB is more than a database: it's also a REST server with a built-in authentication framework. And it boasts some top-notch security features:
+As it turns out, CouchDB isn't just a database: it's also a REST server with a built-in authentication framework. And it boasts some top-notch security features:
 
 * automatically salts and hashes your user passwords with strong PBKDF2 algorithm
 * stores a cookie in the user's browser
 * refreshes the cookie token periodically
-* expires the token after 10 minutes (default)
+* expires the token after 10 minutes by default
 
-And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and you can watch the JSON fly back and forth; you're the one in control. No need for some proprietary Facebook/Twitter/Google API, or their little badges that ruin your site's branding.
+And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and watch the JSON fly back and forth. You know it's secure, because you can see how it works.
 
-Just install CouchDB, throw in a little HTTPS to encrypt the user's password (that's what it's there for, folks), and you've got everything you need for your site's user authentication. You don't even need to store any data in CouchDB &mdash; feel free to just use an empty database. Couch won't complain.
+To get started, just install CouchDB, throw in a little HTTPS to encrypt the user's password (that's what it's for), and then you've got everything you need for your site's user authentication.
 
-But if you are using CouchDB, and if you're using PouchDB to sync to it (like a pro), then this module is a total no-brainer.
+Your users can rest easy because their data isn't shared with some third-party API, and you can rest easy because you didn't have to write the security stuff yourself.
 
 Requirements
 -----
@@ -25,10 +25,10 @@ Requirements
 Installation
 ----
 
-```
-bower install pouchdb
-bower install pouchdb-authentication
-```
+
+    bower install pouchdb
+    bower install pouchdb-authentication
+
 
 Or just grab the latest `pouchdb-authentication.min.js` from [the releases page](https://github.com/pouchdb/authentication/releases) and declare it after PouchDB:
 
@@ -51,14 +51,13 @@ Or, get yourself a hosted one at Cloudant, IrisCouch, etc. It works the same.
 
 Set up CORS so that PouchDB can access your CouchDB from any URL, even if it has a different domain:
 
-```
-HOST=http://localhost:5984 # or whatever you got
-curl -X POST $HOST/_config/httpd/enable_cors -d '"true"'
-curl -X PUT $HOST/_config/cors/origins -d '"*"'
-curl -X PUT $HOST/_config/cors/credentials -d '"true"'
-curl -X PUT $HOST/_config/cors/methods -d '"GET, PUT, POST, HEAD, DELETE"'
-curl -X PUT $HOST/_config/cors/headers -d '"accept, authorization, content-type, origin"'
-```
+
+    HOST=http://localhost:5984 # or whatever you got
+    curl -X POST $HOST/_config/httpd/enable_cors -d '"true"'
+    curl -X PUT $HOST/_config/cors/origins -d '"*"'
+    curl -X PUT $HOST/_config/cors/credentials -d '"true"'
+    curl -X PUT $HOST/_config/cors/methods -d '"GET, PUT, POST, HEAD, DELETE"'
+    curl -X PUT $HOST/_config/cors/headers -d '"accept, authorization, content-type, origin"'
 
 PouchDB setup
 ------
