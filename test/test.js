@@ -115,7 +115,6 @@ function tests(dbName) {
       });
     });
 
-    // todo: get user metadata
     it('Test metadata', function () {
       var metadata = {alias : 'boywonder', profession : 'acrobat'};
       var opts = {metadata : metadata};
@@ -128,7 +127,37 @@ function tests(dbName) {
         console.log(user);
         user.name.should.equal('robin');
         user.alias.should.equal('boywonder');
-        user.profession.should.equal('acrobat2');
+        user.profession.should.equal('acrobat');
+      });
+    });
+
+    it('Test wrong user for getUser', function () {
+      return db.signup('robin', 'dickgrayson').then(function (res) {
+        return db.signup('aquaman', 'sleeps_with_fishes');
+      }).then(function () {
+        return db.login('robin', 'dickgrayson');
+      }).then(function () {
+        return db.getUser('robin');
+      }).then(function (res) {
+        res.name.should.equal('robin');
+        return db.getUser('aquaman').then(function (res) {
+          should.not.exist(res);
+        }).catch(function (err) {
+          err.name.should.equal('not_found');
+          return db.login('aquaman', 'sleeps_with_fishes').then(function () {
+            return db.getUser('aquaman').then(function (res) {
+              res.name.should.equal('aquaman');
+              return db.getSession();
+            }).then(function (res) {
+              res.userCtx.name.should.equal('aquaman');
+              return db.getUser('robin').then(function (res) {
+                should.not.exist(res);
+              }).catch(function (err) {
+                err.name.should.equal('not_found');
+              });
+            });
+          });
+        });
       });
     });
   });
