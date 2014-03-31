@@ -264,31 +264,113 @@ db.getUser('aquaman', function (err, response) {
 Authentication recipes
 ------------
 
-Below is a list of recipes for common authentication use cases.
-
 ### First step: disable the Admin Party!
 
 When you first install CouchDB, it will be in the "Admin Party" mode, which means everyone is an admin.  You'll want to disable this and create at least one admin user, so that random people can't mess with your CouchDB settings:
 
 ![Admin party][]
 
+Below is a list of recipes for common authentication use cases.
+
 ### Everybody can read and write everything
 * Example: a public wiki
 
+#### Howto
 
-
-
+Just create a new database; this is the default.  It's very dangerous, though, since users can even overwite the history of a document. So you probably don't want it.
 
 ### Everybody can read, only some can write (everything)
 * Example: a blog
 
+#### Howto
+
+Create a new database, then add a *design doc* with a  `validate_doc_update` function (see [the CouchDB docs](http://guide.couchdb.org/draft/validation.html) for details). This function will be called whenever a document is created, modified, or deleted.  In it, we'll check that the user is either an admin or has the `'blogger'` role.
+    
+The function looks like this:
+
+```js
+function(newDoc, oldDoc, userCtx) {
+  var role = "blogger";
+  if (userCtx.roles.indexOf("_admin") === -1 && userCtx.roles.indexOf(role) === -1) {
+    throw({forbidden : "Only users with role " + role + " or an admin can modify this database."});
+  }
+}
+```
+
+You can create the document like this:
+
+    curl -X POST http://admin:password@localhost:5984/mydb \
+    -H 'content-type:application/json' \
+    -d $'{"_id":"_design/only_bloggers","validate_doc_update":"function (newDoc, oldDoc, userCtx) {\\nvar role = \\"blogger\\";\\nif (userCtx.roles.indexOf(\\"_admin\\") === -1 && userCtx.roles.indexOf(role) === -1) {\\nthrow({forbidden : \\"Only users with role \\" + role + \\" or an admin can modify this database.\\"});\\n}\\n}"}'
+
+In the above command, you will need to change **admin**/**password** (admin and password), **localhost:5984** (your Couch URL), **mydb** (your database), **only_bloggers** (name of the design doc, can be whatever you want), and **blogger** (name of the new role).
+
+You can also create the document in the Futon interface itself:
+
+![New doc button][]
+
+![Blogger DDoc][]
+
+From now on, you can give users the role `"blogger"`, so they can add/modify/remove documents. (Only admins can change someone's roles.)
+
+![Blogger][]
+
+Admins can also modify documents, but they are the only ones who can change the security settings.
+
+Everyone else will get an error if they try to write (but not if they try to read).
+
+    $ curl -X POST http://blogger1:blogger1@localhost:5984/mydb -H 'content-type:application/json' -d '{"some" : "doc"}'
+    {"ok":true,"id":"ef24bec394e1a45f32ea917121002282","rev":"1-65c2325c1ab76e8279e6c2e3abc1da69"}
+    $ curl -X POST http://foobar:foobar@localhost:5984/mydb -H 'content-type:application/json' -d '{"some" : "doc"}'
+    {"error":"forbidden","reason":"Only users with role blogger or an admin can modify this database."}
+
 ### Everybody can read, only some can write (some things)
+
+* Example: Twitter
+
+In this example, all tweets are public, but everybody can only create/edit/delete their own tweets.
+
+Very similar to the above, we'll create a *design doc* with a `validate_doc_update` function, but this time we'll also ensure that every document contains a `user` field, and that the `user` field matches the name of the user who's modifying it:
+
+```js
+function(newDoc, oldDoc, userCtx) {
+  if (userCtx.roles.indexOf('_admin') === -1 && newDoc.user !== userCtx.name) {
+    throw({forbidden : "doc.user must be the same as your username."});
+  }
+}
+  
+```
+
+Here's a `curl` command you can use:
+
+    curl -X POST http://admin:password@localhost:5984/mydb \
+    -H 'content-type:application/json' \
+    -d $'{"_id":"_design/only_correct_user","validate_doc_update":"function (newDoc, oldDoc, userCtx) {\\nif (userCtx.roles.indexOf(\'_admin\') === -1 && newDoc.user !== userCtx.name) {\\nthrow({forbidden : \\"doc.user must be the same as your username.\\"});\\n}\\n}"}'
+
+In the above command, you will need to change **admin**/**password** (admin and password), **localhost:5984** (your Couch URL), **mydb** (your database), and **only_correct_user** (name of the design doc, can be whatever you want).
+
+You can also use the Futon UI to do this.  See the "blogger" example above for details.
 
 ### Some people can read and write everything
 * Example: a shared company wiki
 
+#### Howto
 
+Create a new database, then click the "Security" button:
 
+![security button][]
+
+Set a new role as the read/write role.  We'll call this one `"employee"`:
+
+![employee][]
+
+In this scheme, only admins can change the security settings, but any user with the role `"employee"` can add/modify/delete documents. See the "blogger" example above for how to set roles.
+
+### Some people can read (some docs), some people can write (those same docs)
+
+The standard practice for this is to set up one database per user.  Don't be scared: databases are cheap, and Cloudant says [100k databases per account is not uncommon].
+
+Your options are listed here in [this gist][couchperuser-gist].
 
 
 Tests
@@ -305,3 +387,10 @@ Then install mongoose or some similar web server, and run
 Then point your browser to [http://127.0.0.1:8080/test/index.html](http://127.0.0.1:8080/test/index.html)
 
 [admin party]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/admin_party.png
+[blogger]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/blogger.png
+[blogger ddoc]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/blogger_ddoc.png
+[new doc button]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/new_doc_button.png
+[security button]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/security_button.png
+[employee]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/employee.png
+[cloudant-100k]: https://mail-archives.apache.org/mod_mbox/couchdb-user/201401.mbox/%3C52CEB873.7080404@ironicdesign.com%3E
+[couchperuser-gist]: https://gist.github.com/nolanlawson/9676093
