@@ -364,14 +364,19 @@ Set a new role as the read/write role.  We'll call this one `"employee"`:
 
 ![employee][]
 
-In this scheme, only admins can change the security settings, but any user with the role `"employee"` can add/modify/delete documents. See the "blogger" example above for how to set roles.
+In this scheme, only admins can change the security settings, but any user with the role `"employee"` can view or add/modify/delete documents. The database is not public; only valid users with the role `"employee"` can read from it.
+
+See the "blogger" example above for how to set roles.
 
 ### Some people can read (some docs), some people can write (those same docs)
 
 The standard practice for this is to set up one database per user.  Don't be scared: databases are cheap, and Cloudant says [100k databases per account is not uncommon].
 
+Then you set the database to be read/write only for people with that exact user name.
+
 Your options are listed here in [this gist][couchperuser-gist].
 
+**TODO**: sugar for this
 
 Tests
 ------
