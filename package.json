@@ -8,13 +8,11 @@
     "url": "git://github.com/pouchdb/authentication.git"
   },
   "scripts": {
-    "do_tests": "TEST_DB=http://localhost:5984/testdb istanbul test ./node_modules/mocha/bin/_mocha test/test.js",
     "jshint": "jshint -c .jshintrc *.js test/test.js",
-    "test": "npm run jshint && npm run do_tests",
     "build-js": "mkdir -p dist && browserify index.js -o dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
-    "dev": "browserify test/test.js > test/test-bundle.js && npm run dev-server",
+    "dev": "npm run jshint && browserify test/test.js > test/test-bundle.js && npm run dev-server",
     "dev-server": "./bin/dev-server.js"
   },
   "keywords": [

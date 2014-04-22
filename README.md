@@ -434,7 +434,7 @@ To test in the browser, run
 
     npm run dev
 
-Then point your browser to [http://127.0.0.1:8000/test/index.html](http://127.0.0.1:8000/test/index.html)
+Then point your browser to [http://127.0.0.1:8002/test/index.html](http://127.0.0.1:8002/test/index.html)
 
 License
 ----------
