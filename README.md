@@ -1,44 +1,66 @@
 PouchDB Authentication
 =====
 
-You know what's hard?  Security.  You know what makes security really easy?  CouchDB.
+Easy user authentication for PouchDB/CouchDB.
 
-As it turns out, CouchDB isn't just a database: it's also a REST server with a built-in authentication framework. And it boasts some top-notch security features:
+```js
+var db = new PouchDB('http://mysite:5984/mydb');
+db.login('batman', 'brucewayne').then(function (batman) {
+  console.log("I'm Batman.");
+  return db.logout();
+});
+```
 
-* automatically salts and hashes your user passwords with strong PBKDF2 algorithm
-* stores a cookie in the user's browser
-* refreshes the cookie token periodically
-* expires the token after 10 minutes by default
+* [Overview](#overview)
+* [Setup](#setup)
+* [API](#api)
+  * [db.signup()](#dbsignupusername-password--options--callback) 
+  * [db.login()](#dbloginusername-password--options--callback)
+  * [db.logout()](#dblogoutcallback)
+  * [db.getSession()](#dbgetsessionopts--callback)
+  * [db.getUser()](#dbgetuserusername--opts-callback)
+* [CouchDB Authentication recipes](#couchdb-authentication-recipes)
+* [Tests](#tests)
+* [License](#license)
 
-And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and watch the JSON fly back and forth. You know it's secure, because you can see how it works.
+Overview
+----------
 
-To get started, just install CouchDB, throw in a little HTTPS to encrypt the user's password (that's what it's for), and then you've got everything you need for your site's user authentication.
+You know what's hard?  **Security**.  You know what makes security really easy?  **CouchDB**.
 
-Your users can rest easy because their data isn't shared with some third-party API, and you can rest easy because you didn't have to write the security stuff yourself.
+That's right, CouchDB is more than a database: it's also a REST server with a built-in authentication framework. And it boasts some top-notch security features:
 
-Requirements
------
+* **salts and hashes** passwords automatically with [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2)
+* **stores a cookie** in the browser
+* **refreshes the cookie** every 10 minutes (default)
 
-- CouchDB v1.3.0+ or equivalent (Cloudant, IrisCouch)
+And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and watch the JSON fly back and forth.
+
+To get started, just install CouchDB, throw in [a little SSL](ssl), and you've got everything you need for your site's authentication.
+
+Setup
+---------
+
+### Requirements
+
+- CouchDB v1.3.0+ or IrisCouch
 - PouchDB v2.0.0+
 
-Installation
-----
+### PouchDB setup
 
+Bower:
 
     bower install pouchdb
     bower install pouchdb-authentication
 
-
-Or just grab the latest `pouchdb-authentication.min.js` from [the releases page](https://github.com/pouchdb/authentication/releases) and declare it after PouchDB:
+Or, just grab the latest `pouchdb-authentication.min.js` from [the releases page](https://github.com/pouchdb/authentication/releases) and declare it after PouchDB:
 
 ```html
 <script src="pouchdb-XXX.min.js"></script>
 <script src="pouchdb-authentication-XXX.min.js"></script>
 ```
 
-CouchDB setup
----------
+### CouchDB setup
 
 Install CouchDB:
 
@@ -47,9 +69,9 @@ sudo apt-get install couchdb # debian, ubuntu, etc.
 brew install couchdb         # mac
 ```
 
-Or, get yourself a hosted one at Cloudant, IrisCouch, etc. It works the same.
+Or, get yourself a hosted one at [IrisCouch](http://iriscouch.com/). It works the same.
 
-Set up CORS so that PouchDB can access your CouchDB from any URL, even if it has a different domain:
+Next, set up CORS so that PouchDB can access your CouchDB from any URL:
 
 
     HOST=http://localhost:5984 # or whatever you got
@@ -59,8 +81,9 @@ Set up CORS so that PouchDB can access your CouchDB from any URL, even if it has
     curl -X PUT $HOST/_config/cors/methods -d '"GET, PUT, POST, HEAD, DELETE"'
     curl -X PUT $HOST/_config/cors/headers -d '"accept, authorization, content-type, origin"'
 
-PouchDB setup
-------
+In a production environment, don't forget to set up [SSL][].
+
+### PouchDB setup
 
 We assume you're using a PouchDB attached to an HTTP backend.  If you're not, you're doing something wrong.
 
@@ -73,7 +96,7 @@ Note that the users are shared across the entire CouchDB instance, not just `myd
 API
 -------
 
-Just like PouchDB, every function takes a Node-style callback of the form `function(error, response)`. Or you can use promises:
+Like PouchDB, every function takes a Node-style callback of the form `function(error, response)`. Or you can use promises:
 
 ```js
 db.doSomething(args).then(function (response){
@@ -261,8 +284,10 @@ db.getUser('aquaman', function (err, response) {
 
 **Note:** Only server admins or the user themselves can fetch user data. Otherwise you will get a 404 `not_found` error.
 
-Authentication recipes
+CouchDB authentication recipes
 ------------
+
+So you just installed CouchDB, but you're not sure how to implement read permissions/write permissions/user privileges/something fancier?  Look no further.
 
 ### First step: disable the Admin Party!
 
@@ -271,6 +296,12 @@ When you first install CouchDB, it will be in the "Admin Party" mode, which mean
 ![Admin party][]
 
 Below is a list of recipes for common authentication use cases.
+
+* [Everybody can read and write everything](#everybody-can-read-and-write-everything)
+* [Everybody can read, only some can write (everything)](#everybody-can-read-only-some-can-write-everything)
+* [Everybody can read, only some can write (some things)](#everybody-can-read-only-some-can-write-some-things)
+* [Some people can read and write everything](#some-people-can-read-and-write-everything)
+* [Some people can read (some docs), some people can write (those same docs)](#some-people-can-read-some-docs-some-people-can-write-those-same-docs)
 
 ### Everybody can read and write everything
 * Example: a public wiki
@@ -370,26 +401,45 @@ See the "blogger" example above for how to set roles.
 
 ### Some people can read (some docs), some people can write (those same docs)
 
-The standard practice for this is to set up one database per user.  Don't be scared: databases are cheap, and Cloudant says [100k databases per account is not uncommon].
+* Example: A private file locker
 
-Then you set the database to be read/write only for people with that exact user name.
+#### Howto
 
-Your options are listed here in [this gist][couchperuser-gist].
+The standard practice for this is to set up one database per user.  Don't be scared: databases are cheap, and Cloudant says [100k databases per account is not uncommon][cloudant-100k].
 
-**TODO**: sugar for this
+Then, you just need to set the database to be read/write only for people with that exact user name.
+
+There are a few different ways to accomplish this, and unfortunately you can't do it with CouchDB alone (as of this writing).  But here are a few different third-party options you can try:
+
+#### [Janus](https://github.com/daleharvey/janus)
+
+Node.js server app that integrates Mozilla Persona with CouchDB.
+
+#### [CouchPerUser](https://github.com/etrepum/couchperuser)
+
+Native CouchDB Erlang plugin that automatically creates one database per user.  Eventually CouchDB will have a plugin repository, and you'll be able to just click a button to install, but for now you have to install manually.
+
+#### [CouchDB-Selfservice](https://github.com/ocasta/CouchDB-Selfservice)
+
+Python process that gives you a URL to use when registering users, and creates a database for that user on registration.
+
+#### [PHP-on-Couch](https://github.com/dready92/PHP-on-Couch)
+
+PHP library that provides some sugar over the CouchDB API, e.g. for admin stuff.
 
 Tests
 ------
 
 To test in the browser, run
 
-    npm run build-test
+    npm run dev
 
-Then install mongoose or some similar web server, and run
+Then point your browser to [http://127.0.0.1:8000/test/index.html](http://127.0.0.1:8000/test/index.html)
 
-    mongoose
+License
+----------
 
-Then point your browser to [http://127.0.0.1:8080/test/index.html](http://127.0.0.1:8080/test/index.html)
+Apache 2.0
 
 [admin party]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/admin_party.png
 [blogger]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/blogger.png
@@ -399,3 +449,4 @@ Then point your browser to [http://127.0.0.1:8080/test/index.html](http://127.0.
 [employee]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/employee.png
 [cloudant-100k]: https://mail-archives.apache.org/mod_mbox/couchdb-user/201401.mbox/%3C52CEB873.7080404@ironicdesign.com%3E
 [couchperuser-gist]: https://gist.github.com/nolanlawson/9676093
+[ssl]: https://wiki.apache.org/couchdb/How_to_enable_SSL
