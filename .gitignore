@@ -5,3 +5,4 @@ coverage
 test/test-bundle.jsnpm-debug.log
 npm-debug.log
 test/test-bundle.js
+dist

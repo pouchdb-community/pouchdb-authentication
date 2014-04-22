@@ -145,3 +145,9 @@ function AuthError(message) {
 }
 
 utils.inherits(AuthError, Error);
+
+if (typeof window !== 'undefined' && window.PouchDB) {
+  Object.keys(exports).forEach(function (key) {
+    window.PouchDB.plugin(key, exports[key]);
+  });
+}

@@ -13,7 +13,7 @@ chai.use(require('chai-as-promised'));
 var Promise = require('bluebird');
 var all = Promise.all;
 if (process.browser) {
-  process.env.TEST_DB = 'http://localhost:2020/testdb';
+  process.env.TEST_DB = 'http://localhost:2022/testdb';
 }
 var dbs = process.env.TEST_DB;
 if (!dbs) {

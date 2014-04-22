@@ -11,7 +11,9 @@
     "do_tests": "TEST_DB=http://localhost:5984/testdb istanbul test ./node_modules/mocha/bin/_mocha test/test.js",
     "jshint": "jshint -c .jshintrc *.js test/test.js",
     "test": "npm run jshint && npm run do_tests",
-    "build": "mkdir -p dist && browserify index.js -s authentication -o dist/pouchdb-authentication.js",
+    "build-js": "mkdir -p dist && browserify index.js -o dist/pouchdb.authentication.js",
+    "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
+    "build": "npm run build-js && npm run min",
     "dev": "browserify test/test.js > test/test-bundle.js && npm run dev-server",
     "dev-server": "./bin/dev-server.js"
   },
@@ -28,24 +30,29 @@
     "url": "https://github.com/pouchdb/authentication/issues"
   },
   "dependencies": {
-    "lie": "^2.5.3",
-    "inherits": "~2.0.1",
-    "http-proxy": "~0.10.3",
-    "corsproxy": "~0.2.13",
-    "http-server": "~0.5.5"
+    "inherits": "~2.0.1"
   },
   "devDependencies": {
+    "lie": "^2.5.3",
     "bluebird": "^1.0.7",
-    "browserify": "~2.36.0",
+    "browserify": "~3.44.1",
     "chai": "~1.8.1",
     "chai-as-promised": "~4.1.0",
     "istanbul": "~0.1.45",
     "jshint": "~2.3.0",
     "mocha": "~1.14.0",
     "mocha-as-promised": "~2.0.0",
-    "pouchdb": "^2.0.0"
+    "pouchdb": "^2.0.0",
+    "watchify": "~0.7.2",
+    "http-proxy": "~0.10.4",
+    "corsproxy": "~0.2.14",
+    "http-server": "~0.5.5",
+    "uglify-js": "~2.4.13"
   },
   "peerDependencies": {
     "pouchdb": ">= 2.0.0"
+  },
+  "browser": {
+    "lie" : false
   }
 }

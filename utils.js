@@ -1,6 +1,11 @@
 'use strict';
 
-var Promise = typeof global.Promise === 'function' ? global.Promise : require('lie');
+var Promise;
+if (typeof window !== 'undefined' && window.PouchDB) {
+  Promise = window.PouchDB.utils.Promise;
+} else {
+  Promise = typeof global.Promise === 'function' ? global.Promise : require('lie');
+}
 
 function getBaseUrl(db) {
   return db.getUrl().replace(/\/[^\/]+\/?$/, '');
