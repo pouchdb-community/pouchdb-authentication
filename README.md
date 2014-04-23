@@ -11,7 +11,7 @@ db.login('batman', 'brucewayne').then(function (batman) {
 });
 ```
 
-**Note: this is a work in progress and will probably be deprecated in favor of [Janus](https://github.com/pouchdb/janus).
+**Note: this is a work in progress and will probably be deprecated in favor of [Janus](https://github.com/pouchdb/janus).**
 
 * [Overview](#overview)
 * [Setup](#setup)
