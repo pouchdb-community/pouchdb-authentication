@@ -421,10 +421,6 @@ Native CouchDB Erlang plugin that automatically creates one database per user.  
 
 Node.js daemon to do the same as above.
 
-#### [Janus](https://github.com/daleharvey/janus)
-
-Node.js server app that integrates Mozilla Persona with CouchDB.
-
 #### [CouchDB-Selfservice](https://github.com/ocasta/CouchDB-Selfservice)
 
 Python process that gives you a URL to use when registering users, and creates a database for that user on registration.
