@@ -413,13 +413,17 @@ Then, you just need to set the database to be read/write only for people with th
 
 There are a few different ways to accomplish this, and unfortunately you can't do it with CouchDB alone (as of this writing).  But here are a few different third-party options you can try:
 
-#### [Janus](https://github.com/daleharvey/janus)
-
-Node.js server app that integrates Mozilla Persona with CouchDB.
-
 #### [CouchPerUser](https://github.com/etrepum/couchperuser)
 
 Native CouchDB Erlang plugin that automatically creates one database per user.  Eventually CouchDB will have a plugin repository, and you'll be able to just click a button to install, but for now you have to install manually.
+
+#### [couchdb-dbperuser-provisioning](https://github.com/pegli/couchdb-dbperuser-provisioning)
+
+Node.js daemon to do the same as above.
+
+#### [Janus](https://github.com/daleharvey/janus)
+
+Node.js server app that integrates Mozilla Persona with CouchDB.
 
 #### [CouchDB-Selfservice](https://github.com/ocasta/CouchDB-Selfservice)
 
