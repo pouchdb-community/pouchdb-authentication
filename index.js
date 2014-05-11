@@ -2,6 +2,19 @@
 
 var utils = require('./utils');
 
+function wrapError(callback) {
+  // provide more helpful error message
+  return function (err, res) {
+    if (err) {
+      if (err.name === 'unknown_error') {
+        err.message = (err.message || '') +
+          ' Unknown error!  Did you remember to enable CORS?';
+      }
+    }
+    return callback(err, res);
+  };
+}
+
 exports.signup = utils.toPromise(function (username, password, opts, callback) {
   var db = this;
   var PouchDB = db.constructor;
@@ -46,7 +59,7 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
     url : url,
     body : user
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, callback);
+  pouchUtils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.signUp = exports.signup;
@@ -74,7 +87,7 @@ exports.login = utils.toPromise(function (username, password, opts, callback) {
     url : utils.getSessionUrl(db),
     body : {name : username, password : password}
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, callback);
+  pouchUtils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.logIn = exports.login;
@@ -91,7 +104,7 @@ exports.logout = utils.toPromise(function (opts, callback) {
     method : 'DELETE',
     url : utils.getSessionUrl(db)
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, callback);
+  pouchUtils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.logOut = exports.logout;
@@ -110,7 +123,7 @@ exports.getSession = utils.toPromise(function (opts, callback) {
     method : 'GET',
     url : url
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, callback);
+  pouchUtils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.getUser = utils.toPromise(function (username, opts, callback) {
@@ -130,7 +143,7 @@ exports.getUser = utils.toPromise(function (username, opts, callback) {
     method : 'GET',
     url : url + '/' + encodeURIComponent('org.couchdb.user:' + username)
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, callback);
+  pouchUtils.ajax(ajaxOpts, wrapError(callback));
 });
 
 
@@ -148,6 +161,6 @@ utils.inherits(AuthError, Error);
 
 if (typeof window !== 'undefined' && window.PouchDB) {
   Object.keys(exports).forEach(function (key) {
-    window.PouchDB.plugin(key, exports[key]);
+    window.PouchDB.plugin(exports);
   });
 }

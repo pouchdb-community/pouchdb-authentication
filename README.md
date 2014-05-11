@@ -76,7 +76,7 @@ Or, get yourself a hosted one at [IrisCouch](http://iriscouch.com/). It works th
 Next, set up CORS so that PouchDB can access your CouchDB from any URL:
 
 
-    HOST=http://localhost:5984 # or whatever you got
+    HOST=http://adminname:password@localhost:5984 # or whatever you got
     curl -X POST $HOST/_config/httpd/enable_cors -d '"true"'
     curl -X PUT $HOST/_config/cors/origins -d '"*"'
     curl -X PUT $HOST/_config/cors/credentials -d '"true"'
