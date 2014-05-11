@@ -59,11 +59,11 @@ Bower:
     bower install pouchdb
     bower install pouchdb-authentication
 
-Or, just grab the latest `pouchdb-authentication.min.js` from [the releases page](https://github.com/pouchdb/authentication/releases) and declare it after PouchDB:
+Or, just grab the latest `pouchdb-authentication.min.js` from [the releases page](https://github.com/nolanlawson/pouchdb-authentication/releases) and declare it after PouchDB:
 
 ```html
 <script src="pouchdb-XXX.min.js"></script>
-<script src="pouchdb-authentication-XXX.min.js"></script>
+<script src="pouchdb.authentication.min.js"></script>
 ```
 
 ### CouchDB setup
