@@ -11,8 +11,6 @@ db.login('batman', 'brucewayne').then(function (batman) {
 });
 ```
 
-**Note: this is a work in progress and will probably be deprecated in favor of [Janus](https://github.com/pouchdb/janus).**
-
 * [Overview](#overview)
 * [Setup](#setup)
 * [API](#api)
@@ -39,6 +37,12 @@ That's right, CouchDB is more than a database: it's also a REST server with a bu
 And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and watch the JSON fly back and forth.
 
 To get started, just install CouchDB, throw in [a little SSL](ssl), and you've got everything you need for your site's authentication.
+
+### Project status
+
+This plugin works, but it is no longer maintained.  In the future you will be able to look to [Janus](https://github.com/pouchdb/janus) for all your PouchDB authentication needs.
+
+Also, this plugin only works with vanilla CouchDB.  The point is to give you a lightweight authentication API that doesn't require anything fancy &ndash; no additional server daemons, no third-party providers, just straight-up Pouch and Couch.
 
 Setup
 ---------
