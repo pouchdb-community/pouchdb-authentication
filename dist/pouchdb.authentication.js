@@ -161,10 +161,9 @@ function AuthError(message) {
 utils.inherits(AuthError, Error);
 
 if (typeof window !== 'undefined' && window.PouchDB) {
-  Object.keys(exports).forEach(function (key) {
-    window.PouchDB.plugin(exports);
-  });
+  window.PouchDB.plugin(exports);
 }
+
 },{"./utils":5}],2:[function(require,module,exports){
 
 },{}],3:[function(require,module,exports){
@@ -344,5 +343,5 @@ exports.toPromise = function (func) {
 };
 
 exports.inherits = require('inherits');
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":3,"inherits":4,"lie":2}]},{},[1])
+}).call(this,require("/Users/nolanlawson/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"/Users/nolanlawson/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":3,"inherits":4,"lie":2}]},{},[1])
