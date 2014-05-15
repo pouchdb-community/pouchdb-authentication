@@ -1,4 +1,4 @@
-PouchDB Authentication
+<img alt="PouchDB Authentication logo" title="PouchDB Authentication logo" width="100px" src="https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/logo.svg"/> PouchDB Authentication
 =====
 
 Easy user authentication for PouchDB/CouchDB.
