@@ -6,7 +6,7 @@
   "authors": [
     "Nolan Lawson <nolan.lawson@gmail.com>"
   ],
-  "description": "https://github.com/nolanlawson/pouchdb-authentication",
+  "description": "Easy authentication plugin for PouchDB/CouchDB",
   "keywords": [
     "pouchdb",
     "couchdb",
