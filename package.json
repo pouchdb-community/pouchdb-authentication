@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/pouchdb/authentication.git"
+    "url": "git://github.com/nolanlawson/pouchdb-authentication.git"
   },
   "scripts": {
     "jshint": "jshint -c .jshintrc *.js test/test.js",
@@ -25,7 +25,7 @@
   "author": "",
   "license": "Apache",
   "bugs": {
-    "url": "https://github.com/pouchdb/authentication/issues"
+    "url": "https://github.com/nolanlawson/pouchdb-authentication/issues"
   },
   "dependencies": {
     "inherits": "~2.0.1"
