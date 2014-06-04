@@ -25,11 +25,12 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
     opts = {};
   }
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('this plugin only works for the http/https adapter'));
+    return callback(new AuthError('This plugin only works for the http/https adapter. ' + 
+      'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   } else if (!username) {
-    return callback(new AuthError('you must provide a username'));
+    return callback(new AuthError('You must provide a username'));
   } else if (!password) {
-    return callback(new AuthError('you must provide a password'));
+    return callback(new AuthError('You must provide a password'));
   }
 
   var userId = 'org.couchdb.user:' + username;
