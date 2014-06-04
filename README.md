@@ -38,7 +38,7 @@ That's right, CouchDB is more than a database: it's also a REST server with a bu
 
 And best of all, CouchDB does it with good ol'-fashioned HTTP. Just open up the network tab and watch the JSON fly back and forth.
 
-To get started, just install CouchDB, throw in [a little SSL](ssl), and you've got everything you need for your site's authentication.
+To get started, just install CouchDB, throw in [a little SSL][ssl], and you've got everything you need for your site's authentication.
 
 ### Project status
 
