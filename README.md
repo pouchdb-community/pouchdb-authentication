@@ -295,7 +295,7 @@ db.getUser('aquaman', function (err, response) {
 CouchDB authentication recipes
 ------------
 
-So you just installed CouchDB, but you're not sure how to implement read permissions/write permissions/user privileges/something fancier?  Look no further.
+So you just installed CouchDB, but you're not sure how to set up the right user permissions?  Look no further.
 
 ### First step: disable the Admin Party!
 
