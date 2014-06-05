@@ -28,10 +28,10 @@
     "url": "https://github.com/nolanlawson/pouchdb-authentication/issues"
   },
   "dependencies": {
-    "inherits": "~2.0.1"
+    "inherits": "~2.0.1",
+    "lie": "^2.5.3"
   },
   "devDependencies": {
-    "lie": "^2.5.3",
     "bluebird": "^1.0.7",
     "browserify": "~3.44.1",
     "chai": "~1.8.1",
