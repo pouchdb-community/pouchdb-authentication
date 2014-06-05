@@ -1,6 +1,6 @@
 {
   "name": "pouchdb-authentication",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "PouchDB Authentication",
   "main": "index.js",
   "repository": {
