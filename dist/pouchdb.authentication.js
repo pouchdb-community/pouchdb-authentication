@@ -1,4 +1,409 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// taken from pouchdb
+"use strict";
+
+var createBlob = require('./blob.js');
+var errors = require('./errors');
+var utils = require("./utils");
+var hasUpload;
+
+function ajax(options, adapterCallback) {
+
+  var requestCompleted = false;
+  var callback = utils.getArguments(function (args) {
+    if (requestCompleted) {
+      return;
+    }
+    adapterCallback.apply(this, args);
+    requestCompleted = true;
+  });
+
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+
+  options = utils.clone(options);
+
+  var defaultOptions = {
+    method : "GET",
+    headers: {},
+    json: true,
+    processData: true,
+    timeout: 10000,
+    cache: false
+  };
+
+  options = utils.extend(true, defaultOptions, options);
+
+  // cache-buster, specifically designed to work around IE's aggressive caching
+  // see http://www.dashbay.com/2011/05/internet-explorer-caches-ajax/
+  if (options.method === 'GET' && !options.cache) {
+    var hasArgs = options.url.indexOf('?') !== -1;
+    options.url += (hasArgs ? '&' : '?') + '_nonce=' + utils.uuid(16);
+  }
+
+  function onSuccess(obj, resp, cb) {
+    if (!options.binary && !options.json && options.processData &&
+      typeof obj !== 'string') {
+      obj = JSON.stringify(obj);
+    } else if (!options.binary && options.json && typeof obj === 'string') {
+      try {
+        obj = JSON.parse(obj);
+      } catch (e) {
+        // Probably a malformed JSON from server
+        return cb(e);
+      }
+    }
+    if (Array.isArray(obj)) {
+      obj = obj.map(function (v) {
+        var obj;
+        if (v.ok) {
+          return v;
+        } else if (v.error && v.error === 'conflict') {
+          obj = errors.REV_CONFLICT;
+          obj.id = v.id;
+          return obj;
+        } else if (v.error && v.error === 'forbidden') {
+          obj = errors.FORBIDDEN;
+          obj.id = v.id;
+          obj.reason = v.reason;
+          return obj;
+        } else if (v.missing) {
+          obj = errors.MISSING_DOC;
+          obj.missing = v.missing;
+          return obj;
+        } else {
+          return v;
+        }
+      });
+    }
+    cb(null, obj, resp);
+  }
+
+  function onError(err, cb) {
+    var errParsed, errObj, errType, key;
+    try {
+      errParsed = JSON.parse(err.responseText);
+      //would prefer not to have a try/catch clause
+      for (key in errors) {
+        if (errors.hasOwnProperty(key) &&
+            errors[key].name === errParsed.error) {
+          errType = errors[key];
+          break;
+        }
+      }
+      if (!errType) {
+        errType = errors.UNKNOWN_ERROR;
+        if (err.status) {
+          errType.status = err.status;
+        }
+        if (err.statusText) {
+          err.name = err.statusText;
+        }
+      }
+      errObj = errors.error(errType, errParsed.reason);
+    } catch (e) {
+      for (var key in errors) {
+        if (errors.hasOwnProperty(key) && errors[key].status === err.status) {
+          errType = errors[key];
+          break;
+        }
+      }
+      if (!errType) {
+        errType = errors.UNKNOWN_ERROR;
+        if (err.status) {
+          errType.status = err.status;
+        }
+        if (err.statusText) {
+          err.name = err.statusText;
+        }
+      }
+      errObj = errors.error(errType);
+    }
+    cb(errObj);
+  }
+
+  var timer;
+  var xhr;
+  if (options.xhr) {
+    xhr = new options.xhr();
+  } else {
+    xhr = new XMLHttpRequest();
+  }
+  xhr.open(options.method, options.url);
+  xhr.withCredentials = true;
+
+  if (options.json) {
+    options.headers.Accept = 'application/json';
+    options.headers['Content-Type'] = options.headers['Content-Type'] ||
+      'application/json';
+    if (options.body &&
+        options.processData &&
+        typeof options.body !== "string") {
+      options.body = JSON.stringify(options.body);
+    }
+  }
+
+  if (options.binary) {
+    xhr.responseType = 'arraybuffer';
+  }
+
+  var createCookie = function (name, value, days) {
+    var expires = "";
+    if (days) {
+      var date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toGMTString();
+    }
+    document.cookie = name + "=" + value + expires + "; path=/";
+  };
+
+  for (var key in options.headers) {
+    if (key === 'Cookie') {
+      var cookie = options.headers[key].split('=');
+      createCookie(cookie[0], cookie[1], 10);
+    } else {
+      xhr.setRequestHeader(key, options.headers[key]);
+    }
+  }
+
+  if (!("body" in options)) {
+    options.body = null;
+  }
+
+  var abortReq = function () {
+    if (requestCompleted) {
+      return;
+    }
+    xhr.abort();
+    onError(xhr, callback);
+  };
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4 || requestCompleted) {
+      return;
+    }
+    clearTimeout(timer);
+    if (xhr.status >= 200 && xhr.status < 300) {
+      var data;
+      if (options.binary) {
+        data = createBlob([xhr.response || ''], {
+          type: xhr.getResponseHeader('Content-Type')
+        });
+      } else {
+        data = xhr.responseText;
+      }
+      onSuccess(data, xhr, callback);
+    } else {
+      onError(xhr, callback);
+    }
+  };
+
+  if (options.timeout > 0) {
+    timer = setTimeout(abortReq, options.timeout);
+    xhr.onprogress = function () {
+      clearTimeout(timer);
+      timer = setTimeout(abortReq, options.timeout);
+    };
+    if (typeof hasUpload === 'undefined') {
+      // IE throws an error if you try to access it directly
+      hasUpload = Object.keys(xhr).indexOf('upload') !== -1;
+    }
+    if (hasUpload) { // does not exist in ie9
+      xhr.upload.onprogress = xhr.onprogress;
+    }
+  }
+  if (options.body && (options.body instanceof Blob)) {
+    var reader = new FileReader();
+    reader.onloadend = function (e) {
+
+      var binary = "";
+      var bytes = new Uint8Array(this.result);
+      var length = bytes.byteLength;
+
+      for (var i = 0; i < length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+
+      binary = utils.fixBinary(binary);
+      xhr.send(binary);
+    };
+    reader.readAsArrayBuffer(options.body);
+  } else {
+    xhr.send(options.body);
+  }
+  return {abort: abortReq};
+}
+
+module.exports = ajax;
+
+},{"./blob.js":2,"./errors":3,"./utils":9}],2:[function(require,module,exports){
+(function (global){
+// taken from pouchdb
+"use strict";
+
+//Abstracts constructing a Blob object, so it also works in older
+//browsers that don't support the native Blob constructor. (i.e.
+//old QtWebKit versions, at least).
+function createBlob(parts, properties) {
+  parts = parts || [];
+  properties = properties || {};
+  try {
+    return new Blob(parts, properties);
+  } catch (e) {
+    if (e.name !== "TypeError") {
+      throw e;
+    }
+    var BlobBuilder = global.BlobBuilder ||
+                      global.MSBlobBuilder ||
+                      global.MozBlobBuilder ||
+                      global.WebKitBlobBuilder;
+    var builder = new BlobBuilder();
+    for (var i = 0; i < parts.length; i += 1) {
+      builder.append(parts[i]);
+    }
+    return builder.getBlob(properties.type);
+  }
+}
+
+module.exports = createBlob;
+
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],3:[function(require,module,exports){
+// taken from pouchdb
+"use strict";
+
+function PouchError(opts) {
+  this.status = opts.status;
+  this.name = opts.error;
+  this.message = opts.reason;
+  this.error = true;
+}
+
+PouchError.prototype__proto__ = Error.prototype;
+
+PouchError.prototype.toString = function () {
+  return JSON.stringify({
+    status: this.status,
+    name: this.name,
+    message: this.message
+  });
+};
+
+exports.UNAUTHORIZED = new PouchError({
+  status: 401,
+  error: 'unauthorized',
+  reason: "Name or password is incorrect."
+});
+exports.MISSING_BULK_DOCS = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: "Missing JSON list of 'docs'"
+});
+exports.MISSING_DOC = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'missing'
+});
+exports.REV_CONFLICT = new PouchError({
+  status: 409,
+  error: 'conflict',
+  reason: 'Document update conflict'
+});
+exports.INVALID_ID = new PouchError({
+  status: 400,
+  error: 'invalid_id',
+  reason: '_id field must contain a string'
+});
+exports.MISSING_ID = new PouchError({
+  status: 412,
+  error: 'missing_id',
+  reason: '_id is required for puts'
+});
+exports.RESERVED_ID = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Only reserved document ids may start with underscore.'
+});
+exports.NOT_OPEN = new PouchError({
+  status: 412,
+  error: 'precondition_failed',
+  reason: 'Database not open'
+});
+exports.UNKNOWN_ERROR = new PouchError({
+  status: 500,
+  error: 'unknown_error',
+  reason: 'Database encountered an unknown error'
+});
+exports.BAD_ARG = new PouchError({
+  status: 500,
+  error: 'badarg',
+  reason: 'Some query argument is invalid'
+});
+exports.INVALID_REQUEST = new PouchError({
+  status: 400,
+  error: 'invalid_request',
+  reason: 'Request was invalid'
+});
+exports.QUERY_PARSE_ERROR = new PouchError({
+  status: 400,
+  error: 'query_parse_error',
+  reason: 'Some query parameter is invalid'
+});
+exports.DOC_VALIDATION = new PouchError({
+  status: 500,
+  error: 'doc_validation',
+  reason: 'Bad special document member'
+});
+exports.BAD_REQUEST = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Something wrong with the request'
+});
+exports.NOT_AN_OBJECT = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Document must be a JSON object'
+});
+exports.DB_MISSING = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'Database not found'
+});
+exports.IDB_ERROR = new PouchError({
+  status: 500,
+  error: 'indexed_db_went_bad',
+  reason: 'unknown'
+});
+exports.WSQ_ERROR = new PouchError({
+  status: 500,
+  error: 'web_sql_went_bad',
+  reason: 'unknown'
+});
+exports.LDB_ERROR = new PouchError({
+  status: 500,
+  error: 'levelDB_went_went_bad',
+  reason: 'unknown'
+});
+exports.FORBIDDEN = new PouchError({
+  status: 403,
+  error: 'forbidden',
+  reason: 'Forbidden by design doc validate_doc_update function'
+});
+exports.error = function (error, reason, name) {
+  function CustomPouchError(msg) {
+    this.message = reason;
+    if (name) {
+      this.name = name;
+    }
+  }
+  CustomPouchError.prototype = error;
+  return new CustomPouchError(reason);
+};
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -18,8 +423,6 @@ function wrapError(callback) {
 
 exports.signup = utils.toPromise(function (username, password, opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
       username : password) : opts;
@@ -52,24 +455,22 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
         }
       }
     }
-    user = pouchUtils.extend(true, user, opts.metadata);
+    user = utils.extend(true, user, opts.metadata);
   }
 
   var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(userId);
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'PUT',
     url : url,
     body : user
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.signUp = exports.signup;
 
 exports.login = utils.toPromise(function (username, password, opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
@@ -84,54 +485,48 @@ exports.login = utils.toPromise(function (username, password, opts, callback) {
     return callback(new AuthError('you must provide a password'));
   }
 
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'POST',
     url : utils.getSessionUrl(db),
     body : {name : username, password : password}
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.logIn = exports.login;
 
 exports.logout = utils.toPromise(function (opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
   }
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'DELETE',
     url : utils.getSessionUrl(db)
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.logOut = exports.logout;
 
 exports.getSession = utils.toPromise(function (opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
   }
   var url = utils.getSessionUrl(db);
 
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'GET',
     url : url
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.getUser = utils.toPromise(function (username, opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? username : opts;
     opts = {};
@@ -141,11 +536,11 @@ exports.getUser = utils.toPromise(function (username, opts, callback) {
   }
 
   var url = utils.getUsersUrl(db);
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'GET',
     url : url + '/' + encodeURIComponent('org.couchdb.user:' + username)
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 
@@ -165,9 +560,9 @@ if (typeof window !== 'undefined' && window.PouchDB) {
   window.PouchDB.plugin(exports);
 }
 
-},{"./utils":5}],2:[function(require,module,exports){
+},{"./utils":9}],5:[function(require,module,exports){
 
-},{}],3:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -229,7 +624,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],4:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -254,7 +649,155 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+"use strict";
+
+// Extends method
+// (taken from http://code.jquery.com/jquery-1.9.0.js)
+// Populate the class2type map
+var class2type = {};
+
+var types = [
+  "Boolean", "Number", "String", "Function", "Array",
+  "Date", "RegExp", "Object", "Error"
+];
+for (var i = 0; i < types.length; i++) {
+  var typename = types[i];
+  class2type["[object " + typename + "]"] = typename.toLowerCase();
+}
+
+var core_toString = class2type.toString;
+var core_hasOwn = class2type.hasOwnProperty;
+
+function type(obj) {
+  if (obj === null) {
+    return String(obj);
+  }
+  return typeof obj === "object" || typeof obj === "function" ?
+    class2type[core_toString.call(obj)] || "object" :
+    typeof obj;
+}
+
+function isWindow(obj) {
+  return obj !== null && obj === obj.window;
+}
+
+function isPlainObject(obj) {
+  // Must be an Object.
+  // Because of IE, we also have to check the presence of
+  // the constructor property.
+  // Make sure that DOM nodes and window objects don't pass through, as well
+  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
+    return false;
+  }
+
+  try {
+    // Not own constructor property must be Object
+    if (obj.constructor &&
+      !core_hasOwn.call(obj, "constructor") &&
+      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+      return false;
+    }
+  } catch ( e ) {
+    // IE8,9 Will throw exceptions on certain host objects #9897
+    return false;
+  }
+
+  // Own properties are enumerated firstly, so to speed up,
+  // if last one is own, then all properties are own.
+  var key;
+  for (key in obj) {}
+
+  return key === undefined || core_hasOwn.call(obj, key);
+}
+
+
+function isFunction(obj) {
+  return type(obj) === "function";
+}
+
+var isArray = Array.isArray || function (obj) {
+  return type(obj) === "array";
+};
+
+function extend() {
+  var options, name, src, copy, copyIsArray, clone,
+    target = arguments[0] || {},
+    i = 1,
+    length = arguments.length,
+    deep = false;
+
+  // Handle a deep copy situation
+  if (typeof target === "boolean") {
+    deep = target;
+    target = arguments[1] || {};
+    // skip the boolean and the target
+    i = 2;
+  }
+
+  // Handle case when target is a string or something (possible in deep copy)
+  if (typeof target !== "object" && !isFunction(target)) {
+    target = {};
+  }
+
+  // extend jQuery itself if only one argument is passed
+  if (length === i) {
+    /* jshint validthis: true */
+    target = this;
+    --i;
+  }
+
+  for (; i < length; i++) {
+    // Only deal with non-null/undefined values
+    if ((options = arguments[i]) != null) {
+      // Extend the base object
+      for (name in options) {
+        //if (options.hasOwnProperty(name)) {
+        if (!(name in Object.prototype)) {
+
+          src = target[name];
+          copy = options[name];
+
+          // Prevent never-ending loop
+          if (target === copy) {
+            continue;
+          }
+
+          // Recurse if we're merging plain objects or arrays
+          if (deep && copy && (isPlainObject(copy) ||
+              (copyIsArray = isArray(copy)))) {
+            if (copyIsArray) {
+              copyIsArray = false;
+              clone = src && isArray(src) ? src : [];
+
+            } else {
+              clone = src && isPlainObject(src) ? src : {};
+            }
+
+            // Never move original objects, clone them
+            target[name] = extend(deep, clone, copy);
+
+          // Don't bring in undefined values
+          } else if (copy !== undefined) {
+            if (!(isArray(options) && isFunction(copy))) {
+              target[name] = copy;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Return the modified object
+  return target;
+}
+
+
+module.exports = extend;
+
+
+
+},{}],9:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -344,5 +887,97 @@ exports.toPromise = function (func) {
 };
 
 exports.inherits = require('inherits');
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":3,"inherits":4,"lie":2}]},{},[1])
+exports.extend = require('pouchdb-extend');
+exports.ajax = require('./ajax');
+exports.clone = function (obj) {
+  return exports.extend(true, {}, obj);
+};
+exports.uuid = require('./uuid');
+exports.Promise = Promise;
+}).call(this,require("/Users/nolanlawson/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./ajax":1,"./uuid":10,"/Users/nolanlawson/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"lie":5,"pouchdb-extend":8}],10:[function(require,module,exports){
+"use strict";
+
+// BEGIN Math.uuid.js
+
+/*!
+Math.uuid.js (v1.4)
+http://www.broofa.com
+mailto:robert@broofa.com
+
+Copyright (c) 2010 Robert Kieffer
+Dual licensed under the MIT and GPL licenses.
+*/
+
+/*
+ * Generate a random uuid.
+ *
+ * USAGE: Math.uuid(length, radix)
+ *   length - the desired number of characters
+ *   radix  - the number of allowable values for each character.
+ *
+ * EXAMPLES:
+ *   // No arguments  - returns RFC4122, version 4 ID
+ *   >>> Math.uuid()
+ *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+ *
+ *   // One argument - returns ID of the specified length
+ *   >>> Math.uuid(15)     // 15 character ID (default base=62)
+ *   "VcydxgltxrVZSTV"
+ *
+ *   // Two arguments - returns ID of the specified length, and radix. 
+ *   // (Radix must be <= 62)
+ *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
+ *   "01001010"
+ *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
+ *   "47473046"
+ *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
+ *   "098F4D35"
+ */
+var chars = (
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+  'abcdefghijklmnopqrstuvwxyz'
+).split('');
+function getValue(radix) {
+  return 0 | Math.random() * radix;
+}
+function uuid(len, radix) {
+  radix = radix || chars.length;
+  var out = '';
+  var i = -1;
+
+  if (len) {
+    // Compact form
+    while (++i < len) {
+      out += chars[getValue(radix)];
+    }
+    return out;
+  }
+    // rfc4122, version 4 form
+    // Fill in random data.  At i==19 set the high bits of clock sequence as
+    // per rfc4122, sec. 4.1.5
+  while (++i < 36) {
+    switch (i) {
+      case 8:
+      case 13:
+      case 18:
+      case 23:
+        out += '-';
+        break;
+      case 19:
+        out += chars[(getValue(16) & 0x3) | 0x8];
+        break;
+      default:
+        out += chars[getValue(16)];
+    }
+  }
+
+  return out;
+}
+
+
+
+module.exports = uuid;
+
+
+},{}]},{},[4])
