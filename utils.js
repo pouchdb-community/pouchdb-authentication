@@ -86,3 +86,10 @@ exports.toPromise = function (func) {
 };
 
 exports.inherits = require('inherits');
+exports.extend = require('pouchdb-extend');
+exports.ajax = require('./ajax');
+exports.clone = function (obj) {
+  return exports.extend(true, {}, obj);
+};
+exports.uuid = require('./uuid');
+exports.Promise = Promise;

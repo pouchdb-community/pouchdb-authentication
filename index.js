@@ -17,8 +17,6 @@ function wrapError(callback) {
 
 exports.signup = utils.toPromise(function (username, password, opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
       username : password) : opts;
@@ -51,24 +49,22 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
         }
       }
     }
-    user = pouchUtils.extend(true, user, opts.metadata);
+    user = utils.extend(true, user, opts.metadata);
   }
 
   var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(userId);
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'PUT',
     url : url,
     body : user
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.signUp = exports.signup;
 
 exports.login = utils.toPromise(function (username, password, opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
@@ -83,54 +79,48 @@ exports.login = utils.toPromise(function (username, password, opts, callback) {
     return callback(new AuthError('you must provide a password'));
   }
 
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'POST',
     url : utils.getSessionUrl(db),
     body : {name : username, password : password}
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.logIn = exports.login;
 
 exports.logout = utils.toPromise(function (opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
   }
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'DELETE',
     url : utils.getSessionUrl(db)
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.logOut = exports.logout;
 
 exports.getSession = utils.toPromise(function (opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
   }
   var url = utils.getSessionUrl(db);
 
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'GET',
     url : url
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 exports.getUser = utils.toPromise(function (username, opts, callback) {
   var db = this;
-  var PouchDB = db.constructor;
-  var pouchUtils = PouchDB.utils;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? username : opts;
     opts = {};
@@ -140,11 +130,11 @@ exports.getUser = utils.toPromise(function (username, opts, callback) {
   }
 
   var url = utils.getUsersUrl(db);
-  var ajaxOpts = pouchUtils.extend(true, {
+  var ajaxOpts = utils.extend(true, {
     method : 'GET',
     url : url + '/' + encodeURIComponent('org.couchdb.user:' + username)
   }, opts.ajax || {});
-  pouchUtils.ajax(ajaxOpts, wrapError(callback));
+  utils.ajax(ajaxOpts, wrapError(callback));
 });
 
 

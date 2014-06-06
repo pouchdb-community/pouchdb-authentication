@@ -29,7 +29,8 @@
   },
   "dependencies": {
     "inherits": "~2.0.1",
-    "lie": "^2.5.3"
+    "lie": "^2.5.3",
+    "pouchdb-extend": "^0.1.0"
   },
   "devDependencies": {
     "bluebird": "^1.0.7",
@@ -51,6 +52,7 @@
     "pouchdb": ">= 2.0.0"
   },
   "browser": {
-    "lie" : false
+    "lie": false,
+    "./ajax.js": "./ajax-browser.js"
   }
 }
