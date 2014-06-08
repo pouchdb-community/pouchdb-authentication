@@ -30,7 +30,7 @@ Overview
 
 You know what's hard?  **Security**.  You know what makes security really easy?  **CouchDB**.
 
-That's right, CouchDB is more than a database: it's also a REST server with a built-in authentication framework. And it boasts some top-notch security features:
+That's right, CouchDB is more than a database: it's also a RESTful web server with a built-in authentication framework. And it boasts some top-notch security features:
 
 * **salts and hashes** passwords automatically with [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2)
 * **stores a cookie** in the browser
