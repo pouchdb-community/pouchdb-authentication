@@ -2,14 +2,14 @@
   "name": "pouchdb-authentication",
   "version": "0.2.0",
   "description": "PouchDB Authentication",
-  "main": "index.js",
+  "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/nolanlawson/pouchdb-authentication.git"
   },
   "scripts": {
-    "jshint": "jshint -c .jshintrc *.js test/test.js",
-    "build-js": "mkdir -p dist && browserify index.js -o dist/pouchdb.authentication.js",
+    "jshint": "jshint -c .jshintrc lib/*.js test/test.js",
+    "build-js": "mkdir -p dist && browserify lib/index.js -o dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
     "dev": "npm run jshint && browserify test/test.js > test/test-bundle.js && npm run dev-server",
@@ -50,9 +50,5 @@
   },
   "peerDependencies": {
     "pouchdb": ">= 2.0.0"
-  },
-  "browser": {
-    "lie": false,
-    "./ajax.js": "./ajax-browser.js"
   }
 }

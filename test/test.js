@@ -3,9 +3,9 @@
 'use strict';
 
 var PouchDB = require('pouchdb');
-var Authentication = require('../');
+var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
-var utils = require('../utils');
+var utils = require('../lib/utils');
 var chai = require('chai');
 var should = chai.should();
 require('mocha-as-promised')();
