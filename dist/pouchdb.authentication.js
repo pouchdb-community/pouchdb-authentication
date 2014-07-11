@@ -238,7 +238,7 @@ function ajax(options, adapterCallback) {
 
 module.exports = ajax;
 
-},{"./blob.js":2,"./errors":3,"./utils":9}],2:[function(require,module,exports){
+},{"./blob.js":2,"./errors":3,"./utils":5}],2:[function(require,module,exports){
 (function (global){
 // taken from pouchdb
 "use strict";
@@ -560,9 +560,191 @@ if (typeof window !== 'undefined' && window.PouchDB) {
   window.PouchDB.plugin(exports);
 }
 
-},{"./utils":9}],5:[function(require,module,exports){
+},{"./utils":5}],5:[function(require,module,exports){
+(function (process,global){
+'use strict';
 
-},{}],6:[function(require,module,exports){
+var Promise;
+if (typeof window !== 'undefined' && window.PouchDB) {
+  Promise = window.PouchDB.utils.Promise;
+} else {
+  Promise = typeof global.Promise === 'function' ? global.Promise : require('lie');
+}
+
+function getBaseUrl(db) {
+  return db.getUrl().replace(/\/[^\/]+\/?$/, '');
+}
+exports.getUsersUrl = function (db) {
+  return getBaseUrl(db) + '/_users';
+};
+exports.getSessionUrl = function (db) {
+  return getBaseUrl(db) + '/_session';
+};
+exports.once = function (fun) {
+  var called = false;
+  return exports.getArguments(function (args) {
+    if (called) {
+      console.trace();
+      throw new Error('once called  more than once');
+    } else {
+      called = true;
+      fun.apply(this, args);
+    }
+  });
+};
+exports.getArguments = function (fun) {
+  return function () {
+    var len = arguments.length;
+    var args = new Array(len);
+    var i = -1;
+    while (++i < len) {
+      args[i] = arguments[i];
+    }
+    return fun.call(this, args);
+  };
+};
+exports.toPromise = function (func) {
+  //create the function we will be returning
+  return exports.getArguments(function (args) {
+    var self = this;
+    var tempCB = (typeof args[args.length - 1] === 'function') ? args.pop() : false;
+    // if the last argument is a function, assume its a callback
+    var usedCB;
+    if (tempCB) {
+      // if it was a callback, create a new callback which calls it,
+      // but do so async so we don't trap any errors
+      usedCB = function (err, resp) {
+        process.nextTick(function () {
+          tempCB(err, resp);
+        });
+      };
+    }
+    var promise = new Promise(function (fulfill, reject) {
+      try {
+        var callback = exports.once(function (err, mesg) {
+          if (err) {
+            reject(err);
+          } else {
+            fulfill(mesg);
+          }
+        });
+        // create a callback for this invocation
+        // apply the function in the orig context
+        args.push(callback);
+        func.apply(self, args);
+      } catch (e) {
+        reject(e);
+      }
+    });
+    // if there is a callback, call it back
+    if (usedCB) {
+      promise.then(function (result) {
+        usedCB(null, result);
+      }, usedCB);
+    }
+    promise.cancel = function () {
+      return this;
+    };
+    return promise;
+  });
+};
+
+exports.inherits = require('inherits');
+exports.extend = require('pouchdb-extend');
+exports.ajax = require('./ajax-browser');
+exports.clone = function (obj) {
+  return exports.extend(true, {}, obj);
+};
+exports.uuid = require('./uuid');
+exports.Promise = Promise;
+
+}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./ajax-browser":1,"./uuid":6,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":7,"inherits":8,"lie":12,"pouchdb-extend":26}],6:[function(require,module,exports){
+"use strict";
+
+// BEGIN Math.uuid.js
+
+/*!
+Math.uuid.js (v1.4)
+http://www.broofa.com
+mailto:robert@broofa.com
+
+Copyright (c) 2010 Robert Kieffer
+Dual licensed under the MIT and GPL licenses.
+*/
+
+/*
+ * Generate a random uuid.
+ *
+ * USAGE: Math.uuid(length, radix)
+ *   length - the desired number of characters
+ *   radix  - the number of allowable values for each character.
+ *
+ * EXAMPLES:
+ *   // No arguments  - returns RFC4122, version 4 ID
+ *   >>> Math.uuid()
+ *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+ *
+ *   // One argument - returns ID of the specified length
+ *   >>> Math.uuid(15)     // 15 character ID (default base=62)
+ *   "VcydxgltxrVZSTV"
+ *
+ *   // Two arguments - returns ID of the specified length, and radix. 
+ *   // (Radix must be <= 62)
+ *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
+ *   "01001010"
+ *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
+ *   "47473046"
+ *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
+ *   "098F4D35"
+ */
+var chars = (
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+  'abcdefghijklmnopqrstuvwxyz'
+).split('');
+function getValue(radix) {
+  return 0 | Math.random() * radix;
+}
+function uuid(len, radix) {
+  radix = radix || chars.length;
+  var out = '';
+  var i = -1;
+
+  if (len) {
+    // Compact form
+    while (++i < len) {
+      out += chars[getValue(radix)];
+    }
+    return out;
+  }
+    // rfc4122, version 4 form
+    // Fill in random data.  At i==19 set the high bits of clock sequence as
+    // per rfc4122, sec. 4.1.5
+  while (++i < 36) {
+    switch (i) {
+      case 8:
+      case 13:
+      case 18:
+      case 23:
+        out += '-';
+        break;
+      case 19:
+        out += chars[(getValue(16) & 0x3) | 0x8];
+        break;
+      default:
+        out += chars[getValue(16)];
+    }
+  }
+
+  return out;
+}
+
+
+
+module.exports = uuid;
+
+
+},{}],7:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -624,7 +806,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -649,7 +831,470 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+'use strict';
+
+module.exports = INTERNAL;
+
+function INTERNAL() {}
+},{}],10:[function(require,module,exports){
+'use strict';
+var INTERNAL = require('./INTERNAL');
+var Promise = require('./promise');
+var reject = require('./reject');
+var resolve = require('./resolve');
+
+module.exports = function all(iterable) {
+  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
+    return reject(new TypeError('must be an array'));
+  }
+  var len = iterable.length;
+  if (!len) {
+    return resolve([]);
+  }
+  var values = [];
+  var resolved = 0;
+  var i = -1;
+  var promise = new Promise(INTERNAL);
+  function allResolver(value, i) {
+    resolve(value).then(function (outValue) {
+      values[i] = outValue;
+      if (++resolved === len) {
+        promise.resolve(values);
+      }
+    }, function (error) {
+      promise.reject(error);
+    });
+  }
+  
+  while (++i < len) {
+    allResolver(iterable[i], i);
+  }
+  return promise;
+};
+},{"./INTERNAL":9,"./promise":14,"./reject":15,"./resolve":16}],11:[function(require,module,exports){
+'use strict';
+
+module.exports = getThen;
+
+function getThen(obj) {
+  // Make sure we only access the accessor once as required by the spec
+  var then = obj && obj.then;
+  if (obj && typeof obj === 'object' && typeof then === 'function') {
+    return function appyThen() {
+      then.apply(obj, arguments);
+    };
+  }
+}
+},{}],12:[function(require,module,exports){
+module.exports = exports = require('./promise');
+
+exports.resolve = require('./resolve');
+exports.reject = require('./reject');
+exports.all = require('./all');
+},{"./all":10,"./promise":14,"./reject":15,"./resolve":16}],13:[function(require,module,exports){
+'use strict';
+
+module.exports = once;
+
+/* Wrap an arbitrary number of functions and allow only one of them to be
+   executed and only once */
+function once() {
+  var called = 0;
+  return function wrapper(wrappedFunction) {
+    return function () {
+      if (called++) {
+        return;
+      }
+      wrappedFunction.apply(this, arguments);
+    };
+  };
+}
+},{}],14:[function(require,module,exports){
+'use strict';
+
+var unwrap = require('./unwrap');
+var INTERNAL = require('./INTERNAL');
+var once = require('./once');
+var tryCatch = require('./tryCatch');
+var getThen = require('./getThen');
+
+// Lazy man's symbols for states
+var PENDING = ['PENDING'],
+  FULFILLED = ['FULFILLED'],
+  REJECTED = ['REJECTED'];
+module.exports = Promise;
+function Promise(resolver) {
+  if (!(this instanceof Promise)) {
+    return new Promise(resolver);
+  }
+  if (typeof resolver !== 'function') {
+    throw new TypeError('reslover must be a function');
+  }
+  this.state = PENDING;
+  this.queue = [];
+  if (resolver !== INTERNAL) {
+    safelyResolveThenable(this, resolver);
+  }
+}
+Promise.prototype.resolve = function (value) {
+  var result = tryCatch(getThen, value);
+  if (result.status === 'error') {
+    return this.reject(result.value);
+  }
+  var thenable = result.value;
+
+  if (thenable) {
+    safelyResolveThenable(this, thenable);
+  } else {
+    this.state = FULFILLED;
+    this.outcome = value;
+    var i = -1;
+    var len = this.queue.length;
+    while (++i < len) {
+      this.queue[i].callFulfilled(value);
+    }
+  }
+  return this;
+};
+Promise.prototype.reject = function (error) {
+  this.state = REJECTED;
+  this.outcome = error;
+  var i = -1;
+  var len = this.queue.length;
+  while (++i < len) {
+    this.queue[i].callRejected(error);
+  }
+  return this;
+};
+
+Promise.prototype['catch'] = function (onRejected) {
+  return this.then(null, onRejected);
+};
+Promise.prototype.then = function (onFulfilled, onRejected) {
+  var onFulfilledFunc = typeof onFulfilled === 'function';
+  var onRejectedFunc = typeof onRejected === 'function';
+  if (!onFulfilledFunc && this.state === FULFILLED || !onRejected && this.state === REJECTED) {
+    return this;
+  }
+  var promise = new Promise(INTERNAL);
+
+  var thenHandler =  {
+    promise: promise,
+  };
+  if (this.state !== REJECTED) {
+    if (onFulfilledFunc) {
+      thenHandler.callFulfilled = function (value) {
+        unwrap(promise, onFulfilled, value);
+      };
+    } else {
+      thenHandler.callFulfilled = function (value) {
+        promise.resolve(value);
+      };
+    }
+  }
+  if (this.state !== FULFILLED) {
+    if (onRejectedFunc) {
+      thenHandler.callRejected = function (value) {
+        unwrap(promise, onRejected, value);
+      };
+    } else {
+      thenHandler.callRejected = function (value) {
+        promise.reject(value);
+      };
+    }
+  }
+  if (this.state === FULFILLED) {
+    thenHandler.callFulfilled(this.outcome);
+  } else if (this.state === REJECTED) {
+    thenHandler.callRejected(this.outcome);
+  } else {
+    this.queue.push(thenHandler);
+  }
+
+  return promise;
+};
+function safelyResolveThenable(self, thenable) {
+  // Either fulfill, reject or reject with error
+  var onceWrapper = once();
+  var onError = onceWrapper(function (value) {
+    return self.reject(value);
+  });
+  var result = tryCatch(function () {
+    thenable(
+      onceWrapper(function (value) {
+        return self.resolve(value);
+      }),
+      onError
+    );
+  });
+  if (result.status === 'error') {
+    onError(result.value);
+  }
+}
+},{"./INTERNAL":9,"./getThen":11,"./once":13,"./tryCatch":17,"./unwrap":18}],15:[function(require,module,exports){
+'use strict';
+
+var Promise = require('./promise');
+var INTERNAL = require('./INTERNAL');
+
+module.exports = reject;
+
+function reject(reason) {
+	var promise = new Promise(INTERNAL);
+	return promise.reject(reason);
+}
+},{"./INTERNAL":9,"./promise":14}],16:[function(require,module,exports){
+'use strict';
+
+var Promise = require('./promise');
+var INTERNAL = require('./INTERNAL');
+
+module.exports = resolve;
+
+var FALSE = new Promise(INTERNAL).resolve(false);
+var NULL = new Promise(INTERNAL).resolve(null);
+var UNDEFINED = new Promise(INTERNAL).resolve(void 0);
+var ZERO = new Promise(INTERNAL).resolve(0);
+var EMPTYSTRING = new Promise(INTERNAL).resolve('');
+
+function resolve(value) {
+  if (value) {
+    return new Promise(INTERNAL).resolve(value);
+  }
+  var valueType = typeof value;
+  switch (valueType) {
+    case 'boolean':
+      return FALSE;
+    case 'undefined':
+      return UNDEFINED;
+    case 'object':
+      return NULL;
+    case 'number':
+      return ZERO;
+    case 'string':
+      return EMPTYSTRING;
+  }
+}
+},{"./INTERNAL":9,"./promise":14}],17:[function(require,module,exports){
+'use strict';
+
+module.exports = tryCatch;
+
+function tryCatch(func, value) {
+  var out = {};
+  try {
+    out.value = func(value);
+    out.status = 'success';
+  } catch (e) {
+    out.status = 'error';
+    out.value = e;
+  }
+  return out;
+}
+},{}],18:[function(require,module,exports){
+'use strict';
+
+var immediate = require('immediate');
+
+module.exports = unwrap;
+
+function unwrap(promise, func, value) {
+  immediate(function () {
+    var returnValue;
+    try {
+      returnValue = func(value);
+    } catch (e) {
+      return promise.reject(e);
+    }
+    if (returnValue === promise) {
+      promise.reject(new TypeError('Cannot resolve promise with itself'));
+    } else {
+      promise.resolve(returnValue);
+    }
+  });
+}
+},{"immediate":20}],19:[function(require,module,exports){
+"use strict";
+exports.test = function () {
+    return false;
+};
+},{}],20:[function(require,module,exports){
+"use strict";
+var types = [
+    require("./nextTick"),
+    require("./mutation"),
+    require("./postMessage"),
+    require("./messageChannel"),
+    require("./stateChange"),
+    require("./timeout")
+];
+var handlerQueue = [];
+function drainQueue() {
+    var i = 0,
+        task,
+        innerQueue = handlerQueue;
+	handlerQueue = [];
+	/*jslint boss: true */
+	while (task = innerQueue[i++]) {
+		task();
+	}
+}
+var nextTick;
+var i = -1;
+var len = types.length;
+while (++ i < len) {
+    if (types[i].test()) {
+        nextTick = types[i].install(drainQueue);
+        break;
+    }
+}
+module.exports = function (task) {
+    var len, i, args;
+    var nTask = task;
+    if (arguments.length > 1 && typeof task === "function") {
+        args = new Array(arguments.length - 1);
+        i = 0;
+        while (++i < arguments.length) {
+            args[i - 1] = arguments[i];
+        }
+        nTask = function () {
+            task.apply(undefined, args);
+        };
+    }
+    if ((len = handlerQueue.push(nTask)) === 1) {
+        nextTick(drainQueue);
+    }
+    return len;
+};
+module.exports.clear = function (n) {
+    if (n <= handlerQueue.length) {
+        handlerQueue[n - 1] = function () {};
+    }
+    return this;
+};
+
+},{"./messageChannel":21,"./mutation":22,"./nextTick":19,"./postMessage":23,"./stateChange":24,"./timeout":25}],21:[function(require,module,exports){
+(function (global){
+"use strict";
+
+exports.test = function () {
+    return typeof global.MessageChannel !== "undefined";
+};
+
+exports.install = function (func) {
+    var channel = new global.MessageChannel();
+    channel.port1.onmessage = func;
+    return function () {
+        channel.port2.postMessage(0);
+    };
+};
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],22:[function(require,module,exports){
+(function (global){
+"use strict";
+//based off rsvp
+//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
+
+var MutationObserver = global.MutationObserver || global.WebKitMutationObserver;
+
+exports.test = function () {
+    return MutationObserver;
+};
+
+exports.install = function (handle) {
+    var observer = new MutationObserver(handle);
+    var element = global.document.createElement("div");
+    observer.observe(element, { attributes: true });
+
+    // Chrome Memory Leak: https://bugs.webkit.org/show_bug.cgi?id=93661
+    global.addEventListener("unload", function () {
+        observer.disconnect();
+        observer = null;
+    }, false);
+    return function () {
+        element.setAttribute("drainQueue", "drainQueue");
+    };
+};
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],23:[function(require,module,exports){
+(function (global){
+"use strict";
+exports.test = function () {
+    // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+    // where `global.postMessage` means something completely different and can"t be used for this purpose.
+
+    if (!global.postMessage || global.importScripts) {
+        return false;
+    }
+
+    var postMessageIsAsynchronous = true;
+    var oldOnMessage = global.onmessage;
+    global.onmessage = function () {
+        postMessageIsAsynchronous = false;
+    };
+    global.postMessage("", "*");
+    global.onmessage = oldOnMessage;
+
+    return postMessageIsAsynchronous;
+};
+
+exports.install = function (func) {
+    var codeWord = "com.calvinmetcalf.setImmediate" + Math.random();
+    function globalMessage(event) {
+        if (event.source === global && event.data === codeWord) {
+            func();
+        }
+    }
+    if (global.addEventListener) {
+        global.addEventListener("message", globalMessage, false);
+    } else {
+        global.attachEvent("onmessage", globalMessage);
+    }
+    return function () {
+        global.postMessage(codeWord, "*");
+    };
+};
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],24:[function(require,module,exports){
+(function (global){
+"use strict";
+
+exports.test = function () {
+    return "document" in global && "onreadystatechange" in global.document.createElement("script");
+};
+
+exports.install = function (handle) {
+    return function () {
+
+        // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+        // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+        var scriptEl = global.document.createElement("script");
+        scriptEl.onreadystatechange = function () {
+            handle();
+
+            scriptEl.onreadystatechange = null;
+            scriptEl.parentNode.removeChild(scriptEl);
+            scriptEl = null;
+        };
+        global.document.documentElement.appendChild(scriptEl);
+
+        return handle;
+    };
+};
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],25:[function(require,module,exports){
+"use strict";
+exports.test = function () {
+    return true;
+};
+
+exports.install = function (t) {
+    return function () {
+        setTimeout(t, 0);
+    };
+};
+},{}],26:[function(require,module,exports){
 "use strict";
 
 // Extends method
@@ -795,189 +1440,6 @@ function extend() {
 
 module.exports = extend;
 
-
-
-},{}],9:[function(require,module,exports){
-(function (process,global){
-'use strict';
-
-var Promise;
-if (typeof window !== 'undefined' && window.PouchDB) {
-  Promise = window.PouchDB.utils.Promise;
-} else {
-  Promise = typeof global.Promise === 'function' ? global.Promise : require('lie');
-}
-
-function getBaseUrl(db) {
-  return db.getUrl().replace(/\/[^\/]+\/?$/, '');
-}
-exports.getUsersUrl = function (db) {
-  return getBaseUrl(db) + '/_users';
-};
-exports.getSessionUrl = function (db) {
-  return getBaseUrl(db) + '/_session';
-};
-exports.once = function (fun) {
-  var called = false;
-  return exports.getArguments(function (args) {
-    if (called) {
-      console.trace();
-      throw new Error('once called  more than once');
-    } else {
-      called = true;
-      fun.apply(this, args);
-    }
-  });
-};
-exports.getArguments = function (fun) {
-  return function () {
-    var len = arguments.length;
-    var args = new Array(len);
-    var i = -1;
-    while (++i < len) {
-      args[i] = arguments[i];
-    }
-    return fun.call(this, args);
-  };
-};
-exports.toPromise = function (func) {
-  //create the function we will be returning
-  return exports.getArguments(function (args) {
-    var self = this;
-    var tempCB = (typeof args[args.length - 1] === 'function') ? args.pop() : false;
-    // if the last argument is a function, assume its a callback
-    var usedCB;
-    if (tempCB) {
-      // if it was a callback, create a new callback which calls it,
-      // but do so async so we don't trap any errors
-      usedCB = function (err, resp) {
-        process.nextTick(function () {
-          tempCB(err, resp);
-        });
-      };
-    }
-    var promise = new Promise(function (fulfill, reject) {
-      try {
-        var callback = exports.once(function (err, mesg) {
-          if (err) {
-            reject(err);
-          } else {
-            fulfill(mesg);
-          }
-        });
-        // create a callback for this invocation
-        // apply the function in the orig context
-        args.push(callback);
-        func.apply(self, args);
-      } catch (e) {
-        reject(e);
-      }
-    });
-    // if there is a callback, call it back
-    if (usedCB) {
-      promise.then(function (result) {
-        usedCB(null, result);
-      }, usedCB);
-    }
-    promise.cancel = function () {
-      return this;
-    };
-    return promise;
-  });
-};
-
-exports.inherits = require('inherits');
-exports.extend = require('pouchdb-extend');
-exports.ajax = require('./ajax');
-exports.clone = function (obj) {
-  return exports.extend(true, {}, obj);
-};
-exports.uuid = require('./uuid');
-exports.Promise = Promise;
-}).call(this,require("/Users/nolanlawson/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ajax":1,"./uuid":10,"/Users/nolanlawson/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"lie":5,"pouchdb-extend":8}],10:[function(require,module,exports){
-"use strict";
-
-// BEGIN Math.uuid.js
-
-/*!
-Math.uuid.js (v1.4)
-http://www.broofa.com
-mailto:robert@broofa.com
-
-Copyright (c) 2010 Robert Kieffer
-Dual licensed under the MIT and GPL licenses.
-*/
-
-/*
- * Generate a random uuid.
- *
- * USAGE: Math.uuid(length, radix)
- *   length - the desired number of characters
- *   radix  - the number of allowable values for each character.
- *
- * EXAMPLES:
- *   // No arguments  - returns RFC4122, version 4 ID
- *   >>> Math.uuid()
- *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
- *
- *   // One argument - returns ID of the specified length
- *   >>> Math.uuid(15)     // 15 character ID (default base=62)
- *   "VcydxgltxrVZSTV"
- *
- *   // Two arguments - returns ID of the specified length, and radix. 
- *   // (Radix must be <= 62)
- *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
- *   "01001010"
- *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
- *   "47473046"
- *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
- *   "098F4D35"
- */
-var chars = (
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-  'abcdefghijklmnopqrstuvwxyz'
-).split('');
-function getValue(radix) {
-  return 0 | Math.random() * radix;
-}
-function uuid(len, radix) {
-  radix = radix || chars.length;
-  var out = '';
-  var i = -1;
-
-  if (len) {
-    // Compact form
-    while (++i < len) {
-      out += chars[getValue(radix)];
-    }
-    return out;
-  }
-    // rfc4122, version 4 form
-    // Fill in random data.  At i==19 set the high bits of clock sequence as
-    // per rfc4122, sec. 4.1.5
-  while (++i < 36) {
-    switch (i) {
-      case 8:
-      case 13:
-      case 18:
-      case 23:
-        out += '-';
-        break;
-      case 19:
-        out += chars[(getValue(16) & 0x3) | 0x8];
-        break;
-      default:
-        out += chars[getValue(16)];
-    }
-  }
-
-  return out;
-}
-
-
-
-module.exports = uuid;
 
 
 },{}]},{},[4])
