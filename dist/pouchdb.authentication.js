@@ -659,7 +659,7 @@ exports.uuid = require('./uuid');
 exports.Promise = Promise;
 
 }).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ajax-browser":1,"./uuid":6,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":7,"inherits":8,"lie":12,"pouchdb-extend":26}],6:[function(require,module,exports){
+},{"./ajax-browser":1,"./uuid":6,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":8,"inherits":9,"lie":13,"pouchdb-extend":27}],6:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -745,6 +745,8 @@ module.exports = uuid;
 
 
 },{}],7:[function(require,module,exports){
+
+},{}],8:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -806,7 +808,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -831,51 +833,92 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = INTERNAL;
 
 function INTERNAL() {}
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
-var INTERNAL = require('./INTERNAL');
 var Promise = require('./promise');
 var reject = require('./reject');
 var resolve = require('./resolve');
-
+var INTERNAL = require('./INTERNAL');
+var handlers = require('./handlers');
+var noArray = reject(new TypeError('must be an array'));
 module.exports = function all(iterable) {
   if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return reject(new TypeError('must be an array'));
+    return noArray;
   }
+
   var len = iterable.length;
+  var called = false;
   if (!len) {
     return resolve([]);
   }
-  var values = [];
+
+  var values = new Array(len);
   var resolved = 0;
   var i = -1;
   var promise = new Promise(INTERNAL);
-  function allResolver(value, i) {
-    resolve(value).then(function (outValue) {
-      values[i] = outValue;
-      if (++resolved === len) {
-        promise.resolve(values);
-      }
-    }, function (error) {
-      promise.reject(error);
-    });
-  }
   
   while (++i < len) {
     allResolver(iterable[i], i);
   }
   return promise;
+  function allResolver(value, i) {
+    resolve(value).then(resolveFromAll, function (error) {
+      if (!called) {
+        called = true;
+        handlers.reject(promise, error);
+      }
+    });
+    function resolveFromAll(outValue) {
+      values[i] = outValue;
+      if (++resolved === len & !called) {
+        called = true;
+        handlers.resolve(promise, values);
+      }
+    }
+  }
 };
-},{"./INTERNAL":9,"./promise":14,"./reject":15,"./resolve":16}],11:[function(require,module,exports){
+},{"./INTERNAL":10,"./handlers":12,"./promise":14,"./reject":16,"./resolve":17}],12:[function(require,module,exports){
 'use strict';
+var tryCatch = require('./tryCatch');
+var resolveThenable = require('./resolveThenable');
+var states = require('./states');
 
-module.exports = getThen;
+exports.resolve = function (self, value) {
+  var result = tryCatch(getThen, value);
+  if (result.status === 'error') {
+    return exports.reject(self, result.value);
+  }
+  var thenable = result.value;
+
+  if (thenable) {
+    resolveThenable.safely(self, thenable);
+  } else {
+    self.state = states.FULFILLED;
+    self.outcome = value;
+    var i = -1;
+    var len = self.queue.length;
+    while (++i < len) {
+      self.queue[i].callFulfilled(value);
+    }
+  }
+  return self;
+};
+exports.reject = function (self, error) {
+  self.state = states.REJECTED;
+  self.outcome = error;
+  var i = -1;
+  var len = self.queue.length;
+  while (++i < len) {
+    self.queue[i].callRejected(error);
+  }
+  return self;
+};
 
 function getThen(obj) {
   // Make sure we only access the accessor once as required by the spec
@@ -886,43 +929,21 @@ function getThen(obj) {
     };
   }
 }
-},{}],12:[function(require,module,exports){
+},{"./resolveThenable":18,"./states":19,"./tryCatch":20}],13:[function(require,module,exports){
 module.exports = exports = require('./promise');
 
 exports.resolve = require('./resolve');
 exports.reject = require('./reject');
 exports.all = require('./all');
-},{"./all":10,"./promise":14,"./reject":15,"./resolve":16}],13:[function(require,module,exports){
-'use strict';
-
-module.exports = once;
-
-/* Wrap an arbitrary number of functions and allow only one of them to be
-   executed and only once */
-function once() {
-  var called = 0;
-  return function wrapper(wrappedFunction) {
-    return function () {
-      if (called++) {
-        return;
-      }
-      wrappedFunction.apply(this, arguments);
-    };
-  };
-}
-},{}],14:[function(require,module,exports){
+},{"./all":11,"./promise":14,"./reject":16,"./resolve":17}],14:[function(require,module,exports){
 'use strict';
 
 var unwrap = require('./unwrap');
 var INTERNAL = require('./INTERNAL');
-var once = require('./once');
-var tryCatch = require('./tryCatch');
-var getThen = require('./getThen');
+var resolveThenable = require('./resolveThenable');
+var states = require('./states');
+var QueueItem = require('./queueItem');
 
-// Lazy man's symbols for states
-var PENDING = ['PENDING'],
-  FULFILLED = ['FULFILLED'],
-  REJECTED = ['REJECTED'];
 module.exports = Promise;
 function Promise(resolver) {
   if (!(this instanceof Promise)) {
@@ -931,136 +952,96 @@ function Promise(resolver) {
   if (typeof resolver !== 'function') {
     throw new TypeError('reslover must be a function');
   }
-  this.state = PENDING;
+  this.state = states.PENDING;
   this.queue = [];
+  this.outcome = void 0;
   if (resolver !== INTERNAL) {
-    safelyResolveThenable(this, resolver);
+    resolveThenable.safely(this, resolver);
   }
 }
-Promise.prototype.resolve = function (value) {
-  var result = tryCatch(getThen, value);
-  if (result.status === 'error') {
-    return this.reject(result.value);
-  }
-  var thenable = result.value;
-
-  if (thenable) {
-    safelyResolveThenable(this, thenable);
-  } else {
-    this.state = FULFILLED;
-    this.outcome = value;
-    var i = -1;
-    var len = this.queue.length;
-    while (++i < len) {
-      this.queue[i].callFulfilled(value);
-    }
-  }
-  return this;
-};
-Promise.prototype.reject = function (error) {
-  this.state = REJECTED;
-  this.outcome = error;
-  var i = -1;
-  var len = this.queue.length;
-  while (++i < len) {
-    this.queue[i].callRejected(error);
-  }
-  return this;
-};
 
 Promise.prototype['catch'] = function (onRejected) {
   return this.then(null, onRejected);
 };
 Promise.prototype.then = function (onFulfilled, onRejected) {
-  var onFulfilledFunc = typeof onFulfilled === 'function';
-  var onRejectedFunc = typeof onRejected === 'function';
-  if (!onFulfilledFunc && this.state === FULFILLED || !onRejected && this.state === REJECTED) {
+  if (typeof onFulfilled !== 'function' && this.state === states.FULFILLED ||
+    typeof onRejected !== 'function' && this.state === states.REJECTED) {
     return this;
   }
   var promise = new Promise(INTERNAL);
 
-  var thenHandler =  {
-    promise: promise,
-  };
-  if (this.state !== REJECTED) {
-    if (onFulfilledFunc) {
-      thenHandler.callFulfilled = function (value) {
-        unwrap(promise, onFulfilled, value);
-      };
-    } else {
-      thenHandler.callFulfilled = function (value) {
-        promise.resolve(value);
-      };
-    }
-  }
-  if (this.state !== FULFILLED) {
-    if (onRejectedFunc) {
-      thenHandler.callRejected = function (value) {
-        unwrap(promise, onRejected, value);
-      };
-    } else {
-      thenHandler.callRejected = function (value) {
-        promise.reject(value);
-      };
-    }
-  }
-  if (this.state === FULFILLED) {
-    thenHandler.callFulfilled(this.outcome);
-  } else if (this.state === REJECTED) {
-    thenHandler.callRejected(this.outcome);
+  
+  if (this.state !== states.PENDING) {
+    var resolver = this.state === states.FULFILLED ? onFulfilled: onRejected;
+    unwrap(promise, resolver, this.outcome);
   } else {
-    this.queue.push(thenHandler);
+    this.queue.push(new QueueItem(promise, onFulfilled, onRejected));
   }
 
   return promise;
 };
-function safelyResolveThenable(self, thenable) {
-  // Either fulfill, reject or reject with error
-  var onceWrapper = once();
-  var onError = onceWrapper(function (value) {
-    return self.reject(value);
-  });
-  var result = tryCatch(function () {
-    thenable(
-      onceWrapper(function (value) {
-        return self.resolve(value);
-      }),
-      onError
-    );
-  });
-  if (result.status === 'error') {
-    onError(result.value);
+
+},{"./INTERNAL":10,"./queueItem":15,"./resolveThenable":18,"./states":19,"./unwrap":21}],15:[function(require,module,exports){
+'use strict';
+var handlers = require('./handlers');
+var unwrap = require('./unwrap');
+
+module.exports = QueueItem;
+function QueueItem(promise, onFulfilled, onRejected) {
+  this.promise = promise;
+  if (typeof onFulfilled === 'function') {
+    this.onFulfilled = onFulfilled;
+    this.callFulfilled = this.otherCallFulfilled;
+  }
+  if (typeof onRejected === 'function') {
+    this.onRejected = onRejected;
+    this.callRejected = this.otherCallRejected;
   }
 }
-},{"./INTERNAL":9,"./getThen":11,"./once":13,"./tryCatch":17,"./unwrap":18}],15:[function(require,module,exports){
+QueueItem.prototype.callFulfilled = function (value) {
+  handlers.resolve(this.promise, value);
+};
+QueueItem.prototype.otherCallFulfilled = function (value) {
+  unwrap(this.promise, this.onFulfilled, value);
+};
+QueueItem.prototype.callRejected = function (value) {
+  handlers.reject(this.promise, value);
+};
+QueueItem.prototype.otherCallRejected = function (value) {
+  unwrap(this.promise, this.onRejected, value);
+};
+},{"./handlers":12,"./unwrap":21}],16:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
 var INTERNAL = require('./INTERNAL');
-
+var handlers = require('./handlers');
 module.exports = reject;
 
 function reject(reason) {
 	var promise = new Promise(INTERNAL);
-	return promise.reject(reason);
+	return handlers.reject(promise, reason);
 }
-},{"./INTERNAL":9,"./promise":14}],16:[function(require,module,exports){
+},{"./INTERNAL":10,"./handlers":12,"./promise":14}],17:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
 var INTERNAL = require('./INTERNAL');
-
+var handlers = require('./handlers');
 module.exports = resolve;
 
-var FALSE = new Promise(INTERNAL).resolve(false);
-var NULL = new Promise(INTERNAL).resolve(null);
-var UNDEFINED = new Promise(INTERNAL).resolve(void 0);
-var ZERO = new Promise(INTERNAL).resolve(0);
-var EMPTYSTRING = new Promise(INTERNAL).resolve('');
+var FALSE = handlers.resolve(new Promise(INTERNAL), false);
+var NULL = handlers.resolve(new Promise(INTERNAL), null);
+var UNDEFINED = handlers.resolve(new Promise(INTERNAL), void 0);
+var ZERO = handlers.resolve(new Promise(INTERNAL), 0);
+var EMPTYSTRING = handlers.resolve(new Promise(INTERNAL), '');
 
 function resolve(value) {
   if (value) {
-    return new Promise(INTERNAL).resolve(value);
+    if (value instanceof Promise) {
+      return value;
+    }
+    return handlers.resolve(new Promise(INTERNAL), value);
   }
   var valueType = typeof value;
   switch (valueType) {
@@ -1076,7 +1057,46 @@ function resolve(value) {
       return EMPTYSTRING;
   }
 }
-},{"./INTERNAL":9,"./promise":14}],17:[function(require,module,exports){
+},{"./INTERNAL":10,"./handlers":12,"./promise":14}],18:[function(require,module,exports){
+'use strict';
+var handlers = require('./handlers');
+var tryCatch = require('./tryCatch');
+function safelyResolveThenable(self, thenable) {
+  // Either fulfill, reject or reject with error
+  var called = false;
+  function onError(value) {
+    if (called) {
+      return;
+    }
+    called = true;
+    handlers.reject(self, value);
+  }
+
+  function onSuccess(value) {
+    if (called) {
+      return;
+    }
+    called = true;
+    handlers.resolve(self, value);
+  }
+
+  function tryToUnwrap() {
+    thenable(onSuccess, onError);
+  }
+  
+  var result = tryCatch(tryToUnwrap);
+  if (result.status === 'error') {
+    onError(result.value);
+  }
+}
+exports.safely = safelyResolveThenable;
+},{"./handlers":12,"./tryCatch":20}],19:[function(require,module,exports){
+// Lazy man's symbols for states
+
+exports.REJECTED = ['REJECTED'];
+exports.FULFILLED = ['FULFILLED'];
+exports.PENDING = ['PENDING'];
+},{}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = tryCatch;
@@ -1092,11 +1112,11 @@ function tryCatch(func, value) {
   }
   return out;
 }
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var immediate = require('immediate');
-
+var handlers = require('./handlers');
 module.exports = unwrap;
 
 function unwrap(promise, func, value) {
@@ -1105,196 +1125,141 @@ function unwrap(promise, func, value) {
     try {
       returnValue = func(value);
     } catch (e) {
-      return promise.reject(e);
+      return handlers.reject(promise, e);
     }
     if (returnValue === promise) {
-      promise.reject(new TypeError('Cannot resolve promise with itself'));
+      handlers.reject(promise, new TypeError('Cannot resolve promise with itself'));
     } else {
-      promise.resolve(returnValue);
+      handlers.resolve(promise, returnValue);
     }
   });
 }
-},{"immediate":20}],19:[function(require,module,exports){
-"use strict";
-exports.test = function () {
-    return false;
-};
-},{}],20:[function(require,module,exports){
-"use strict";
+},{"./handlers":12,"immediate":22}],22:[function(require,module,exports){
+'use strict';
 var types = [
-    require("./nextTick"),
-    require("./mutation"),
-    require("./postMessage"),
-    require("./messageChannel"),
-    require("./stateChange"),
-    require("./timeout")
+  require('./nextTick'),
+  require('./mutation.js'),
+  require('./messageChannel'),
+  require('./stateChange'),
+  require('./timeout')
 ];
-var handlerQueue = [];
+var draining;
+var queue = [];
 function drainQueue() {
-    var i = 0,
-        task,
-        innerQueue = handlerQueue;
-	handlerQueue = [];
-	/*jslint boss: true */
-	while (task = innerQueue[i++]) {
-		task();
-	}
+  draining = true;
+  var i, oldQueue;
+  var len = queue.length;
+  while (len) {
+    oldQueue = queue;
+    queue = [];
+    i = -1;
+    while (++i < len) {
+      oldQueue[i]();
+    }
+    len = queue.length;
+  }
+  draining = false;
 }
-var nextTick;
+var scheduleDrain;
 var i = -1;
 var len = types.length;
 while (++ i < len) {
-    if (types[i].test()) {
-        nextTick = types[i].install(drainQueue);
-        break;
-    }
+  if (types[i] && types[i].test && types[i].test()) {
+    scheduleDrain = types[i].install(drainQueue);
+    break;
+  }
 }
-module.exports = function (task) {
-    var len, i, args;
-    var nTask = task;
-    if (arguments.length > 1 && typeof task === "function") {
-        args = new Array(arguments.length - 1);
-        i = 0;
-        while (++i < arguments.length) {
-            args[i - 1] = arguments[i];
-        }
-        nTask = function () {
-            task.apply(undefined, args);
-        };
-    }
-    if ((len = handlerQueue.push(nTask)) === 1) {
-        nextTick(drainQueue);
-    }
-    return len;
-};
-module.exports.clear = function (n) {
-    if (n <= handlerQueue.length) {
-        handlerQueue[n - 1] = function () {};
-    }
-    return this;
-};
-
-},{"./messageChannel":21,"./mutation":22,"./nextTick":19,"./postMessage":23,"./stateChange":24,"./timeout":25}],21:[function(require,module,exports){
+module.exports = immediate;
+function immediate(task) {
+  if (queue.push(task) === 1 && !draining) {
+    scheduleDrain();
+  }
+}
+},{"./messageChannel":23,"./mutation.js":24,"./nextTick":7,"./stateChange":25,"./timeout":26}],23:[function(require,module,exports){
 (function (global){
-"use strict";
+'use strict';
 
 exports.test = function () {
-    return typeof global.MessageChannel !== "undefined";
+  if (global.setImmediate) {
+    // we can only get here in IE10
+    // which doesn't handel postMessage well
+    return false;
+  }
+  return typeof global.MessageChannel !== 'undefined';
 };
 
 exports.install = function (func) {
-    var channel = new global.MessageChannel();
-    channel.port1.onmessage = func;
-    return function () {
-        channel.port2.postMessage(0);
-    };
-};
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],22:[function(require,module,exports){
-(function (global){
-"use strict";
-//based off rsvp
-//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
-
-var MutationObserver = global.MutationObserver || global.WebKitMutationObserver;
-
-exports.test = function () {
-    return MutationObserver;
-};
-
-exports.install = function (handle) {
-    var observer = new MutationObserver(handle);
-    var element = global.document.createElement("div");
-    observer.observe(element, { attributes: true });
-
-    // Chrome Memory Leak: https://bugs.webkit.org/show_bug.cgi?id=93661
-    global.addEventListener("unload", function () {
-        observer.disconnect();
-        observer = null;
-    }, false);
-    return function () {
-        element.setAttribute("drainQueue", "drainQueue");
-    };
-};
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],23:[function(require,module,exports){
-(function (global){
-"use strict";
-exports.test = function () {
-    // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-    // where `global.postMessage` means something completely different and can"t be used for this purpose.
-
-    if (!global.postMessage || global.importScripts) {
-        return false;
-    }
-
-    var postMessageIsAsynchronous = true;
-    var oldOnMessage = global.onmessage;
-    global.onmessage = function () {
-        postMessageIsAsynchronous = false;
-    };
-    global.postMessage("", "*");
-    global.onmessage = oldOnMessage;
-
-    return postMessageIsAsynchronous;
-};
-
-exports.install = function (func) {
-    var codeWord = "com.calvinmetcalf.setImmediate" + Math.random();
-    function globalMessage(event) {
-        if (event.source === global && event.data === codeWord) {
-            func();
-        }
-    }
-    if (global.addEventListener) {
-        global.addEventListener("message", globalMessage, false);
-    } else {
-        global.attachEvent("onmessage", globalMessage);
-    }
-    return function () {
-        global.postMessage(codeWord, "*");
-    };
+  var channel = new global.MessageChannel();
+  channel.port1.onmessage = func;
+  return function () {
+    channel.port2.postMessage(0);
+  };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],24:[function(require,module,exports){
 (function (global){
-"use strict";
+'use strict';
+//based off rsvp https://github.com/tildeio/rsvp.js
+//license https://github.com/tildeio/rsvp.js/blob/master/LICENSE
+//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/asap.js
+
+var Mutation = global.MutationObserver || global.WebKitMutationObserver;
 
 exports.test = function () {
-    return "document" in global && "onreadystatechange" in global.document.createElement("script");
+  return Mutation;
 };
 
 exports.install = function (handle) {
-    return function () {
-
-        // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-        // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-        var scriptEl = global.document.createElement("script");
-        scriptEl.onreadystatechange = function () {
-            handle();
-
-            scriptEl.onreadystatechange = null;
-            scriptEl.parentNode.removeChild(scriptEl);
-            scriptEl = null;
-        };
-        global.document.documentElement.appendChild(scriptEl);
-
-        return handle;
-    };
+  var called = 0;
+  var observer = new Mutation(handle);
+  var element = global.document.createTextNode('');
+  observer.observe(element, {
+    characterData: true
+  });
+  return function () {
+    element.data = (called = ++called % 2);
+  };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],25:[function(require,module,exports){
-"use strict";
+(function (global){
+'use strict';
+
 exports.test = function () {
-    return true;
+  return 'document' in global && 'onreadystatechange' in global.document.createElement('script');
+};
+
+exports.install = function (handle) {
+  return function () {
+
+    // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+    // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+    var scriptEl = global.document.createElement('script');
+    scriptEl.onreadystatechange = function () {
+      handle();
+
+      scriptEl.onreadystatechange = null;
+      scriptEl.parentNode.removeChild(scriptEl);
+      scriptEl = null;
+    };
+    global.document.documentElement.appendChild(scriptEl);
+
+    return handle;
+  };
+};
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],26:[function(require,module,exports){
+'use strict';
+exports.test = function () {
+  return true;
 };
 
 exports.install = function (t) {
-    return function () {
-        setTimeout(t, 0);
-    };
+  return function () {
+    setTimeout(t, 0);
+  };
 };
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 // Extends method
