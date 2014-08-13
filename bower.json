@@ -1,7 +1,7 @@
 {
   "name": "pouchdb-authentication",
   "main": "dist/pouchdb.authentication.js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "homepage": "https://github.com/nolanlawson/pouchdb-authentication",
   "authors": [
     "Nolan Lawson <nolan.lawson@gmail.com>"

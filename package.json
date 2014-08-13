@@ -1,6 +1,6 @@
 {
   "name": "pouchdb-authentication",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "PouchDB Authentication",
   "main": "lib/index.js",
   "repository": {
@@ -47,8 +47,5 @@
     "corsproxy": "~0.2.14",
     "http-server": "~0.5.5",
     "uglify-js": "~2.4.13"
-  },
-  "peerDependencies": {
-    "pouchdb": ">= 2.0.0"
   }
 }
