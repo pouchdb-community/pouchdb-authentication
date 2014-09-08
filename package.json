@@ -3,6 +3,7 @@
   "version": "0.3.3",
   "description": "PouchDB Authentication",
   "main": "lib/index.js",
+  "browser": "dist/pouchdb.authentication.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/nolanlawson/pouchdb-authentication.git"
