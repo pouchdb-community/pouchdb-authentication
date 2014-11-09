@@ -310,6 +310,7 @@ Below is a list of recipes for common authentication use cases.
 * [Everybody can read, only some can write (some things)](#everybody-can-read-only-some-can-write-some-things)
 * [Some people can read and write everything](#some-people-can-read-and-write-everything)
 * [Some people can read (some docs), some people can write (those same docs)](#some-people-can-read-some-docs-some-people-can-write-those-same-docs)
+* [Everybody has to be logged in to do anything](#everybody-has-to-be-logged-in-to-do-anything)
 
 ### Everybody can read and write everything
 * Example: a public wiki
@@ -435,6 +436,49 @@ Python process that gives you a URL to use when registering users, and creates a
 
 PHP library that provides some sugar over the CouchDB API, e.g. for admin stuff.
 
+### Everybody has to be logged in to do anything
+
+* Example: Medical healthcare records
+
+#### Howto
+
+The highest level of security offered by CouchDB.  No requests *whatsoever* are allowed from unauthenticated users.
+
+First, ensure that at least one CouchDB user has been created (if you've [disabled admin party](#first-step-disable-the-admin-party), you'll already have at least one admin user).  Next, if you're using CORS, ensure the `cors.headers` array contains `authorization` (this should already be set if you've followed [CouchDB setup](#couchdb-setup)).  Finally, set `httpd.require_valid_user` to `true`.
+
+To prevent browser HTTP basic authentication modal dialogs of ye olde times, we have to be subtle in the way we use PouchDB.  To prevent a rouge unauthenticated request to CouchDB (used to [check whether the remote DB exists][skipsetup]), pass `skipSetup: true` in Pouch's constructor options.  Secondly, to authenticate the request against `_session`, add the HTTP basic authorization header to `db.login()`'s [AJAX options](#api).
+
+Example usage:
+
+```js
+var user = {
+  name: 'admin',
+  password: 'admin'
+};
+
+var pouchOpts = {
+  skipSetup: true
+};
+
+var ajaxOpts = {
+  ajax: {
+    headers: {
+      Authorization: 'Basic ' + window.btoa(user.name + ':' + user.password)
+    }
+  }
+};
+
+var db = new PouchDB('http://localhost:5984/test', pouchOpts);
+
+db.login(user.name, user.password, ajaxOpts).then(function() {
+  return db.allDocs();
+}).then(function(docs) {
+  console.log(docs);
+}).catch(function(error) {
+  console.error(error);
+});
+```
+
 Tests
 ------
 
@@ -458,3 +502,4 @@ Apache 2.0
 [cloudant-100k]: https://mail-archives.apache.org/mod_mbox/couchdb-user/201401.mbox/%3C52CEB873.7080404@ironicdesign.com%3E
 [couchperuser-gist]: https://gist.github.com/nolanlawson/9676093
 [ssl]: https://wiki.apache.org/couchdb/How_to_enable_SSL
+[skipsetup]: https://github.com/pouchdb/pouchdb/blob/e78a30f8a548340335e28efb827cddfcd96d0482/lib/adapters/http.js#L157
