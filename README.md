@@ -42,7 +42,7 @@ To get started, just install CouchDB, throw in [a little SSL][ssl], and you've g
 
 ### Project status
 
-This plugin works, but it is no longer maintained.  In the future you will be able to look to [Janus](https://github.com/pouchdb/janus) for all your PouchDB authentication needs.
+This plugin works, but it is no longer maintained.  In the future you will be able to look to [Pouch.host](https://pouch.host/) for all your PouchDB authentication needs.
 
 Also, this plugin only works with vanilla CouchDB.  The point is to give you a lightweight authentication API that doesn't require anything fancy &ndash; no additional server daemons, no third-party providers, just straight-up Pouch and Couch.
 
