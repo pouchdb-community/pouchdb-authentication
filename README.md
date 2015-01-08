@@ -436,6 +436,14 @@ Python process that gives you a URL to use when registering users, and creates a
 
 PHP library that provides some sugar over the CouchDB API, e.g. for admin stuff.
 
+#### [Hoodie](http://hood.ie)
+
+Batteries-included no-backend framework. Currently (as of January 2015) being [ported to use PouchDB](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb).
+
+#### [Pouch.host](https://pouch.host/)
+
+(Work in progress as of January 2015.) Hosted PouchDB Server with per-user read-write access.
+
 ### Everybody has to be logged in to do anything
 
 * Example: Medical healthcare records
