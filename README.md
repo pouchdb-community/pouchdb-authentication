@@ -44,7 +44,7 @@ To get started, just install CouchDB, throw in [a little SSL][ssl], and you've g
 
 This plugin uses vanilla CouchDB.  The goal is to give you a lightweight authentication API that doesn't require anything fancy &ndash; no additional server daemons, no third-party providers, just straight-up Pouch and Couch.
 
-This is more of a reference implementation than an all-in-one solution.
+So this is more of a reference implementation than an all-in-one solution. If there's a feature missing that you need, you will probably need to write a custom server (see the [CouchDB Authentication recipes](#couchdb-authentication-recipes) section for details).
 
 Setup
 ---------
