@@ -87,7 +87,7 @@ Next, set up CORS so that PouchDB can access your CouchDB from any URL:
     curl -X PUT $HOST/_config/cors/origins -d '"*"'
     curl -X PUT $HOST/_config/cors/credentials -d '"true"'
     curl -X PUT $HOST/_config/cors/methods -d '"GET, PUT, POST, HEAD, DELETE"'
-    curl -X PUT $HOST/_config/cors/headers -d '"accept, authorization, content-type, origin"'
+    curl -X PUT $HOST/_config/cors/headers -d '"accept, authorization, content-type, origin, referer"'
 
 In a production environment, don't forget to set up [SSL][].
 
