@@ -81,9 +81,9 @@ Or, get yourself a hosted one at [IrisCouch](http://iriscouch.com/). It works th
 
 Next, set up CORS so that PouchDB can access your CouchDB from any URL. For convenience we'll use [add-cors-to-couchdb](https://github.com/pouchdb/add-cors-to-couchdb).
 
-    npm install -g add-cors-to-couchdb                                      # may require sudo
-    add-cors-to-couchdb                                                     # for local couchdb
-    add-cors-to-couchdb http://me.iriscouch.com -u myusername -p mypassword # for iriscouch
+    npm install -g add-cors-to-couchdb # may require sudo
+    add-cors-to-couchdb                # for IrisCouch, see add-cors-to-couchdb instructions
+    
 
 In a production environment, don't forget to set up [SSL][].
 
