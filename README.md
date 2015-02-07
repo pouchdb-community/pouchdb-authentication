@@ -79,15 +79,11 @@ brew install couchdb         # mac
 
 Or, get yourself a hosted one at [IrisCouch](http://iriscouch.com/). It works the same.
 
-Next, set up CORS so that PouchDB can access your CouchDB from any URL:
+Next, set up CORS so that PouchDB can access your CouchDB from any URL. For convenience we'll use [add-cors-to-couchdb](https://github.com/pouchdb/add-cors-to-couchdb).
 
-
-    HOST=http://adminname:password@localhost:5984 # or whatever you got
-    curl -X POST $HOST/_config/httpd/enable_cors -d '"true"'
-    curl -X PUT $HOST/_config/cors/origins -d '"*"'
-    curl -X PUT $HOST/_config/cors/credentials -d '"true"'
-    curl -X PUT $HOST/_config/cors/methods -d '"GET, PUT, POST, HEAD, DELETE"'
-    curl -X PUT $HOST/_config/cors/headers -d '"accept, authorization, content-type, origin, referer"'
+    npm install -g add-cors-to-couchdb                                      # may require sudo
+    add-cors-to-couchdb                                                     # for local couchdb
+    add-cors-to-couchdb http://me.iriscouch.com -u myusername -p mypassword # for iriscouch
 
 In a production environment, don't forget to set up [SSL][].
 
