@@ -89,13 +89,22 @@ In a production environment, don't forget to set up [SSL][].
 
 ### PouchDB setup
 
-We assume you're using a PouchDB attached to an HTTP backend.  If you're not, you're doing something wrong.
+Create a `PouchDB` attached to an HTTP backend.  This is the one you'll use for `pouchdb-authentication` stuff.
 
 ```js
 var db = new PouchDB('http://localhost:5984/mydb');
 ```
 
-Note that the users are shared across the entire CouchDB instance, not just `mydb`. But you can use `mydb` like you normally would.
+(Note that the users are shared across the entire CouchDB instance, not just `mydb`.)
+
+Of course, you'll probably want to sync that database with a local one:
+
+```js
+var local = new PouchDB('local_db');
+local.sync(db, {live: true, retry: true}).on('error', console.log.bind(console));
+```
+
+But the `pouchdb-authentication` API will operate on your remote `PouchDB` object, not your local one.
 
 API
 -------
