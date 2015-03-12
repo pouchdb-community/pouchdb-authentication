@@ -419,9 +419,11 @@ See the "blogger" example above for how to set roles.
 
 #### Howto
 
-The standard practice for this is to set up one database per user.  Don't be scared: databases are cheap, and Cloudant says [100k databases per account is not uncommon][cloudant-100k].
+The standard practice for this is to set up **one database per user**.  Don't be scared: databases are cheap, and Cloudant says [100k databases per account is not uncommon][cloudant-100k].
 
 Then, you just need to set the database to be read/write only for people with that exact user name.
+
+Alternatively, if you have users who belong to multiple groups, and each group has a set of documents, then you should use a **one database per role** setup, with CouchDB's [roles system](http://docs.couchdb.org/en/latest/api/database/security.html?highlight=roles).
 
 There are a few different ways to accomplish this, and unfortunately you can't do it with CouchDB alone (as of this writing).  But here are a few different third-party options you can try:
 
