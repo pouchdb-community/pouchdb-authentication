@@ -28,6 +28,7 @@
     "url": "https://github.com/nolanlawson/pouchdb-authentication/issues"
   },
   "dependencies": {
+    "crypto": "0.0.3",
     "inherits": "~2.0.1",
     "lie": "^2.5.3",
     "pouchdb-extend": "^0.1.0"
