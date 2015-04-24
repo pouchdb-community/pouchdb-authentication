@@ -63,6 +63,18 @@ Bower:
     bower install pouchdb
     bower install pouchdb-authentication
 
+Browserify :
+
+    npm install pouchdb --save
+    npm install pouchdb-authentication --save
+
+```javascript
+var PouchDB = require("pouchdb");
+PouchDB.plugin(require('pouchdb-authentication'));
+```
+
+Static :
+
 Or, just grab the latest `pouchdb.authentication.min.js` from [the releases page](https://github.com/nolanlawson/pouchdb-authentication/releases) and declare it after PouchDB:
 
 ```html
