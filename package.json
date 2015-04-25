@@ -30,7 +30,8 @@
   "dependencies": {
     "inherits": "~2.0.1",
     "lie": "^2.5.3",
-    "pouchdb-extend": "^0.1.0"
+    "pouchdb-extend": "^0.1.0",
+    "pouchdb": "pouchdb/pouchdb"
   },
   "devDependencies": {
     "bluebird": "^1.0.7",
@@ -41,7 +42,6 @@
     "jshint": "~2.3.0",
     "mocha": "~1.14.0",
     "mocha-as-promised": "~2.0.0",
-    "pouchdb": "^2.0.0",
     "watchify": "~0.7.2",
     "http-proxy": "~0.10.4",
     "corsproxy": "~0.2.14",
