@@ -154,12 +154,12 @@ exports.changePassword = utils.toPromise(function (username, password, opts, cal
     return callback(new AuthError('You must provide a password'));
   }
 
-  return db.getUser(username, opts, function(error, user) {
+  return db.getUser(username, opts, function (error, user) {
     if (error) {
-      return callback(error)
+      return callback(error);
     }
 
-    user.password = password
+    user.password = password;
 
     var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(user._id);
     var ajaxOpts = utils.extend(true, {
@@ -168,7 +168,7 @@ exports.changePassword = utils.toPromise(function (username, password, opts, cal
       body : user
     }, opts.ajax || {});
     utils.ajax(ajaxOpts, wrapError(callback));
-  })
+  });
 });
 
 
@@ -282,8 +282,8 @@ exports.clone = function (obj) {
 exports.uuid = require('./uuid');
 exports.Promise = Promise;
 
-}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./uuid":3,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"pouchdb-extend":26,"pouchdb/extras/ajax":27,"pouchdb/extras/promise":28}],3:[function(require,module,exports){
+}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./uuid":3,"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"pouchdb-extend":26,"pouchdb/extras/ajax":27,"pouchdb/extras/promise":28}],3:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -1436,7 +1436,7 @@ module.exports = require('../lib/deps/ajax');
 
 // allow external plugins to require('pouchdb/extras/promise')
 module.exports = require('../lib/deps/promise');
-},{"../lib/deps/promise":38}],29:[function(require,module,exports){
+},{"../lib/deps/promise":37}],29:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -1576,38 +1576,8 @@ function ajax(options, adapterCallback) {
 
 module.exports = ajax;
 
-}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"../utils":42,"./buffer":32,"./errors":33,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"request":39}],30:[function(require,module,exports){
-'use strict';
-
-var buffer = require('./buffer');
-
-if (typeof atob === 'function') {
-  exports.atob = function (str) {
-    return atob(str);
-  };
-} else {
-  exports.atob = function (str) {
-    var base64 = new buffer(str, 'base64');
-    // Node.js will just skip the characters it can't encode instead of
-    // throwing and exception
-    if (base64.toString('base64') !== str) {
-      throw ("Cannot base64 encode full string");
-    }
-    return base64.toString('binary');
-  };
-}
-
-if (typeof btoa === 'function') {
-  exports.btoa = function (str) {
-    return btoa(str);
-  };
-} else {
-  exports.btoa = function (str) {
-    return new buffer(str, 'binary').toString('base64');
-  };
-}
-},{"./buffer":32}],31:[function(require,module,exports){
+}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"../utils":41,"./buffer":31,"./errors":32,"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"request":38}],30:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -1639,10 +1609,10 @@ module.exports = createBlob;
 
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 // hey guess what, we don't need this in the browser
 module.exports = {};
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 "use strict";
 
 var inherits = require('inherits');
@@ -1904,7 +1874,7 @@ exports.generateErrorFromResponse = function (res) {
   return error;
 };
 
-},{"inherits":7}],34:[function(require,module,exports){
+},{"inherits":7}],33:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -1917,12 +1887,11 @@ function explain404(str) {
 }
 
 module.exports = explain404;
-}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6}],35:[function(require,module,exports){
+}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6}],34:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
-var base64 = require('./base64');
 var crypto = require('crypto');
 var Md5 = require('spark-md5');
 var setImmediateShim = global.setImmediate || global.setTimeout;
@@ -1948,7 +1917,7 @@ function rawToBase64(raw) {
   for (var i = 0; i < raw.length; i++) {
     res += intToString(raw[i]);
   }
-  return base64.btoa(res);
+  return btoa(res);
 }
 
 function appendBuffer(buffer, data, start, end) {
@@ -2001,8 +1970,8 @@ module.exports = function (data, callback) {
   loadNextChunk();
 };
 
-}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base64":30,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"crypto":4,"spark-md5":48}],36:[function(require,module,exports){
+}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"crypto":4,"spark-md5":47}],35:[function(require,module,exports){
 'use strict';
 
 var errors = require('./errors');
@@ -2170,7 +2139,7 @@ exports.parseDoc = function (doc, newEdits) {
   }
   return result;
 };
-},{"./errors":33,"./uuid":40}],37:[function(require,module,exports){
+},{"./errors":32,"./uuid":39}],36:[function(require,module,exports){
 'use strict';
 
 // originally parseUri 1.2.2, now patched by us
@@ -2216,7 +2185,7 @@ function parseUri(str) {
 
 
 module.exports = parseUri;
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 if (typeof Promise === 'function') {
@@ -2224,7 +2193,7 @@ if (typeof Promise === 'function') {
 } else {
   module.exports = require('bluebird');
 }
-},{"bluebird":11}],39:[function(require,module,exports){
+},{"bluebird":11}],38:[function(require,module,exports){
 /* global fetch */
 /* global Headers */
 'use strict';
@@ -2448,9 +2417,9 @@ module.exports = function(options, callback) {
   }
 };
 
-},{"../utils":42,"./blob.js":31}],40:[function(require,module,exports){
+},{"../utils":41,"./blob.js":30}],39:[function(require,module,exports){
 module.exports=require(3)
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 var extend = require('pouchdb-extend');
 
@@ -2752,7 +2721,7 @@ PouchMerge.rootToLeaf = function (tree) {
 
 module.exports = PouchMerge;
 
-},{"pouchdb-extend":26}],42:[function(require,module,exports){
+},{"pouchdb-extend":26}],41:[function(require,module,exports){
 (function (process){
 /*jshint strict: false */
 /*global chrome */
@@ -2762,6 +2731,7 @@ exports.ajax = require('./deps/ajax');
 exports.createBlob = require('./deps/blob');
 exports.uuid = require('./deps/uuid');
 exports.getArguments = require('argsarray');
+var buffer = require('./deps/buffer');
 var errors = require('./deps/errors');
 var EventEmitter = require('events').EventEmitter;
 var collections = require('pouchdb-collections');
@@ -3003,9 +2973,31 @@ Changes.prototype.notify = function (dbName) {
   this.notifyLocalWindows(dbName);
 };
 
-var base64 = require('./deps/base64');
-exports.atob = base64.atob;
-exports.btoa = base64.btoa;
+if (typeof atob === 'function') {
+  exports.atob = function (str) {
+    return atob(str);
+  };
+} else {
+  exports.atob = function (str) {
+    var base64 = new buffer(str, 'base64');
+    // Node.js will just skip the characters it can't encode instead of
+    // throwing and exception
+    if (base64.toString('base64') !== str) {
+      throw ("Cannot base64 encode full string");
+    }
+    return base64.toString('binary');
+  };
+}
+
+if (typeof btoa === 'function') {
+  exports.btoa = function (str) {
+    return btoa(str);
+  };
+} else {
+  exports.btoa = function (str) {
+    return new buffer(str, 'binary').toString('base64');
+  };
+}
 
 // From http://stackoverflow.com/questions/14967647/ (continues on next line)
 // encode-decode-image-with-base64-breaks-image (2013-04-21)
@@ -3545,8 +3537,8 @@ exports.safeJsonStringify = function safeJsonStringify(json) {
   }
 };
 
-}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./deps/ajax":29,"./deps/base64":30,"./deps/blob":31,"./deps/errors":33,"./deps/explain404":34,"./deps/md5":35,"./deps/parse-doc":36,"./deps/parse-uri":37,"./deps/promise":38,"./deps/uuid":40,"./merge":41,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"argsarray":43,"debug":44,"events":5,"inherits":7,"pouchdb-collections":47,"pouchdb-extend":26,"vuvuzela":49}],43:[function(require,module,exports){
+}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./deps/ajax":29,"./deps/blob":30,"./deps/buffer":31,"./deps/errors":32,"./deps/explain404":33,"./deps/md5":34,"./deps/parse-doc":35,"./deps/parse-uri":36,"./deps/promise":37,"./deps/uuid":39,"./merge":40,"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"argsarray":42,"debug":43,"events":5,"inherits":7,"pouchdb-collections":46,"pouchdb-extend":26,"vuvuzela":48}],42:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -3566,7 +3558,7 @@ function argsArray(fun) {
     }
   };
 }
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -3736,7 +3728,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":45}],45:[function(require,module,exports){
+},{"./debug":44}],44:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3935,7 +3927,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":46}],46:[function(require,module,exports){
+},{"ms":45}],45:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -4062,7 +4054,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 exports.Map = LazyMap; // TODO: use ES6 map
 exports.Set = LazySet; // TODO: use ES6 set
@@ -4134,7 +4126,7 @@ LazySet.prototype.delete = function (key) {
   return this.store.delete(key);
 };
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /*jshint bitwise:false*/
 /*global unescape*/
 
@@ -4735,7 +4727,7 @@ LazySet.prototype.delete = function (key) {
     return SparkMD5;
 }));
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 /**
