@@ -138,6 +138,40 @@ exports.getUser = utils.toPromise(function (username, opts, callback) {
   utils.ajax(ajaxOpts, wrapError(callback));
 });
 
+exports.changePassword = utils.toPromise(function (username, password, opts, callback) {
+  var db = this;
+  if (typeof callback === 'undefined') {
+    callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
+      username : password) : opts;
+    opts = {};
+  }
+  if (['http', 'https'].indexOf(db.type()) === -1) {
+    return callback(new AuthError('This plugin only works for the http/https adapter. ' + 
+      'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
+  } else if (!username) {
+    return callback(new AuthError('You must provide a username'));
+  } else if (!password) {
+    return callback(new AuthError('You must provide a password'));
+  }
+
+  return db.getUser(username, opts, function(error, user) {
+    if (error) {
+      return callback(error)
+    }
+
+    user.password = password
+
+    var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+    var ajaxOpts = utils.extend(true, {
+      method : 'PUT',
+      url : url,
+      body : user
+    }, opts.ajax || {});
+    utils.ajax(ajaxOpts, wrapError(callback));
+  })
+});
+
+
 
 function AuthError(message) {
   this.status = 400;
@@ -248,8 +282,8 @@ exports.clone = function (obj) {
 exports.uuid = require('./uuid');
 exports.Promise = Promise;
 
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./uuid":3,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"pouchdb-extend":25,"pouchdb/extras/ajax":26,"pouchdb/extras/promise":27}],3:[function(require,module,exports){
+}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./uuid":3,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"pouchdb-extend":26,"pouchdb/extras/ajax":27,"pouchdb/extras/promise":28}],3:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -396,10 +430,8 @@ EventEmitter.prototype.emit = function(type) {
       er = arguments[1];
       if (er instanceof Error) {
         throw er; // Unhandled 'error' event
-      } else {
-        throw TypeError('Uncaught, unspecified "error" event.');
       }
-      return false;
+      throw TypeError('Uncaught, unspecified "error" event.');
     }
   }
 
@@ -741,10 +773,10 @@ var reject = require('./reject');
 var resolve = require('./resolve');
 var INTERNAL = require('./INTERNAL');
 var handlers = require('./handlers');
-var noArray = reject(new TypeError('must be an array'));
-module.exports = function all(iterable) {
+module.exports = all;
+function all(iterable) {
   if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return noArray;
+    return reject(new TypeError('must be an array'));
   }
 
   var len = iterable.length;
@@ -777,8 +809,8 @@ module.exports = function all(iterable) {
       }
     }
   }
-};
-},{"./INTERNAL":8,"./handlers":10,"./promise":12,"./reject":14,"./resolve":15}],10:[function(require,module,exports){
+}
+},{"./INTERNAL":8,"./handlers":10,"./promise":12,"./reject":15,"./resolve":16}],10:[function(require,module,exports){
 'use strict';
 var tryCatch = require('./tryCatch');
 var resolveThenable = require('./resolveThenable');
@@ -824,13 +856,14 @@ function getThen(obj) {
     };
   }
 }
-},{"./resolveThenable":16,"./states":17,"./tryCatch":18}],11:[function(require,module,exports){
+},{"./resolveThenable":17,"./states":18,"./tryCatch":19}],11:[function(require,module,exports){
 module.exports = exports = require('./promise');
 
 exports.resolve = require('./resolve');
 exports.reject = require('./reject');
 exports.all = require('./all');
-},{"./all":9,"./promise":12,"./reject":14,"./resolve":15}],12:[function(require,module,exports){
+exports.race = require('./race');
+},{"./all":9,"./promise":12,"./race":14,"./reject":15,"./resolve":16}],12:[function(require,module,exports){
 'use strict';
 
 var unwrap = require('./unwrap');
@@ -845,7 +878,7 @@ function Promise(resolver) {
     return new Promise(resolver);
   }
   if (typeof resolver !== 'function') {
-    throw new TypeError('reslover must be a function');
+    throw new TypeError('resolver must be a function');
   }
   this.state = states.PENDING;
   this.queue = [];
@@ -876,7 +909,7 @@ Promise.prototype.then = function (onFulfilled, onRejected) {
   return promise;
 };
 
-},{"./INTERNAL":8,"./queueItem":13,"./resolveThenable":16,"./states":17,"./unwrap":19}],13:[function(require,module,exports){
+},{"./INTERNAL":8,"./queueItem":13,"./resolveThenable":17,"./states":18,"./unwrap":20}],13:[function(require,module,exports){
 'use strict';
 var handlers = require('./handlers');
 var unwrap = require('./unwrap');
@@ -905,7 +938,48 @@ QueueItem.prototype.callRejected = function (value) {
 QueueItem.prototype.otherCallRejected = function (value) {
   unwrap(this.promise, this.onRejected, value);
 };
-},{"./handlers":10,"./unwrap":19}],14:[function(require,module,exports){
+},{"./handlers":10,"./unwrap":20}],14:[function(require,module,exports){
+'use strict';
+var Promise = require('./promise');
+var reject = require('./reject');
+var resolve = require('./resolve');
+var INTERNAL = require('./INTERNAL');
+var handlers = require('./handlers');
+module.exports = race;
+function race(iterable) {
+  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
+    return reject(new TypeError('must be an array'));
+  }
+
+  var len = iterable.length;
+  var called = false;
+  if (!len) {
+    return resolve([]);
+  }
+
+  var resolved = 0;
+  var i = -1;
+  var promise = new Promise(INTERNAL);
+  
+  while (++i < len) {
+    resolver(iterable[i]);
+  }
+  return promise;
+  function resolver(value) {
+    resolve(value).then(function (response) {
+      if (!called) {
+        called = true;
+        handlers.resolve(promise, response);
+      }
+    }, function (error) {
+      if (!called) {
+        called = true;
+        handlers.reject(promise, error);
+      }
+    });
+  }
+}
+},{"./INTERNAL":8,"./handlers":10,"./promise":12,"./reject":15,"./resolve":16}],15:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
@@ -917,7 +991,7 @@ function reject(reason) {
 	var promise = new Promise(INTERNAL);
 	return handlers.reject(promise, reason);
 }
-},{"./INTERNAL":8,"./handlers":10,"./promise":12}],15:[function(require,module,exports){
+},{"./INTERNAL":8,"./handlers":10,"./promise":12}],16:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
@@ -952,7 +1026,7 @@ function resolve(value) {
       return EMPTYSTRING;
   }
 }
-},{"./INTERNAL":8,"./handlers":10,"./promise":12}],16:[function(require,module,exports){
+},{"./INTERNAL":8,"./handlers":10,"./promise":12}],17:[function(require,module,exports){
 'use strict';
 var handlers = require('./handlers');
 var tryCatch = require('./tryCatch');
@@ -985,13 +1059,13 @@ function safelyResolveThenable(self, thenable) {
   }
 }
 exports.safely = safelyResolveThenable;
-},{"./handlers":10,"./tryCatch":18}],17:[function(require,module,exports){
+},{"./handlers":10,"./tryCatch":19}],18:[function(require,module,exports){
 // Lazy man's symbols for states
 
 exports.REJECTED = ['REJECTED'];
 exports.FULFILLED = ['FULFILLED'];
 exports.PENDING = ['PENDING'];
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = tryCatch;
@@ -1007,7 +1081,7 @@ function tryCatch(func, value) {
   }
   return out;
 }
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var immediate = require('immediate');
@@ -1029,7 +1103,7 @@ function unwrap(promise, func, value) {
     }
   });
 }
-},{"./handlers":10,"immediate":20}],20:[function(require,module,exports){
+},{"./handlers":10,"immediate":21}],21:[function(require,module,exports){
 'use strict';
 var types = [
   require('./nextTick'),
@@ -1039,28 +1113,45 @@ var types = [
   require('./timeout')
 ];
 var draining;
+var currentQueue;
+var queueIndex = -1;
 var queue = [];
-function drainQueue() {
-  draining = true;
-  var i, oldQueue;
-  var len = queue.length;
-  while (len) {
-    oldQueue = queue;
-    queue = [];
-    i = -1;
-    while (++i < len) {
-      oldQueue[i]();
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue && currentQueue.length) {
+      queue = currentQueue.concat(queue);
+    } else {
+      queueIndex = -1;
     }
+    if (queue.length) {
+      nextTick();
+    }
+}
+
+//named nextTick for less confusing stack traces
+function nextTick() {
+  draining = true;
+  var len = queue.length;
+  var timeout = setTimeout(cleanUpNextTick);
+  while (len) {
+    currentQueue = queue;
+    queue = [];
+    while (++queueIndex < len) {
+      currentQueue[queueIndex]();
+    }
+    queueIndex = -1;
     len = queue.length;
   }
+  queueIndex = -1;
   draining = false;
+  clearTimeout(timeout);
 }
 var scheduleDrain;
 var i = -1;
 var len = types.length;
 while (++ i < len) {
   if (types[i] && types[i].test && types[i].test()) {
-    scheduleDrain = types[i].install(drainQueue);
+    scheduleDrain = types[i].install(nextTick);
     break;
   }
 }
@@ -1070,7 +1161,7 @@ function immediate(task) {
     scheduleDrain();
   }
 }
-},{"./messageChannel":21,"./mutation.js":22,"./nextTick":4,"./stateChange":23,"./timeout":24}],21:[function(require,module,exports){
+},{"./messageChannel":22,"./mutation.js":23,"./nextTick":4,"./stateChange":24,"./timeout":25}],22:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1091,7 +1182,7 @@ exports.install = function (func) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 (function (global){
 'use strict';
 //based off rsvp https://github.com/tildeio/rsvp.js
@@ -1116,7 +1207,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1143,7 +1234,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 exports.test = function () {
   return true;
@@ -1154,7 +1245,7 @@ exports.install = function (t) {
     setTimeout(t, 0);
   };
 };
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 
 // Extends method
@@ -1226,16 +1317,38 @@ var isArray = Array.isArray || function (obj) {
 };
 
 function extend() {
+  // originally extend() was recursive, but this ended up giving us
+  // "call stack exceeded", so it's been unrolled to use a literal stack
+  // (see https://github.com/pouchdb/pouchdb/issues/2543)
+  var stack = [];
+  var i = -1;
+  var len = arguments.length;
+  var args = new Array(len);
+  while (++i < len) {
+    args[i] = arguments[i];
+  }
+  var container = {};
+  stack.push({args: args, result: {container: container, key: 'key'}});
+  var next;
+  while ((next = stack.pop())) {
+    extendInner(stack, next.args, next.result);
+  }
+  return container.key;
+}
+
+function extendInner(stack, args, result) {
   var options, name, src, copy, copyIsArray, clone,
-    target = arguments[0] || {},
+    target = args[0] || {},
     i = 1,
-    length = arguments.length,
-    deep = false;
+    length = args.length,
+    deep = false,
+    numericStringRegex = /\d+/,
+    optionsIsArray;
 
   // Handle a deep copy situation
   if (typeof target === "boolean") {
     deep = target;
-    target = arguments[1] || {};
+    target = args[1] || {};
     // skip the boolean and the target
     i = 2;
   }
@@ -1254,11 +1367,15 @@ function extend() {
 
   for (; i < length; i++) {
     // Only deal with non-null/undefined values
-    if ((options = arguments[i]) != null) {
+    if ((options = args[i]) != null) {
+      optionsIsArray = isArray(options);
       // Extend the base object
       for (name in options) {
         //if (options.hasOwnProperty(name)) {
         if (!(name in Object.prototype)) {
+          if (optionsIsArray && !numericStringRegex.test(name)) {
+            continue;
+          }
 
           src = target[name];
           copy = options[name];
@@ -1280,7 +1397,13 @@ function extend() {
             }
 
             // Never move original objects, clone them
-            target[name] = extend(deep, clone, copy);
+            stack.push({
+              args: [deep, clone, copy],
+              result: {
+                container: target,
+                key: name
+              }
+            });
 
           // Don't bring in undefined values
           } else if (copy !== undefined) {
@@ -1293,8 +1416,9 @@ function extend() {
     }
   }
 
-  // Return the modified object
-  return target;
+  // "Return" the modified object by setting the key
+  // on the given container
+  result.container[result.key] = target;
 }
 
 
@@ -1302,17 +1426,17 @@ module.exports = extend;
 
 
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 // allow external plugins to require('pouchdb/extras/ajax')
 module.exports = require('../lib/deps/ajax');
-},{"../lib/deps/ajax":28}],27:[function(require,module,exports){
+},{"../lib/deps/ajax":29}],28:[function(require,module,exports){
 'use strict';
 
 // allow external plugins to require('pouchdb/extras/promise')
 module.exports = require('../lib/deps/promise');
-},{"../lib/deps/promise":35}],28:[function(require,module,exports){
+},{"../lib/deps/promise":38}],29:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -1452,8 +1576,38 @@ function ajax(options, adapterCallback) {
 
 module.exports = ajax;
 
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"../utils":39,"./buffer":30,"./errors":31,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"request":36}],29:[function(require,module,exports){
+}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"../utils":42,"./buffer":32,"./errors":33,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"request":39}],30:[function(require,module,exports){
+'use strict';
+
+var buffer = require('./buffer');
+
+if (typeof atob === 'function') {
+  exports.atob = function (str) {
+    return atob(str);
+  };
+} else {
+  exports.atob = function (str) {
+    var base64 = new buffer(str, 'base64');
+    // Node.js will just skip the characters it can't encode instead of
+    // throwing and exception
+    if (base64.toString('base64') !== str) {
+      throw ("Cannot base64 encode full string");
+    }
+    return base64.toString('binary');
+  };
+}
+
+if (typeof btoa === 'function') {
+  exports.btoa = function (str) {
+    return btoa(str);
+  };
+} else {
+  exports.btoa = function (str) {
+    return new buffer(str, 'binary').toString('base64');
+  };
+}
+},{"./buffer":32}],31:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -1485,10 +1639,10 @@ module.exports = createBlob;
 
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 // hey guess what, we don't need this in the browser
 module.exports = {};
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 
 var inherits = require('inherits');
@@ -1750,10 +1904,25 @@ exports.generateErrorFromResponse = function (res) {
   return error;
 };
 
-},{"inherits":7}],32:[function(require,module,exports){
+},{"inherits":7}],34:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
+// designed to give info to browser users, who are disturbed
+// when they see 404s in the console
+function explain404(str) {
+  if (process.browser && 'console' in global && 'info' in console) {
+    console.info('The above 404 is totally normal. ' + str);
+  }
+}
+
+module.exports = explain404;
+}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6}],35:[function(require,module,exports){
+(function (process,global){
+'use strict';
+
+var base64 = require('./base64');
 var crypto = require('crypto');
 var Md5 = require('spark-md5');
 var setImmediateShim = global.setImmediate || global.setTimeout;
@@ -1779,7 +1948,7 @@ function rawToBase64(raw) {
   for (var i = 0; i < raw.length; i++) {
     res += intToString(raw[i]);
   }
-  return btoa(res);
+  return base64.btoa(res);
 }
 
 function appendBuffer(buffer, data, start, end) {
@@ -1832,8 +2001,8 @@ module.exports = function (data, callback) {
   loadNextChunk();
 };
 
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"crypto":4,"spark-md5":46}],33:[function(require,module,exports){
+}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./base64":30,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"crypto":4,"spark-md5":48}],36:[function(require,module,exports){
 'use strict';
 
 var errors = require('./errors');
@@ -2001,7 +2170,7 @@ exports.parseDoc = function (doc, newEdits) {
   }
   return result;
 };
-},{"./errors":31,"./uuid":37}],34:[function(require,module,exports){
+},{"./errors":33,"./uuid":40}],37:[function(require,module,exports){
 'use strict';
 
 // originally parseUri 1.2.2, now patched by us
@@ -2047,7 +2216,7 @@ function parseUri(str) {
 
 
 module.exports = parseUri;
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 if (typeof Promise === 'function') {
@@ -2055,13 +2224,117 @@ if (typeof Promise === 'function') {
 } else {
   module.exports = require('bluebird');
 }
-},{"bluebird":11}],36:[function(require,module,exports){
+},{"bluebird":11}],39:[function(require,module,exports){
+/* global fetch */
+/* global Headers */
 'use strict';
 
 var createBlob = require('./blob.js');
 var utils = require('../utils');
 
-module.exports = function(options, callback) {
+function wrappedFetch() {
+  var wrappedPromise = {};
+
+  var promise = new utils.Promise(function(resolve, reject) {
+    wrappedPromise.resolve = resolve;
+    wrappedPromise.reject = reject;
+  });
+
+  var args = new Array(arguments.length);
+
+  for (var i = 0; i < args.length; i++) {
+    args[i] = arguments[i];
+  }
+
+  wrappedPromise.then = promise.then.bind(promise);
+  wrappedPromise.catch = promise.catch.bind(promise);
+  wrappedPromise.promise = promise;
+
+  fetch.apply(null, args).then(function(response) {
+    wrappedPromise.resolve(response);
+  }, function(error) {
+    wrappedPromise.reject(error);
+  }).catch(function(error) {
+    wrappedPromise.catch(error);
+  });
+
+  return wrappedPromise;
+}
+
+function fetchRequest(options, callback) {
+  var wrappedPromise, timer, fetchResponse;
+
+  var headers = new Headers();
+
+  var fetchOptions = {
+    method: options.method,
+    credentials: 'include',
+    headers: headers
+  };
+
+  if (options.json) {
+    headers.set('Accept', 'application/json');
+    headers.set('Content-Type', options.headers['Content-Type'] ||
+      'application/json');
+  }
+
+  if (options.body && (options.body instanceof Blob)) {
+    utils.readAsBinaryString(options.body, function(binary) {
+      fetchOptions.body = utils.fixBinary(binary);
+    });
+  } else if (options.body &&
+             options.processData &&
+             typeof options.body !== 'string') {
+    fetchOptions.body = JSON.stringify(options.body);
+  } else if ('body' in options) {
+    fetchOptions.body = options.body;
+  } else {
+    fetchOptions.body = null;
+  }
+
+  Object.keys(options.headers).forEach(function(key) {
+    if (options.headers.hasOwnProperty(key)) {
+      headers.set(key, options.headers[key]);
+    }
+  });
+
+  wrappedPromise = wrappedFetch(options.url, fetchOptions);
+
+  if (options.timeout > 0) {
+    timer = setTimeout(function() {
+      wrappedPromise.reject(new Error('Load timeout for resource: ' +
+        options.url));
+    }, options.timeout);
+  }
+
+  wrappedPromise.promise.then(function(response) {
+    var result;
+
+    fetchResponse = response;
+
+    if (options.timeout > 0) {
+      clearTimeout(timer);
+    }
+
+    if (response.status >= 200 && response.status < 300) {
+      return options.binary ? response.blob() : response.text();
+    }
+
+    return result.json();
+  }).then(function(result) {
+    if (fetchResponse.status >= 200 && fetchResponse.status < 300) {
+      callback(null, fetchResponse, result);
+    } else {
+      callback(result, fetchResponse);
+    }
+  }).catch(function(error) {
+    callback(error, fetchResponse);
+  });
+
+  return {abort: wrappedPromise.reject};
+}
+
+function xhRequest(options, callback) {
 
   var xhr, timer, hasUpload;
 
@@ -2085,7 +2358,9 @@ module.exports = function(options, callback) {
   xhr.open(options.method, options.url);
   xhr.withCredentials = true;
 
-  if (options.json) {
+  if (options.method === 'GET') {
+    delete options.headers['Content-Type'];
+  } else if (options.json) {
     options.headers.Accept = 'application/json';
     options.headers['Content-Type'] = options.headers['Content-Type'] ||
       'application/json';
@@ -2118,7 +2393,8 @@ module.exports = function(options, callback) {
     };
     if (typeof hasUpload === 'undefined') {
       // IE throws an error if you try to access it directly
-      hasUpload = Object.keys(xhr).indexOf('upload') !== -1;
+      hasUpload = Object.keys(xhr).indexOf('upload') !== -1 &&
+                  typeof xhr.upload !== 'undefined';
     }
     if (hasUpload) { // does not exist in ie9
       xhr.upload.onprogress = xhr.onprogress;
@@ -2162,11 +2438,19 @@ module.exports = function(options, callback) {
   }
 
   return {abort: abortReq};
+}
+
+module.exports = function(options, callback) {
+  if (typeof XMLHttpRequest === 'undefined' && !options.xhr) {
+    return fetchRequest(options, callback);
+  } else {
+    return xhRequest(options, callback);
+  }
 };
 
-},{"../utils":39,"./blob.js":29}],37:[function(require,module,exports){
+},{"../utils":42,"./blob.js":31}],40:[function(require,module,exports){
 module.exports=require(3)
-},{}],38:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 var extend = require('pouchdb-extend');
 
@@ -2468,8 +2752,8 @@ PouchMerge.rootToLeaf = function (tree) {
 
 module.exports = PouchMerge;
 
-},{"pouchdb-extend":45}],39:[function(require,module,exports){
-(function (process,global){
+},{"pouchdb-extend":26}],42:[function(require,module,exports){
+(function (process){
 /*jshint strict: false */
 /*global chrome */
 var merge = require('./merge');
@@ -2478,7 +2762,6 @@ exports.ajax = require('./deps/ajax');
 exports.createBlob = require('./deps/blob');
 exports.uuid = require('./deps/uuid');
 exports.getArguments = require('argsarray');
-var buffer = require('./deps/buffer');
 var errors = require('./deps/errors');
 var EventEmitter = require('events').EventEmitter;
 var collections = require('pouchdb-collections');
@@ -2720,31 +3003,9 @@ Changes.prototype.notify = function (dbName) {
   this.notifyLocalWindows(dbName);
 };
 
-if (typeof atob === 'function') {
-  exports.atob = function (str) {
-    return atob(str);
-  };
-} else {
-  exports.atob = function (str) {
-    var base64 = new buffer(str, 'base64');
-    // Node.js will just skip the characters it can't encode instead of
-    // throwing and exception
-    if (base64.toString('base64') !== str) {
-      throw ("Cannot base64 encode full string");
-    }
-    return base64.toString('binary');
-  };
-}
-
-if (typeof btoa === 'function') {
-  exports.btoa = function (str) {
-    return btoa(str);
-  };
-} else {
-  exports.btoa = function (str) {
-    return new buffer(str, 'binary').toString('base64');
-  };
-}
+var base64 = require('./deps/base64');
+exports.atob = base64.atob;
+exports.btoa = base64.btoa;
 
 // From http://stackoverflow.com/questions/14967647/ (continues on next line)
 // encode-decode-image-with-base64-breaks-image (2013-04-21)
@@ -2997,13 +3258,7 @@ exports.cancellableFun = function (fun, self, opts) {
 
 exports.MD5 = exports.toPromise(require('./deps/md5'));
 
-// designed to give info to browser users, who are disturbed
-// when they see 404s in the console
-exports.explain404 = function (str) {
-  if (process.browser && 'console' in global && 'info' in console) {
-    console.info('The above 404 is totally normal. ' + str);
-  }
-};
+exports.explain404 = require('./deps/explain404');
 
 exports.info = function (str) {
   if (typeof console !== 'undefined' && 'info' in console) {
@@ -3290,8 +3545,8 @@ exports.safeJsonStringify = function safeJsonStringify(json) {
   }
 };
 
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./deps/ajax":28,"./deps/blob":29,"./deps/buffer":30,"./deps/errors":31,"./deps/md5":32,"./deps/parse-doc":33,"./deps/parse-uri":34,"./deps/promise":35,"./deps/uuid":37,"./merge":38,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"argsarray":40,"debug":41,"events":5,"inherits":7,"pouchdb-collections":44,"pouchdb-extend":45,"vuvuzela":47}],40:[function(require,module,exports){
+}).call(this,require("/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./deps/ajax":29,"./deps/base64":30,"./deps/blob":31,"./deps/errors":33,"./deps/explain404":34,"./deps/md5":35,"./deps/parse-doc":36,"./deps/parse-uri":37,"./deps/promise":38,"./deps/uuid":40,"./merge":41,"/home/jo/github/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"argsarray":43,"debug":44,"events":5,"inherits":7,"pouchdb-collections":47,"pouchdb-extend":26,"vuvuzela":49}],43:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -3311,7 +3566,7 @@ function argsArray(fun) {
     }
   };
 }
-},{}],41:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -3325,17 +3580,10 @@ exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
-
-/**
- * Use chrome.storage.local if we are in an app
- */
-
-var storage;
-
-if (typeof chrome !== 'undefined' && typeof chrome.storage !== 'undefined')
-  storage = chrome.storage.local;
-else
-  storage = localstorage();
+exports.storage = 'undefined' != typeof chrome
+               && 'undefined' != typeof chrome.storage
+                  ? chrome.storage.local
+                  : localstorage();
 
 /**
  * Colors.
@@ -3443,9 +3691,9 @@ function log() {
 function save(namespaces) {
   try {
     if (null == namespaces) {
-      storage.removeItem('debug');
+      exports.storage.removeItem('debug');
     } else {
-      storage.debug = namespaces;
+      exports.storage.debug = namespaces;
     }
   } catch(e) {}
 }
@@ -3460,7 +3708,7 @@ function save(namespaces) {
 function load() {
   var r;
   try {
-    r = storage.debug;
+    r = exports.storage.debug;
   } catch(e) {}
   return r;
 }
@@ -3488,7 +3736,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":42}],42:[function(require,module,exports){
+},{"./debug":45}],45:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3687,7 +3935,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":43}],43:[function(require,module,exports){
+},{"ms":46}],46:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -3728,6 +3976,8 @@ module.exports = function(val, options){
  */
 
 function parse(str) {
+  str = '' + str;
+  if (str.length > 10000) return;
   var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
   if (!match) return;
   var n = parseFloat(match[1]);
@@ -3812,7 +4062,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],44:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 'use strict';
 exports.Map = LazyMap; // TODO: use ES6 map
 exports.Set = LazySet; // TODO: use ES6 set
@@ -3884,188 +4134,7 @@ LazySet.prototype.delete = function (key) {
   return this.store.delete(key);
 };
 
-},{}],45:[function(require,module,exports){
-"use strict";
-
-// Extends method
-// (taken from http://code.jquery.com/jquery-1.9.0.js)
-// Populate the class2type map
-var class2type = {};
-
-var types = [
-  "Boolean", "Number", "String", "Function", "Array",
-  "Date", "RegExp", "Object", "Error"
-];
-for (var i = 0; i < types.length; i++) {
-  var typename = types[i];
-  class2type["[object " + typename + "]"] = typename.toLowerCase();
-}
-
-var core_toString = class2type.toString;
-var core_hasOwn = class2type.hasOwnProperty;
-
-function type(obj) {
-  if (obj === null) {
-    return String(obj);
-  }
-  return typeof obj === "object" || typeof obj === "function" ?
-    class2type[core_toString.call(obj)] || "object" :
-    typeof obj;
-}
-
-function isWindow(obj) {
-  return obj !== null && obj === obj.window;
-}
-
-function isPlainObject(obj) {
-  // Must be an Object.
-  // Because of IE, we also have to check the presence of
-  // the constructor property.
-  // Make sure that DOM nodes and window objects don't pass through, as well
-  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
-    return false;
-  }
-
-  try {
-    // Not own constructor property must be Object
-    if (obj.constructor &&
-      !core_hasOwn.call(obj, "constructor") &&
-      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-      return false;
-    }
-  } catch ( e ) {
-    // IE8,9 Will throw exceptions on certain host objects #9897
-    return false;
-  }
-
-  // Own properties are enumerated firstly, so to speed up,
-  // if last one is own, then all properties are own.
-  var key;
-  for (key in obj) {}
-
-  return key === undefined || core_hasOwn.call(obj, key);
-}
-
-
-function isFunction(obj) {
-  return type(obj) === "function";
-}
-
-var isArray = Array.isArray || function (obj) {
-  return type(obj) === "array";
-};
-
-function extend() {
-  // originally extend() was recursive, but this ended up giving us
-  // "call stack exceeded", so it's been unrolled to use a literal stack
-  // (see https://github.com/pouchdb/pouchdb/issues/2543)
-  var stack = [];
-  var i = -1;
-  var len = arguments.length;
-  var args = new Array(len);
-  while (++i < len) {
-    args[i] = arguments[i];
-  }
-  var container = {};
-  stack.push({args: args, result: {container: container, key: 'key'}});
-  var next;
-  while ((next = stack.pop())) {
-    extendInner(stack, next.args, next.result);
-  }
-  return container.key;
-}
-
-function extendInner(stack, args, result) {
-  var options, name, src, copy, copyIsArray, clone,
-    target = args[0] || {},
-    i = 1,
-    length = args.length,
-    deep = false,
-    numericStringRegex = /\d+/,
-    optionsIsArray;
-
-  // Handle a deep copy situation
-  if (typeof target === "boolean") {
-    deep = target;
-    target = args[1] || {};
-    // skip the boolean and the target
-    i = 2;
-  }
-
-  // Handle case when target is a string or something (possible in deep copy)
-  if (typeof target !== "object" && !isFunction(target)) {
-    target = {};
-  }
-
-  // extend jQuery itself if only one argument is passed
-  if (length === i) {
-    /* jshint validthis: true */
-    target = this;
-    --i;
-  }
-
-  for (; i < length; i++) {
-    // Only deal with non-null/undefined values
-    if ((options = args[i]) != null) {
-      optionsIsArray = isArray(options);
-      // Extend the base object
-      for (name in options) {
-        //if (options.hasOwnProperty(name)) {
-        if (!(name in Object.prototype)) {
-          if (optionsIsArray && !numericStringRegex.test(name)) {
-            continue;
-          }
-
-          src = target[name];
-          copy = options[name];
-
-          // Prevent never-ending loop
-          if (target === copy) {
-            continue;
-          }
-
-          // Recurse if we're merging plain objects or arrays
-          if (deep && copy && (isPlainObject(copy) ||
-              (copyIsArray = isArray(copy)))) {
-            if (copyIsArray) {
-              copyIsArray = false;
-              clone = src && isArray(src) ? src : [];
-
-            } else {
-              clone = src && isPlainObject(src) ? src : {};
-            }
-
-            // Never move original objects, clone them
-            stack.push({
-              args: [deep, clone, copy],
-              result: {
-                container: target,
-                key: name
-              }
-            });
-
-          // Don't bring in undefined values
-          } else if (copy !== undefined) {
-            if (!(isArray(options) && isFunction(copy))) {
-              target[name] = copy;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // "Return" the modified object by setting the key
-  // on the given container
-  result.container[result.key] = target;
-}
-
-
-module.exports = extend;
-
-
-
-},{}],46:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /*jshint bitwise:false*/
 /*global unescape*/
 
@@ -4666,7 +4735,7 @@ module.exports = extend;
     return SparkMD5;
 }));
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 /**

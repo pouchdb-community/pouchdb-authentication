@@ -27,7 +27,7 @@ dbs.split(',').forEach(function (db) {
   });
 });
 
-var users = ['batman', 'superman', 'green_lantern', 'robin', 'aquaman'];
+var users = ['batman', 'superman', 'green_lantern', 'robin', 'aquaman', 'spiderman'];
 
 function tests(dbName) {
 
@@ -157,6 +157,18 @@ function tests(dbName) {
               });
             });
           });
+        });
+      });
+    });
+
+    it('Test change password', function () {
+      return db.signup('spiderman', 'will-forget').then(function (res) {
+        return db.changePassword('spiderman', 'will-remember').then(function (res) {
+          res.ok.should.equal(true);
+        }).then(function () {
+          return db.login('spiderman', 'will-remember');
+        }).then(function (res) {
+          res.ok.should.equal(true);
         });
       });
     });

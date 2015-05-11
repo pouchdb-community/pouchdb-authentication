@@ -21,6 +21,7 @@ db.login('batman', 'brucewayne').then(function (batman) {
   * [db.logout()](#dblogoutcallback)
   * [db.getSession()](#dbgetsessionopts--callback)
   * [db.getUser()](#dbgetuserusername--opts-callback)
+  * [db.changePassword()](#user-content-dbchangepasswordusername-password--opts-callback)
 * [CouchDB Authentication recipes](#couchdb-authentication-recipes)
 * [Tests](#tests)
 * [License](#license)
@@ -310,6 +311,34 @@ db.getUser('aquaman', function (err, response) {
 ```
 
 **Note:** Only server admins or the user themselves can fetch user data. Otherwise you will get a 404 `not_found` error.
+
+#### db.changePassword(username, password [, opts][, callback])
+
+Set new `password` for user `username`.
+
+##### Example:
+
+```js
+db.changePassword('spiderman', 'will-remember', function(error, response) {
+  if (err) {
+    if (err.name === 'not_found') {
+      // typo, or you don't have the privileges to see this user
+    } else {
+      // some other error
+    }
+  } else {
+    // response is the user update response
+    // {
+    //   "ok": true,
+    //   "id": "org.couchdb.user:spiderman",
+    //   "rev": "2-09310a62dcc7eea42bf3d4f67e8ff8c4"
+    // }
+  }
+})
+```
+
+**Note:** Only server admins or the user themselves can change user data. Otherwise you will get a 404 `not_found` error.
+
 
 CouchDB authentication recipes
 ------------
