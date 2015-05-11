@@ -31,7 +31,7 @@
     "inherits": "~2.0.1",
     "lie": "^2.5.3",
     "pouchdb-extend": "^0.1.0",
-    "pouchdb": "pouchdb/pouchdb"
+    "pouchdb": "3.5.0"
   },
   "devDependencies": {
     "bluebird": "^1.0.7",
