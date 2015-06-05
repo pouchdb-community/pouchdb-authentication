@@ -23,6 +23,13 @@ db.login('batman', 'brucewayne').then(function (batman) {
   * [db.getUser()](#dbgetuserusername--opts-callback)
   * [db.changePassword()](#user-content-dbchangepasswordusername-password--opts-callback)
 * [CouchDB Authentication recipes](#couchdb-authentication-recipes)
+  * [First step: disable the Admin Party!](#first-step-disable-the-admin-party)
+  * [Everybody can read and write everything](#everybody-can-read-and-write-everything)
+  * [Everybody can read, only some can write (everything)](#everybody-can-read-only-some-can-write-everything)
+  * [Everybody can read, only some can write (some things)](#everybody-can-read-only-some-can-write-some-things)
+  * [Some people can read and write everything](#some-people-can-read-and-write-everything)
+  * [Some people can read (some docs), some people can write (those same docs)](#some-people-can-read-some-docs-some-people-can-write-those-same-docs)
+  * [Everybody has to be logged in to do anything](#everybody-has-to-be-logged-in-to-do-anything)
 * [Tests](#tests)
 * [License](#license)
 
