@@ -255,7 +255,7 @@ db.getSession(function (err, response) {
     // network error
   } else if (!response.userCtx.name) {
     // nobody's logged in
-  } else{
+  } else {
     // response.userCtx.name is the current user
   }
 });
