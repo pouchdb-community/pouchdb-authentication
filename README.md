@@ -326,7 +326,7 @@ Set new `password` for user `username`.
 ##### Example:
 
 ```js
-db.changePassword('spiderman', 'will-remember', function(error, response) {
+db.changePassword('spiderman', 'will-remember', function(err, response) {
   if (err) {
     if (err.name === 'not_found') {
       // typo, or you don't have the privileges to see this user
