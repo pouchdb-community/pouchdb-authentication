@@ -41,7 +41,7 @@ exports.signup = utils.toPromise(function (username, password, opts, callback) {
     _id      : userId
   };
 
-  var reservedWords = ['name', 'password', 'roles', 'type'];
+  var reservedWords = ['name', 'password', 'roles', 'type', 'salt', 'metadata'];
   if (opts.metadata) {
     for (var key in opts.metadata) {
       if (opts.hasOwnProperty(key)) {
@@ -282,8 +282,8 @@ exports.clone = function (obj) {
 exports.uuid = require('./uuid');
 exports.Promise = Promise;
 
-}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./uuid":3,"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"pouchdb-extend":26,"pouchdb/extras/ajax":27,"pouchdb/extras/promise":28}],3:[function(require,module,exports){
+}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./uuid":3,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"inherits":7,"pouchdb-extend":26,"pouchdb/extras/ajax":27,"pouchdb/extras/promise":28}],3:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -856,6 +856,7 @@ function getThen(obj) {
     };
   }
 }
+
 },{"./resolveThenable":17,"./states":18,"./tryCatch":19}],11:[function(require,module,exports){
 module.exports = exports = require('./promise');
 
@@ -863,6 +864,7 @@ exports.resolve = require('./resolve');
 exports.reject = require('./reject');
 exports.all = require('./all');
 exports.race = require('./race');
+
 },{"./all":9,"./promise":12,"./race":14,"./reject":15,"./resolve":16}],12:[function(require,module,exports){
 'use strict';
 
@@ -897,10 +899,8 @@ Promise.prototype.then = function (onFulfilled, onRejected) {
     return this;
   }
   var promise = new Promise(INTERNAL);
-
-  
   if (this.state !== states.PENDING) {
-    var resolver = this.state === states.FULFILLED ? onFulfilled: onRejected;
+    var resolver = this.state === states.FULFILLED ? onFulfilled : onRejected;
     unwrap(promise, resolver, this.outcome);
   } else {
     this.queue.push(new QueueItem(promise, onFulfilled, onRejected));
@@ -938,6 +938,7 @@ QueueItem.prototype.callRejected = function (value) {
 QueueItem.prototype.otherCallRejected = function (value) {
   unwrap(this.promise, this.onRejected, value);
 };
+
 },{"./handlers":10,"./unwrap":20}],14:[function(require,module,exports){
 'use strict';
 var Promise = require('./promise');
@@ -957,10 +958,9 @@ function race(iterable) {
     return resolve([]);
   }
 
-  var resolved = 0;
   var i = -1;
   var promise = new Promise(INTERNAL);
-  
+
   while (++i < len) {
     resolver(iterable[i]);
   }
@@ -979,6 +979,7 @@ function race(iterable) {
     });
   }
 }
+
 },{"./INTERNAL":8,"./handlers":10,"./promise":12,"./reject":15,"./resolve":16}],15:[function(require,module,exports){
 'use strict';
 
@@ -1065,6 +1066,7 @@ exports.safely = safelyResolveThenable;
 exports.REJECTED = ['REJECTED'];
 exports.FULFILLED = ['FULFILLED'];
 exports.PENDING = ['PENDING'];
+
 },{}],19:[function(require,module,exports){
 'use strict';
 
@@ -1113,38 +1115,22 @@ var types = [
   require('./timeout')
 ];
 var draining;
-var currentQueue;
-var queueIndex = -1;
 var queue = [];
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue && currentQueue.length) {
-      queue = currentQueue.concat(queue);
-    } else {
-      queueIndex = -1;
-    }
-    if (queue.length) {
-      nextTick();
-    }
-}
-
 //named nextTick for less confusing stack traces
 function nextTick() {
   draining = true;
+  var i, oldQueue;
   var len = queue.length;
-  var timeout = setTimeout(cleanUpNextTick);
   while (len) {
-    currentQueue = queue;
+    oldQueue = queue;
     queue = [];
-    while (++queueIndex < len) {
-      currentQueue[queueIndex]();
+    i = -1;
+    while (++i < len) {
+      oldQueue[i]();
     }
-    queueIndex = -1;
     len = queue.length;
   }
-  queueIndex = -1;
   draining = false;
-  clearTimeout(timeout);
 }
 var scheduleDrain;
 var i = -1;
@@ -1576,8 +1562,8 @@ function ajax(options, adapterCallback) {
 
 module.exports = ajax;
 
-}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"../utils":41,"./buffer":31,"./errors":32,"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"request":38}],30:[function(require,module,exports){
+}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"../utils":41,"./buffer":31,"./errors":32,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"request":38}],30:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -1887,8 +1873,8 @@ function explain404(str) {
 }
 
 module.exports = explain404;
-}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6}],34:[function(require,module,exports){
+}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6}],34:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -1970,8 +1956,8 @@ module.exports = function (data, callback) {
   loadNextChunk();
 };
 
-}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"crypto":4,"spark-md5":47}],35:[function(require,module,exports){
+}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"crypto":4,"spark-md5":47}],35:[function(require,module,exports){
 'use strict';
 
 var errors = require('./errors');
@@ -3537,8 +3523,8 @@ exports.safeJsonStringify = function safeJsonStringify(json) {
   }
 };
 
-}).call(this,require("/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./deps/ajax":29,"./deps/blob":30,"./deps/buffer":31,"./deps/errors":32,"./deps/explain404":33,"./deps/md5":34,"./deps/parse-doc":35,"./deps/parse-uri":36,"./deps/promise":37,"./deps/uuid":39,"./merge":40,"/Users/nlawson/workspace-node/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"argsarray":42,"debug":43,"events":5,"inherits":7,"pouchdb-collections":46,"pouchdb-extend":26,"vuvuzela":48}],42:[function(require,module,exports){
+}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./deps/ajax":29,"./deps/blob":30,"./deps/buffer":31,"./deps/errors":32,"./deps/explain404":33,"./deps/md5":34,"./deps/parse-doc":35,"./deps/parse-uri":36,"./deps/promise":37,"./deps/uuid":39,"./merge":40,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":6,"argsarray":42,"debug":43,"events":5,"inherits":7,"pouchdb-collections":46,"pouchdb-extend":26,"vuvuzela":48}],42:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
