@@ -54,7 +54,7 @@ This plugin uses vanilla CouchDB.  The goal is to give you a lightweight authent
 
 So this is more of a reference implementation than an all-in-one solution. If there's a feature missing that you need, you will probably need to write a custom server (see the [CouchDB Authentication recipes](#couchdb-authentication-recipes) section for details).
 
-This plugin does not work in Node.js. It's designed for the browser.
+This plugin **does not work in Node.js. It's designed for the browser**.
 
 Setup
 ---------
@@ -185,7 +185,7 @@ db.signup('batman', 'brucewayne', function (err, response) {
 db.signup('robin', 'dickgrayson', {
   metadata : {
     email : 'robin@boywonder.com',
-    birthday : '1932-03-27T00:00:00.000Z'
+    birthday : '1932-03-27T00:00:00.000Z',
     likes : ['acrobatics', 'short pants', 'sidekickin\''],
   }
 }, function (err, response) {
