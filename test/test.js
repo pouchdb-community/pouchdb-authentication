@@ -40,7 +40,7 @@ function tests(dbName) {
     });
     afterEach(function () {
       return db.logout().then(function () {
-        return PouchDB.destroy(dbName).then(function () {
+        return new PouchDB(dbName).destroy().then(function () {
           var usersUrl = utils.getUsersUrl(db);
           return new PouchDB(usersUrl).then(function (usersDb) {
             // remove the fake users, hopefully we're in the admin party
