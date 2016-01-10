@@ -495,7 +495,7 @@ PHP library that provides some sugar over the CouchDB API, e.g. for admin stuff.
 
 #### [Hoodie](http://hood.ie)
 
-Batteries-included no-backend framework.  [Uses PouchDB](https://github.com/hoodiehq/hoodie-client-store).
+Batteries-included no-backend framework.  Currently (as of January 2016) being [ported to use PouchDB](https://github.com/hoodiehq/hoodie-client-store).
 
 #### [Pouch.host](https://pouch.host/)
 
