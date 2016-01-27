@@ -171,5 +171,31 @@ function tests(dbName) {
         });
       });
     });
+
+    it('Test change username', function () {
+      return db.signup('spiderman', 'will-forget').then(function (res) {
+        return db.changeUsername('spiderman', 'batman').then(function (res) {
+          res.ok.should.equal(true);
+        }).then(function () {
+          return db.login('batman', 'will-forget');
+        }).then(function (res) {
+          res.ok.should.equal(true);
+        });
+      });
+    });
+
+    it('Shouldn\'t change username if new username already exists', function () {
+      return new Promise(function (resolve, reject) {
+        return db.signup('spiderman', 'will-forget').then(function (res) {
+          return db.signup('batman', 'will-remember');
+        }).then(function () {
+          return db.changeUsername('spiderman', 'batman');
+        }).then(function () {
+          reject(new Error('shouldn\'t have worked'));
+        }).catch(function (err) {
+          resolve();
+        })
+      });
+    });
   });
 }
