@@ -22,6 +22,7 @@ db.login('batman', 'brucewayne').then(function (batman) {
   * [db.getSession()](#dbgetsessionopts--callback)
   * [db.getUser()](#dbgetuserusername--opts-callback)
   * [db.changePassword()](#user-content-dbchangepasswordusername-password--opts-callback)
+  * [db.changeUsername()](#user-content-dbchangeusernameoldusername-newusername-opts-callback)
 * [CouchDB Authentication recipes](#couchdb-authentication-recipes)
   * [First step: disable the Admin Party!](#first-step-disable-the-admin-party)
   * [Everybody can read and write everything](#everybody-can-read-and-write-everything)
@@ -346,6 +347,29 @@ db.changePassword('spiderman', 'will-remember', function(err, response) {
 
 **Note:** Only server admins or the user themselves can change user data. Otherwise you will get a 404 `not_found` error.
 
+#### db.changeUsername(oldUsername, newUsername[, opts][, callback])
+
+Renames `oldUsername` to `newUsername`.
+
+##### Example:
+
+```js
+db.changeUsername('spiderman', 'batman', function(err) {
+  if (err) {
+    if (err.name === 'not_found') {
+      // typo, or you don't have the privileges to see this user
+    } else if (err.taken) {
+      // auth error, make sure that 'batman' isn't already in DB
+    } else {
+      // some other error
+    }
+  } else {
+    // succeeded
+  }
+})
+```
+
+**Note:** Only server admins change a username. Otherwise you will get a 404 `not_found` error.
 
 CouchDB authentication recipes
 ------------

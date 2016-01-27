@@ -153,4 +153,26 @@ describe('authentication', function () {
       });
     });
   });
+
+  it('Test change username', function () {
+    return db.signup('spiderman', 'will-forget').then(function (res) {
+      return db.changeUsername('spiderman', 'batman').then(function () {
+        return db.login('batman', 'will-forget');
+      }).then(function (res) {
+        res.ok.should.equal(true);
+      });
+    });
+  });
+
+  it('Shouldn\'t change username if new username already exists', function () {
+    return db.signup('spiderman', 'will-forget').then(function (res) {
+      return db.signup('batman', 'will-remember');
+    }).then(function () {
+      return db.changeUsername('spiderman', 'batman');
+    }).then(function () {
+      throw new Error('shouldn\'t have worked');
+    }, function (err) {
+      should.exist(err);
+    });
+  });
 });
