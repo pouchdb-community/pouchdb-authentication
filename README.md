@@ -574,3 +574,4 @@ Apache 2.0
 [couchperuser-gist]: https://gist.github.com/nolanlawson/9676093
 [ssl]: https://wiki.apache.org/couchdb/How_to_enable_SSL
 [skipsetup]: https://github.com/pouchdb/pouchdb/blob/e78a30f8a548340335e28efb827cddfcd96d0482/lib/adapters/http.js#L157
+

@@ -196,7 +196,7 @@ if (typeof window !== 'undefined' && window.PouchDB) {
 var Promise = require('pouchdb/extras/promise');
 
 function getBaseUrl(db) {
-  return db.getUrl().replace(/\/[^\/]+\/?$/, '');
+  return db.getUrl().replace(/\/[^\/]+\/?$/, '').replace(/\/*$/, '');
 }
 exports.getUsersUrl = function (db) {
   return getBaseUrl(db) + '/_users';
@@ -282,8 +282,8 @@ exports.clone = function (obj) {
 exports.uuid = require('./uuid');
 exports.Promise = Promise;
 
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./uuid":3,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":5,"inherits":6,"pouchdb-extend":7,"pouchdb/extras/ajax":8,"pouchdb/extras/promise":9}],3:[function(require,module,exports){
+}).call(this,require("/home/sapk/Documents/Projets/pouchdb-authentication/node_modules/process/browser.js"))
+},{"./uuid":3,"/home/sapk/Documents/Projets/pouchdb-authentication/node_modules/process/browser.js":44,"inherits":9,"pouchdb-extend":12,"pouchdb/extras/ajax":13,"pouchdb/extras/promise":14}],3:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -369,6 +369,395 @@ module.exports = uuid;
 
 
 },{}],4:[function(require,module,exports){
+'use strict';
+
+module.exports = argsArray;
+
+function argsArray(fun) {
+  return function () {
+    var len = arguments.length;
+    if (len) {
+      var args = [];
+      var i = -1;
+      while (++i < len) {
+        args[i] = arguments[i];
+      }
+      return fun.call(this, args);
+    } else {
+      return fun.call(this, []);
+    }
+  };
+}
+},{}],5:[function(require,module,exports){
+
+/**
+ * This is the web browser implementation of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = require('./debug');
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = 'undefined' != typeof chrome
+               && 'undefined' != typeof chrome.storage
+                  ? chrome.storage.local
+                  : localstorage();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+  'lightseagreen',
+  'forestgreen',
+  'goldenrod',
+  'dodgerblue',
+  'darkorchid',
+  'crimson'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  return ('WebkitAppearance' in document.documentElement.style) ||
+    // is firebug? http://stackoverflow.com/a/398120/376773
+    (window.console && (console.firebug || (console.exception && console.table))) ||
+    // is firefox >= v31?
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function(v) {
+  return JSON.stringify(v);
+};
+
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs() {
+  var args = arguments;
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '')
+    + this.namespace
+    + (useColors ? ' %c' : ' ')
+    + args[0]
+    + (useColors ? '%c ' : ' ')
+    + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return args;
+
+  var c = 'color: ' + this.color;
+  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-z%]/g, function(match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+  return args;
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === typeof console
+    && console.log
+    && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      exports.storage.removeItem('debug');
+    } else {
+      exports.storage.debug = namespaces;
+    }
+  } catch(e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  var r;
+  try {
+    r = exports.storage.debug;
+  } catch(e) {}
+  return r;
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage(){
+  try {
+    return window.localStorage;
+  } catch (e) {}
+}
+
+},{"./debug":6}],6:[function(require,module,exports){
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = debug;
+exports.coerce = coerce;
+exports.disable = disable;
+exports.enable = enable;
+exports.enabled = enabled;
+exports.humanize = require('ms');
+
+/**
+ * The currently active debug mode names, and names to skip.
+ */
+
+exports.names = [];
+exports.skips = [];
+
+/**
+ * Map of special "%n" handling functions, for the debug "format" argument.
+ *
+ * Valid key names are a single, lowercased letter, i.e. "n".
+ */
+
+exports.formatters = {};
+
+/**
+ * Previously assigned color.
+ */
+
+var prevColor = 0;
+
+/**
+ * Previous log timestamp.
+ */
+
+var prevTime;
+
+/**
+ * Select a color.
+ *
+ * @return {Number}
+ * @api private
+ */
+
+function selectColor() {
+  return exports.colors[prevColor++ % exports.colors.length];
+}
+
+/**
+ * Create a debugger with the given `namespace`.
+ *
+ * @param {String} namespace
+ * @return {Function}
+ * @api public
+ */
+
+function debug(namespace) {
+
+  // define the `disabled` version
+  function disabled() {
+  }
+  disabled.enabled = false;
+
+  // define the `enabled` version
+  function enabled() {
+
+    var self = enabled;
+
+    // set `diff` timestamp
+    var curr = +new Date();
+    var ms = curr - (prevTime || curr);
+    self.diff = ms;
+    self.prev = prevTime;
+    self.curr = curr;
+    prevTime = curr;
+
+    // add the `color` if not set
+    if (null == self.useColors) self.useColors = exports.useColors();
+    if (null == self.color && self.useColors) self.color = selectColor();
+
+    var args = Array.prototype.slice.call(arguments);
+
+    args[0] = exports.coerce(args[0]);
+
+    if ('string' !== typeof args[0]) {
+      // anything else let's inspect with %o
+      args = ['%o'].concat(args);
+    }
+
+    // apply any `formatters` transformations
+    var index = 0;
+    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
+      // if we encounter an escaped % then don't increase the array index
+      if (match === '%%') return match;
+      index++;
+      var formatter = exports.formatters[format];
+      if ('function' === typeof formatter) {
+        var val = args[index];
+        match = formatter.call(self, val);
+
+        // now we need to remove `args[index]` since it's inlined in the `format`
+        args.splice(index, 1);
+        index--;
+      }
+      return match;
+    });
+
+    if ('function' === typeof exports.formatArgs) {
+      args = exports.formatArgs.apply(self, args);
+    }
+    var logFn = enabled.log || exports.log || console.log.bind(console);
+    logFn.apply(self, args);
+  }
+  enabled.enabled = true;
+
+  var fn = exports.enabled(namespace) ? enabled : disabled;
+
+  fn.namespace = namespace;
+
+  return fn;
+}
+
+/**
+ * Enables a debug mode by namespaces. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} namespaces
+ * @api public
+ */
+
+function enable(namespaces) {
+  exports.save(namespaces);
+
+  var split = (namespaces || '').split(/[\s,]+/);
+  var len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    if (!split[i]) continue; // ignore empty strings
+    namespaces = split[i].replace(/\*/g, '.*?');
+    if (namespaces[0] === '-') {
+      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+    } else {
+      exports.names.push(new RegExp('^' + namespaces + '$'));
+    }
+  }
+}
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+function disable() {
+  exports.enable('');
+}
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+function enabled(name) {
+  var i, len;
+  for (i = 0, len = exports.skips.length; i < len; i++) {
+    if (exports.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (i = 0, len = exports.names.length; i < len; i++) {
+    if (exports.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+},{"ms":10}],7:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -671,69 +1060,80 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],5:[function(require,module,exports){
-// shim for using process in browser
+},{}],8:[function(require,module,exports){
+(function (global){
+'use strict';
+var Mutation = global.MutationObserver || global.WebKitMutationObserver;
 
-var process = module.exports = {};
+var scheduleDrain;
 
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
+{
+  if (Mutation) {
+    var called = 0;
+    var observer = new Mutation(nextTick);
+    var element = global.document.createTextNode('');
+    observer.observe(element, {
+      characterData: true
+    });
+    scheduleDrain = function () {
+      element.data = (called = ++called % 2);
     };
-})();
+  } else if (!global.setImmediate && typeof global.MessageChannel !== 'undefined') {
+    var channel = new global.MessageChannel();
+    channel.port1.onmessage = nextTick;
+    scheduleDrain = function () {
+      channel.port2.postMessage(0);
+    };
+  } else if ('document' in global && 'onreadystatechange' in global.document.createElement('script')) {
+    scheduleDrain = function () {
 
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
+      // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+      // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+      var scriptEl = global.document.createElement('script');
+      scriptEl.onreadystatechange = function () {
+        nextTick();
 
-function noop() {}
-
-process.on = noop;
-process.once = noop;
-process.off = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
+        scriptEl.onreadystatechange = null;
+        scriptEl.parentNode.removeChild(scriptEl);
+        scriptEl = null;
+      };
+      global.document.documentElement.appendChild(scriptEl);
+    };
+  } else {
+    scheduleDrain = function () {
+      setTimeout(nextTick, 0);
+    };
+  }
 }
 
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
+var draining;
+var queue = [];
+//named nextTick for less confusing stack traces
+function nextTick() {
+  draining = true;
+  var i, oldQueue;
+  var len = queue.length;
+  while (len) {
+    oldQueue = queue;
+    queue = [];
+    i = -1;
+    while (++i < len) {
+      oldQueue[i]();
+    }
+    len = queue.length;
+  }
+  draining = false;
+}
 
-},{}],6:[function(require,module,exports){
+module.exports = immediate;
+function immediate(task) {
+  if (queue.push(task) === 1 && !draining) {
+    scheduleDrain();
+  }
+}
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],9:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -758,7 +1158,205 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} options
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options){
+  options = options || {};
+  if ('string' == typeof val) return parse(val);
+  return options.long
+    ? long(val)
+    : short(val);
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = '' + str;
+  if (str.length > 10000) return;
+  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
+  if (!match) return;
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function short(ms) {
+  if (ms >= d) return Math.round(ms / d) + 'd';
+  if (ms >= h) return Math.round(ms / h) + 'h';
+  if (ms >= m) return Math.round(ms / m) + 'm';
+  if (ms >= s) return Math.round(ms / s) + 's';
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function long(ms) {
+  return plural(ms, d, 'day')
+    || plural(ms, h, 'hour')
+    || plural(ms, m, 'minute')
+    || plural(ms, s, 'second')
+    || ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, n, name) {
+  if (ms < n) return;
+  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
+  return Math.ceil(ms / n) + ' ' + name + 's';
+}
+
+},{}],11:[function(require,module,exports){
+'use strict';
+exports.Map = LazyMap; // TODO: use ES6 map
+exports.Set = LazySet; // TODO: use ES6 set
+// based on https://github.com/montagejs/collections
+function LazyMap() {
+  this.store = {};
+}
+LazyMap.prototype.mangle = function (key) {
+  if (typeof key !== "string") {
+    throw new TypeError("key must be a string but Got " + key);
+  }
+  return '$' + key;
+};
+LazyMap.prototype.unmangle = function (key) {
+  return key.substring(1);
+};
+LazyMap.prototype.get = function (key) {
+  var mangled = this.mangle(key);
+  if (mangled in this.store) {
+    return this.store[mangled];
+  }
+  return void 0;
+};
+LazyMap.prototype.set = function (key, value) {
+  var mangled = this.mangle(key);
+  this.store[mangled] = value;
+  return true;
+};
+LazyMap.prototype.has = function (key) {
+  var mangled = this.mangle(key);
+  return mangled in this.store;
+};
+LazyMap.prototype.delete = function (key) {
+  var mangled = this.mangle(key);
+  if (mangled in this.store) {
+    delete this.store[mangled];
+    return true;
+  }
+  return false;
+};
+LazyMap.prototype.forEach = function (cb) {
+  var keys = Object.keys(this.store);
+  for (var i = 0, len = keys.length; i < len; i++) {
+    var key = keys[i];
+    var value = this.store[key];
+    key = this.unmangle(key);
+    cb(value, key);
+  }
+};
+
+function LazySet(array) {
+  this.store = new LazyMap();
+
+  // init with an array
+  if (array && Array.isArray(array)) {
+    for (var i = 0, len = array.length; i < len; i++) {
+      this.add(array[i]);
+    }
+  }
+}
+LazySet.prototype.add = function (key) {
+  return this.store.set(key, true);
+};
+LazySet.prototype.has = function (key) {
+  return this.store.has(key);
+};
+LazySet.prototype.delete = function (key) {
+  return this.store.delete(key);
+};
+
+},{}],12:[function(require,module,exports){
 "use strict";
 
 // Extends method
@@ -939,17 +1537,17 @@ module.exports = extend;
 
 
 
-},{}],8:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 // allow external plugins to require('pouchdb/extras/ajax')
 module.exports = require('../lib/deps/ajax/ajaxCore');
-},{"../lib/deps/ajax/ajaxCore":11}],9:[function(require,module,exports){
+},{"../lib/deps/ajax/ajaxCore":16}],14:[function(require,module,exports){
 'use strict';
 
 // allow external plugins to require('pouchdb/extras/promise')
 module.exports = require('../lib/deps/promise');
-},{"../lib/deps/promise":34}],10:[function(require,module,exports){
+},{"../lib/deps/promise":39}],15:[function(require,module,exports){
 'use strict';
 
 var EventEmitter = require('events').EventEmitter;
@@ -1056,7 +1654,7 @@ Changes.prototype.notify = function (dbName) {
 
 module.exports = Changes;
 
-},{"./deps/env/hasLocalStorage":26,"./deps/env/isChromeApp":27,"./deps/pick":33,"events":4,"inherits":6}],11:[function(require,module,exports){
+},{"./deps/env/hasLocalStorage":31,"./deps/env/isChromeApp":32,"./deps/pick":38,"events":7,"inherits":9}],16:[function(require,module,exports){
 "use strict";
 
 var request = require('request');
@@ -1188,18 +1786,18 @@ function ajax(options, callback) {
 
 module.exports = ajax;
 
-},{"../../utils":37,"./../errors":28,"./applyTypeToBuffer":12,"./defaultBody":13,"./explainCors":15,"request":17}],12:[function(require,module,exports){
+},{"../../utils":42,"./../errors":33,"./applyTypeToBuffer":17,"./defaultBody":18,"./explainCors":20,"request":22}],17:[function(require,module,exports){
 'use strict';
 
 // the blob already has a type; do nothing
 module.exports = function () {};
-},{}],13:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 module.exports = function defaultBody() {
   return '';
 };
-},{}],14:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1211,7 +1809,7 @@ module.exports = function explain404(str) {
   }
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],15:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1224,7 +1822,7 @@ module.exports = function () {
 };
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var ajax = require('./ajaxCore');
@@ -1242,7 +1840,7 @@ module.exports = function(opts, callback) {
   return ajax(opts, callback);
 };
 
-},{"./ajaxCore":11}],17:[function(require,module,exports){
+},{"./ajaxCore":16}],22:[function(require,module,exports){
 /* global fetch */
 /* global Headers */
 'use strict';
@@ -1469,7 +2067,7 @@ module.exports = function(options, callback) {
   }
 };
 
-},{"../../utils":37,"./../binary/blob.js":21,"./../binary/readAsArrayBuffer":23}],18:[function(require,module,exports){
+},{"../../utils":42,"./../binary/blob.js":26,"./../binary/readAsArrayBuffer":28}],23:[function(require,module,exports){
 'use strict';
 
 var buffer = require('./buffer');
@@ -1503,7 +2101,7 @@ if (typeof btoa === 'function') {
     return new buffer(str, 'binary').toString('base64');
   };
 }
-},{"./buffer":22}],19:[function(require,module,exports){
+},{"./buffer":27}],24:[function(require,module,exports){
 'use strict';
 
 // From http://stackoverflow.com/questions/14967647/ (continues on next line)
@@ -1517,7 +2115,7 @@ module.exports = function (bin) {
   }
   return buf;
 };
-},{}],20:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var createBlob = require('./blob');
@@ -1526,7 +2124,7 @@ var binaryStringToArrayBuffer = require('./binaryStringToArrayBuffer');
 module.exports = function (binString, type) {
   return createBlob([binaryStringToArrayBuffer(binString)], {type: type});
 };
-},{"./binaryStringToArrayBuffer":19,"./blob":21}],21:[function(require,module,exports){
+},{"./binaryStringToArrayBuffer":24,"./blob":26}],26:[function(require,module,exports){
 "use strict";
 
 // Abstracts constructing a Blob object, so it also works in older
@@ -1557,10 +2155,10 @@ function createBlob(parts, properties) {
 module.exports = createBlob;
 
 
-},{}],22:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 // hey guess what, we don't need this in the browser
 module.exports = {};
-},{}],23:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 // simplified API. universal browser support is assumed
@@ -1572,7 +2170,7 @@ module.exports = function (blob, callback) {
   };
   reader.readAsArrayBuffer(blob);
 };
-},{}],24:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 function isPlainObject(object) {
@@ -1628,7 +2226,7 @@ module.exports = function clone(object) {
   }
   return newObject;
 };
-},{}],25:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 var errors = require('./../errors');
@@ -1798,7 +2396,7 @@ exports.parseDoc = function (doc, newEdits) {
   return result;
 };
 
-},{"./../errors":28,"./../uuid":36}],26:[function(require,module,exports){
+},{"./../errors":33,"./../uuid":41}],31:[function(require,module,exports){
 'use strict';
 
 var isChromeApp = require('./isChromeApp');
@@ -1819,7 +2417,7 @@ if (isChromeApp()) {
 module.exports = function hasLocalStorage() {
   return hasLocal;
 };
-},{"./isChromeApp":27}],27:[function(require,module,exports){
+},{"./isChromeApp":32}],32:[function(require,module,exports){
 'use strict';
 
 module.exports = function isChromeApp() {
@@ -1827,7 +2425,7 @@ module.exports = function isChromeApp() {
     typeof chrome.storage !== "undefined" &&
     typeof chrome.storage.local !== "undefined");
 };
-},{}],28:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 
 var inherits = require('inherits');
@@ -2079,7 +2677,7 @@ exports.generateErrorFromResponse = function (res) {
   return error;
 };
 
-},{"inherits":6}],29:[function(require,module,exports){
+},{"inherits":9}],34:[function(require,module,exports){
 'use strict';
 
 var clone = require('./clone');
@@ -2102,7 +2700,7 @@ module.exports = function extend(obj, obj2, obj3) {
   }
   return obj;
 };
-},{"./clone":24}],30:[function(require,module,exports){
+},{"./clone":29}],35:[function(require,module,exports){
 'use strict';
 
 // Pretty much all below can be combined into a higher order function to
@@ -2124,7 +2722,7 @@ module.exports = function traverseRevTree(revs, callback) {
     }
   }
 };
-},{}],31:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 var getArguments = require('argsarray');
@@ -2144,7 +2742,7 @@ function once(fun) {
 }
 
 module.exports = once;
-},{"argsarray":38}],32:[function(require,module,exports){
+},{"argsarray":4}],37:[function(require,module,exports){
 'use strict';
 
 // originally parseUri 1.2.2, now patched by us
@@ -2182,7 +2780,7 @@ function parseUri(str) {
 }
 
 module.exports = parseUri;
-},{}],33:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 // like underscore/lodash _.pick()
@@ -2196,12 +2794,12 @@ module.exports = function pick(obj, arr) {
   }
   return res;
 };
-},{}],34:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 /* istanbul ignore next */
 module.exports = typeof Promise === 'function' ? Promise : require('lie');
 
-},{"lie":42}],35:[function(require,module,exports){
+},{"lie":43}],40:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -2258,10 +2856,10 @@ function toPromise(func) {
 }
 
 module.exports = toPromise;
-}).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./once":31,"./promise":34,"/Users/nolan/workspace/pouchdb-authentication/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":5,"argsarray":38}],36:[function(require,module,exports){
+}).call(this,require("/home/sapk/Documents/Projets/pouchdb-authentication/node_modules/process/browser.js"))
+},{"./once":36,"./promise":39,"/home/sapk/Documents/Projets/pouchdb-authentication/node_modules/process/browser.js":44,"argsarray":4}],41:[function(require,module,exports){
 module.exports=require(3)
-},{}],37:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*jshint strict: false */
 var traverseRevTree = require('./deps/merge/traverseRevTree');
 exports.ajax = require('./deps/ajax/prequest');
@@ -2442,523 +3040,7 @@ exports.safeJsonStringify = function safeJsonStringify(json) {
   }
 };
 
-},{"./changesHandler":10,"./deps/ajax/explain404":14,"./deps/ajax/prequest":16,"./deps/binary/base64":18,"./deps/binary/binaryStringToBlobOrBuffer":20,"./deps/clone":24,"./deps/docs/parseDoc":25,"./deps/errors":28,"./deps/extend":29,"./deps/merge/traverseRevTree":30,"./deps/once":31,"./deps/parseUri":32,"./deps/pick":33,"./deps/promise":34,"./deps/toPromise":35,"./deps/uuid":36,"argsarray":38,"debug":39,"inherits":6,"pouchdb-collections":44,"vuvuzela":45}],38:[function(require,module,exports){
-'use strict';
-
-module.exports = argsArray;
-
-function argsArray(fun) {
-  return function () {
-    var len = arguments.length;
-    if (len) {
-      var args = [];
-      var i = -1;
-      while (++i < len) {
-        args[i] = arguments[i];
-      }
-      return fun.call(this, args);
-    } else {
-      return fun.call(this, []);
-    }
-  };
-}
-},{}],39:[function(require,module,exports){
-
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = require('./debug');
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  return ('WebkitAppearance' in document.documentElement.style) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (window.console && (console.firebug || (console.exception && console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  return JSON.stringify(v);
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs() {
-  var args = arguments;
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return args;
-
-  var c = 'color: ' + this.color;
-  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-  return args;
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-  return r;
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage(){
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-},{"./debug":40}],40:[function(require,module,exports){
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = debug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = require('ms');
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lowercased letter, i.e. "n".
- */
-
-exports.formatters = {};
-
-/**
- * Previously assigned color.
- */
-
-var prevColor = 0;
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- *
- * @return {Number}
- * @api private
- */
-
-function selectColor() {
-  return exports.colors[prevColor++ % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function debug(namespace) {
-
-  // define the `disabled` version
-  function disabled() {
-  }
-  disabled.enabled = false;
-
-  // define the `enabled` version
-  function enabled() {
-
-    var self = enabled;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // add the `color` if not set
-    if (null == self.useColors) self.useColors = exports.useColors();
-    if (null == self.color && self.useColors) self.color = selectColor();
-
-    var args = Array.prototype.slice.call(arguments);
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %o
-      args = ['%o'].concat(args);
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    if ('function' === typeof exports.formatArgs) {
-      args = exports.formatArgs.apply(self, args);
-    }
-    var logFn = enabled.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-  enabled.enabled = true;
-
-  var fn = exports.enabled(namespace) ? enabled : disabled;
-
-  fn.namespace = namespace;
-
-  return fn;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  var split = (namespaces || '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-},{"ms":41}],41:[function(require,module,exports){
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} options
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options){
-  options = options || {};
-  if ('string' == typeof val) return parse(val);
-  return options.long
-    ? long(val)
-    : short(val);
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = '' + str;
-  if (str.length > 10000) return;
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
-  if (!match) return;
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function short(ms) {
-  if (ms >= d) return Math.round(ms / d) + 'd';
-  if (ms >= h) return Math.round(ms / h) + 'h';
-  if (ms >= m) return Math.round(ms / m) + 'm';
-  if (ms >= s) return Math.round(ms / s) + 's';
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function long(ms) {
-  return plural(ms, d, 'day')
-    || plural(ms, h, 'hour')
-    || plural(ms, m, 'minute')
-    || plural(ms, s, 'second')
-    || ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) return;
-  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
-  return Math.ceil(ms / n) + ' ' + name + 's';
-}
-
-},{}],42:[function(require,module,exports){
+},{"./changesHandler":15,"./deps/ajax/explain404":19,"./deps/ajax/prequest":21,"./deps/binary/base64":23,"./deps/binary/binaryStringToBlobOrBuffer":25,"./deps/clone":29,"./deps/docs/parseDoc":30,"./deps/errors":33,"./deps/extend":34,"./deps/merge/traverseRevTree":35,"./deps/once":36,"./deps/parseUri":37,"./deps/pick":38,"./deps/promise":39,"./deps/toPromise":40,"./deps/uuid":41,"argsarray":4,"debug":5,"inherits":9,"pouchdb-collections":11,"vuvuzela":45}],43:[function(require,module,exports){
 'use strict';
 var immediate = require('immediate');
 
@@ -3214,148 +3296,66 @@ function race(iterable) {
   }
 }
 
-},{"immediate":43}],43:[function(require,module,exports){
-(function (global){
-'use strict';
-var Mutation = global.MutationObserver || global.WebKitMutationObserver;
+},{"immediate":8}],44:[function(require,module,exports){
+// shim for using process in browser
 
-var scheduleDrain;
+var process = module.exports = {};
 
-{
-  if (Mutation) {
-    var called = 0;
-    var observer = new Mutation(nextTick);
-    var element = global.document.createTextNode('');
-    observer.observe(element, {
-      characterData: true
-    });
-    scheduleDrain = function () {
-      element.data = (called = ++called % 2);
-    };
-  } else if (!global.setImmediate && typeof global.MessageChannel !== 'undefined') {
-    var channel = new global.MessageChannel();
-    channel.port1.onmessage = nextTick;
-    scheduleDrain = function () {
-      channel.port2.postMessage(0);
-    };
-  } else if ('document' in global && 'onreadystatechange' in global.document.createElement('script')) {
-    scheduleDrain = function () {
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
 
-      // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-      // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-      var scriptEl = global.document.createElement('script');
-      scriptEl.onreadystatechange = function () {
-        nextTick();
-
-        scriptEl.onreadystatechange = null;
-        scriptEl.parentNode.removeChild(scriptEl);
-        scriptEl = null;
-      };
-      global.document.documentElement.appendChild(scriptEl);
-    };
-  } else {
-    scheduleDrain = function () {
-      setTimeout(nextTick, 0);
-    };
-  }
-}
-
-var draining;
-var queue = [];
-//named nextTick for less confusing stack traces
-function nextTick() {
-  draining = true;
-  var i, oldQueue;
-  var len = queue.length;
-  while (len) {
-    oldQueue = queue;
-    queue = [];
-    i = -1;
-    while (++i < len) {
-      oldQueue[i]();
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
     }
-    len = queue.length;
-  }
-  draining = false;
-}
 
-module.exports = immediate;
-function immediate(task) {
-  if (queue.push(task) === 1 && !draining) {
-    scheduleDrain();
-  }
-}
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
 
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],44:[function(require,module,exports){
-'use strict';
-exports.Map = LazyMap; // TODO: use ES6 map
-exports.Set = LazySet; // TODO: use ES6 set
-// based on https://github.com/montagejs/collections
-function LazyMap() {
-  this.store = {};
-}
-LazyMap.prototype.mangle = function (key) {
-  if (typeof key !== "string") {
-    throw new TypeError("key must be a string but Got " + key);
-  }
-  return '$' + key;
-};
-LazyMap.prototype.unmangle = function (key) {
-  return key.substring(1);
-};
-LazyMap.prototype.get = function (key) {
-  var mangled = this.mangle(key);
-  if (mangled in this.store) {
-    return this.store[mangled];
-  }
-  return void 0;
-};
-LazyMap.prototype.set = function (key, value) {
-  var mangled = this.mangle(key);
-  this.store[mangled] = value;
-  return true;
-};
-LazyMap.prototype.has = function (key) {
-  var mangled = this.mangle(key);
-  return mangled in this.store;
-};
-LazyMap.prototype.delete = function (key) {
-  var mangled = this.mangle(key);
-  if (mangled in this.store) {
-    delete this.store[mangled];
-    return true;
-  }
-  return false;
-};
-LazyMap.prototype.forEach = function (cb) {
-  var keys = Object.keys(this.store);
-  for (var i = 0, len = keys.length; i < len; i++) {
-    var key = keys[i];
-    var value = this.store[key];
-    key = this.unmangle(key);
-    cb(value, key);
-  }
-};
-
-function LazySet(array) {
-  this.store = new LazyMap();
-
-  // init with an array
-  if (array && Array.isArray(array)) {
-    for (var i = 0, len = array.length; i < len; i++) {
-      this.add(array[i]);
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
     }
-  }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.once = noop;
+process.off = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
 }
-LazySet.prototype.add = function (key) {
-  return this.store.set(key, true);
-};
-LazySet.prototype.has = function (key) {
-  return this.store.has(key);
-};
-LazySet.prototype.delete = function (key) {
-  return this.store.delete(key);
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
 };
 
 },{}],45:[function(require,module,exports){
