@@ -12,8 +12,8 @@
     "build-js": "mkdir -p dist && browserify lib/index.js -o dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
-    "dev": "npm run jshint && browserify test/test.js > test/test-bundle.js && npm run dev-server",
-    "dev-server": "./bin/dev-server.js"
+    "dev": "add-cors-to-couchdb && zuul --local 9000 --no-coverage --ui mocha-bdd test/test.js",
+    "test": "add-cors-to-couchdb && zuul --phantom --ui mocha-bdd test/test.js"
   },
   "keywords": [
     "pouch",
@@ -22,29 +22,29 @@
     "couch",
     "couchdb"
   ],
-  "author": "",
+  "author": "Nolan Lawson <nolan@nolanlawson.com",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/nolanlawson/pouchdb-authentication/issues"
   },
   "dependencies": {
-    "inherits": "~2.0.1",
-    "lie": "^2.5.3",
-    "pouchdb": "^4.0.3",
-    "pouchdb-extend": "^0.1.2"
+    "inherits": "2.0.1",
+    "lie": "3.0.2",
+    "pouchdb": "5.2.1",
+    "pouchdb-extend": "0.1.2"
   },
   "devDependencies": {
-    "bluebird": "^1.0.7",
-    "browserify": "~3.44.1",
-    "chai": "~1.8.1",
-    "chai-as-promised": "~4.1.0",
-    "istanbul": "~0.1.45",
-    "jshint": "~2.3.0",
-    "mocha": "^1.18.2",
-    "watchify": "~0.7.2",
-    "http-proxy": "~0.10.4",
-    "corsproxy": "~0.2.14",
-    "http-server": "~0.5.5",
-    "uglify-js": "~2.4.13"
-  }
+    "add-cors-to-couchdb": "0.0.4",
+    "bluebird": "1.2.4",
+    "browserify": "3.44.2",
+    "chai": "1.8.1",
+    "chai-as-promised": "4.1.1",
+    "istanbul": "0.1.46",
+    "jshint": "2.3.0",
+    "mocha": "1.21.5",
+    "phantomjs": "2.1.1",
+    "uglify-js": "2.4.24",
+    "zuul": "3.9.0"
+  },
+  "files": ["lib", "dist"]
 }
