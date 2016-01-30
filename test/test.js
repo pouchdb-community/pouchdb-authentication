@@ -185,16 +185,14 @@ function tests(dbName) {
     });
 
     it('Shouldn\'t change username if new username already exists', function () {
-      return new Promise(function (resolve, reject) {
-        return db.signup('spiderman', 'will-forget').then(function (res) {
-          return db.signup('batman', 'will-remember');
-        }).then(function () {
-          return db.changeUsername('spiderman', 'batman');
-        }).then(function () {
-          reject(new Error('shouldn\'t have worked'));
-        }).catch(function (err) {
-          resolve();
-        })
+      return db.signup('spiderman', 'will-forget').then(function (res) {
+        return db.signup('batman', 'will-remember');
+      }).then(function () {
+        return db.changeUsername('spiderman', 'batman');
+      }).then(function () {
+        throw new Error('shouldn\'t have worked');
+      }, function (err) {
+        should.exist(err);
       });
     });
   });
