@@ -1,0 +1,15 @@
+language: node_js
+
+services:
+  - couchdb
+
+node_js:
+  - "stable"
+
+sudo: false
+
+script: npm test
+
+branches:
+  only:
+  - master

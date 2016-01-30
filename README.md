@@ -1,4 +1,4 @@
-PouchDB Authentication
+PouchDB Authentication [![Build Status](https://travis-ci.org/nolanlawson/pouchdb-authentication.svg?branch=master)](https://travis-ci.org/nolanlawson/pouchdb-authentication)
 =====
 
 <img alt="PouchDB Authentication logo by nickcolley" title="PouchDB Authentication logo by nickcolley" width="150px" src="https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/logo.png"/>
@@ -544,14 +544,20 @@ db.login(user.name, user.password, ajaxOpts).then(function() {
 });
 ```
 
-Tests
+Test this library
 ------
 
-To test in the browser, run
+First off:
+
+    npm install
+
+To test in the browser (locally):
 
     npm run dev
 
-Then point your browser to [http://127.0.0.1:8002/test/index.html](http://127.0.0.1:8002/test/index.html)
+To test in PhantomJS:
+
+    npm test
 
 License
 ----------
