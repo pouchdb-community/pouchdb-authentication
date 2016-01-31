@@ -1,6 +1,6 @@
 {
   "name": "pouchdb-authentication",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "PouchDB Authentication",
   "main": "lib/index.js",
   "repository": {
@@ -46,5 +46,8 @@
     "uglify-js": "2.4.24",
     "zuul": "3.9.0"
   },
-  "files": ["lib", "dist"]
+  "files": [
+    "lib",
+    "dist"
+  ]
 }
