@@ -497,7 +497,7 @@ PHP library that provides some sugar over the CouchDB API, e.g. for admin stuff.
 
 Batteries-included no-backend framework.  Currently (as of January 2016) being [ported to use PouchDB](https://github.com/hoodiehq/hoodie-client-store).
 
-#### [Pouch.host](https://pouch.host/)
+#### [PouchBase](https://github.com/pouchdb/pouchbase/) (formerly pouch.host)
 
 (Work in progress as of January 2015.) Hosted PouchDB Server with per-user read-write access.
 
