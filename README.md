@@ -16,11 +16,12 @@ db.login('batman', 'brucewayne').then(function (batman) {
 * [Overview](#overview)
 * [Setup](#setup)
 * [API](#api)
-  * [db.signup()](#dbsignupusername-password--options--callback) 
+  * [db.signup()](#dbsignupusername-password--options--callback)
   * [db.login()](#dbloginusername-password--options--callback)
   * [db.logout()](#dblogoutcallback)
   * [db.getSession()](#dbgetsessionopts--callback)
   * [db.getUser()](#dbgetuserusername--opts-callback)
+  * [db.putUser()](#dbputuserusername-opts--callback)
   * [db.changePassword()](#user-content-dbchangepasswordusername-password--opts-callback)
   * [db.changeUsername()](#user-content-dbchangeusernameoldusername-newusername-opts-callback)
 * [CouchDB Authentication recipes](#couchdb-authentication-recipes)
@@ -106,7 +107,7 @@ Next, set up CORS so that PouchDB can access your CouchDB from any URL. For conv
 
     npm install -g add-cors-to-couchdb # may require sudo
     add-cors-to-couchdb                # for IrisCouch, see add-cors-to-couchdb instructions
-    
+
 
 In a production environment, don't forget to set up [SSL][].
 
@@ -200,7 +201,7 @@ You can also type `signUp()`.
 
 #### db.login(username, password [, options] [ callback])
 
-Log in an existing user. Throws an error if the user doesn't exist yet, the password is wrong, the HTTP server is unreachable, or a meteor struck your computer. 
+Log in an existing user. Throws an error if the user doesn't exist yet, the password is wrong, the HTTP server is unreachable, or a meteor struck your computer.
 
 ```js
 db.login('superman', 'clarkkent', function (err, response) {
@@ -267,13 +268,13 @@ db.getSession(function (err, response) {
 ```js
 {
     "info": {
-        "authenticated": "cookie", 
-        "authentication_db": "_users", 
+        "authenticated": "cookie",
+        "authentication_db": "_users",
         "authentication_handlers": ["oauth", "cookie", "default"]
-    }, 
-    "ok": true, 
+    },
+    "ok": true,
     "userCtx": {
-        "name": "batman", 
+        "name": "batman",
         "roles": []
     }
 }
@@ -285,6 +286,23 @@ db.getSession(function (err, response) {
 #### db.getUser(username [, opts][, callback])
 
 Returns the user document associated with a username.  (CouchDB, in a pleasing show of consistency, stores users as JSON documents in the special `_users` database.) This is the primary way to get metadata about a user.
+
+
+#### db.putUser(username, opts [, callback])
+
+Update the metadata of a user.
+
+```js
+db.putUser('robin', {
+  metadata : {
+    email : 'robin@boywonder.com',
+    birthday : '1932-03-27T00:00:00.000Z',
+    likes : ['acrobatics', 'short pants', 'sidekickin\''],
+  }
+}, function (err, response) {
+  // etc.
+});
+```
 
 ##### Example:
 
@@ -306,14 +324,14 @@ db.getUser('aquaman', function (err, response) {
 
 ```js
 {
-    "_id": "org.couchdb.user:aquaman", 
-    "_rev": "1-60288b5b056a8af31e910bca2523ea6a", 
-    "derived_key": "05c3314f180faed646af3b77e637ffecf2e3fb93", 
-    "iterations": 10, 
-    "name": "aquaman", 
-    "password_scheme": "pbkdf2", 
-    "roles": [], 
-    "salt": "bce14111a559e00587f3e5f207e4a316", 
+    "_id": "org.couchdb.user:aquaman",
+    "_rev": "1-60288b5b056a8af31e910bca2523ea6a",
+    "derived_key": "05c3314f180faed646af3b77e637ffecf2e3fb93",
+    "iterations": 10,
+    "name": "aquaman",
+    "password_scheme": "pbkdf2",
+    "roles": [],
+    "salt": "bce14111a559e00587f3e5f207e4a316",
     "type": "user"
 }
 ```
@@ -404,7 +422,7 @@ Just create a new database; this is the default.  It's very dangerous, though, s
 #### Howto
 
 Create a new database, then add a *design doc* with a  `validate_doc_update` function (see [the CouchDB docs](http://guide.couchdb.org/draft/validation.html) for details). This function will be called whenever a document is created, modified, or deleted.  In it, we'll check that the user is either an admin or has the `'blogger'` role.
-    
+
 The function looks like this:
 
 ```js
@@ -457,7 +475,7 @@ function(newDoc, oldDoc, userCtx) {
     throw({forbidden : "doc.user must be the same as your username."});
   }
 }
-  
+
 ```
 
 Here's a `curl` command you can use:
