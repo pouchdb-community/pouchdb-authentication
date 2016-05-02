@@ -112,6 +112,30 @@ describe('authentication', function () {
     });
   });
 
+  it('Test changing metadata', function () {
+    var metadata = {alias: 'boywonder', profession: 'acrobat'};
+    var newMetadata = {alias: 'rednowyob', profession: 'taborca'};
+    var opts = {metadata: metadata};
+    return db.signup('robin', 'dickgrayson', opts).then(function (res) {
+      res.ok.should.equal(true);
+      return db.login('robin', 'dickgrayson');
+    }).then(function () {
+        return db.getUser('robin');
+    }).then(function (user) {
+      user.name.should.equal('robin');
+      user.alias.should.equal('boywonder');
+      user.profession.should.equal('acrobat');
+    }).then(function () {
+      return db.putUser('robin', {metadata: newMetadata});
+    }).then(function () {
+      return db.getUser('robin');
+    }).then(function (user) {
+      user.name.should.equal('robin');
+      user.alias.should.equal('rednowyob');
+      user.profession.should.equal('taborca');
+    });
+  });
+
   it('Test wrong user for getUser', function () {
     return db.signup('robin', 'dickgrayson').then(function (res) {
       return db.signup('aquaman', 'sleeps_with_fishes');
