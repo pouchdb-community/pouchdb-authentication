@@ -281,15 +281,16 @@ if (typeof window !== 'undefined' && window.PouchDB) {
 'use strict';
 
 var Promise = require('pouchdb/extras/promise');
+var urlJoin = require('url-join');
 
 function getBaseUrl(db) {
   return db.getUrl().replace(/\/[^\/]+\/?$/, '');
 }
 exports.getUsersUrl = function (db) {
-  return getBaseUrl(db) + '/_users';
+  return urlJoin(getBaseUrl(db), '/_users');
 };
 exports.getSessionUrl = function (db) {
-  return getBaseUrl(db) + '/_session';
+  return urlJoin(getBaseUrl(db), '/_session');
 };
 exports.once = function (fun) {
   var called = false;
@@ -370,7 +371,7 @@ exports.uuid = require('./uuid');
 exports.Promise = Promise;
 
 }).call(this,require("/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js"))
-},{"./uuid":3,"/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js":13,"inherits":5,"pouchdb-extend":8,"pouchdb/extras/ajax":9,"pouchdb/extras/promise":10}],3:[function(require,module,exports){
+},{"./uuid":3,"/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js":13,"inherits":5,"pouchdb-extend":8,"pouchdb/extras/ajax":9,"pouchdb/extras/promise":10,"url-join":14}],3:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -1869,5 +1870,45 @@ process.cwd = function () { return '/' };
 process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
+
+},{}],14:[function(require,module,exports){
+(function (name, context, definition) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = definition();
+  else if (typeof define === 'function' && define.amd) define(definition);
+  else context[name] = definition();
+})('urljoin', this, function () {
+
+  function normalize (str, options) {
+
+    // make sure protocol is followed by two slashes
+    str = str.replace(/:\//g, '://');
+
+    // remove consecutive slashes
+    str = str.replace(/([^:\s])\/+/g, '$1/');
+
+    // remove trailing slash before parameters or hash
+    str = str.replace(/\/(\?|&|#[^!])/g, '$1');
+
+    // replace ? in parameters with &
+    str = str.replace(/(\?.+)\?/g, '$1&');
+
+    return str;
+  }
+
+  return function () {
+    var input = arguments;
+    var options = {};
+
+    if (typeof arguments[0] === 'object') {
+      // new syntax with array and options
+      input = arguments[0];
+      options = arguments[1] || {};
+    }
+
+    var joined = [].slice.call(input, 0).join('/');
+    return normalize(joined, options);
+  };
+
+});
 
 },{}]},{},[1])
