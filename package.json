@@ -31,7 +31,8 @@
     "inherits": "2.0.1",
     "lie": "3.0.2",
     "pouchdb": "5.2.1",
-    "pouchdb-extend": "0.1.2"
+    "pouchdb-extend": "0.1.2",
+    "url-join": "^1.1.0"
   },
   "devDependencies": {
     "add-cors-to-couchdb": "0.0.4",
