@@ -287,23 +287,6 @@ db.getSession(function (err, response) {
 
 Returns the user document associated with a username.  (CouchDB, in a pleasing show of consistency, stores users as JSON documents in the special `_users` database.) This is the primary way to get metadata about a user.
 
-
-#### db.putUser(username, opts [, callback])
-
-Update the metadata of a user.
-
-```js
-db.putUser('robin', {
-  metadata : {
-    email : 'robin@boywonder.com',
-    birthday : '1932-03-27T00:00:00.000Z',
-    likes : ['acrobatics', 'short pants', 'sidekickin\''],
-  }
-}, function (err, response) {
-  // etc.
-});
-```
-
 ##### Example:
 
 ```js
@@ -337,6 +320,23 @@ db.getUser('aquaman', function (err, response) {
 ```
 
 **Note:** Only server admins or the user themselves can fetch user data. Otherwise you will get a 404 `not_found` error.
+
+
+#### db.putUser(username, opts [, callback])
+
+Update the metadata of a user.
+
+```js
+db.putUser('robin', {
+  metadata : {
+    email : 'robin@boywonder.com',
+    birthday : '1932-03-27T00:00:00.000Z',
+    likes : ['acrobatics', 'short pants', 'sidekickin\''],
+  }
+}, function (err, response) {
+  // etc.
+});
+```
 
 #### db.changePassword(username, password [, opts][, callback])
 
