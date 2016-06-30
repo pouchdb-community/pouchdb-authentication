@@ -9,7 +9,7 @@
   },
   "scripts": {
     "jshint": "jshint -c .jshintrc lib/*.js test/test.js",
-    "build-js": "mkdir -p dist && browserify lib/index.js -o dist/pouchdb.authentication.js",
+    "build-js": "mkdir -p dist && browserify lib/index.js -s PouchAuthentication -o dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
     "dev": "add-cors-to-couchdb && zuul --local 9000 --no-coverage --ui mocha-bdd test/test.js",
@@ -30,9 +30,10 @@
   "dependencies": {
     "inherits": "2.0.1",
     "lie": "3.0.2",
-    "pouchdb": "5.2.1",
+    "pouchdb-ajax": "5.4.4",
     "pouchdb-extend": "0.1.2",
-    "url-join": "^1.1.0"
+    "pouchdb-promise": "5.4.4",
+    "url-join": "1.1.0"
   },
   "devDependencies": {
     "bluebird": "1.2.4",
@@ -43,6 +44,7 @@
     "jshint": "2.3.0",
     "mocha": "1.21.5",
     "phantomjs": "2.1.1",
+    "pouchdb-memory": "^1.1.0",
     "uglify-js": "2.4.24",
     "zuul": "3.9.0"
   },

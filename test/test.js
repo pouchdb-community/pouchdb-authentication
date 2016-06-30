@@ -2,7 +2,7 @@
 /* global sum */
 'use strict';
 
-var PouchDB = require('pouchdb');
+var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
 var utils = require('../lib/utils');
