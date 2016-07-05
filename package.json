@@ -9,7 +9,7 @@
   },
   "scripts": {
     "jshint": "jshint -c .jshintrc lib/ test/test.js",
-    "build-js": "mkdirp dist && browserify lib/index.js -s PouchAuthentication -o dist/pouchdb.authentication.js",
+    "build-js": "mkdirp dist && browserify . -p bundle-collapser/plugin -s PouchAuthentication > dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
     "dev": "zuul --local 9000 --no-coverage --ui mocha-bdd test/test.js",
@@ -39,6 +39,7 @@
   "devDependencies": {
     "bluebird": "1.2.4",
     "browserify": "3.44.2",
+    "bundle-collapser": "^1.2.1",
     "chai": "1.8.1",
     "chai-as-promised": "4.1.1",
     "istanbul": "0.1.46",
