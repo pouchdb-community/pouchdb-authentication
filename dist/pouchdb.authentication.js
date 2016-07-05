@@ -367,96 +367,11 @@ exports.ajax = _dereq_('pouchdb-ajax');
 exports.clone = function (obj) {
   return exports.extend(true, {}, obj);
 };
-exports.uuid = _dereq_('./uuid');
+exports.uuid = _dereq_('pouchdb-utils').uuid;
 exports.Promise = Promise;
 
-}).call(this,_dereq_("/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js"))
-},{"./uuid":3,"/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js":19,"inherits":9,"pouchdb-ajax":12,"pouchdb-extend":15,"pouchdb-promise":16,"url-join":20}],3:[function(_dereq_,module,exports){
-"use strict";
-
-// BEGIN Math.uuid.js
-
-/*!
-Math.uuid.js (v1.4)
-http://www.broofa.com
-mailto:robert@broofa.com
-
-Copyright (c) 2010 Robert Kieffer
-Dual licensed under the MIT and GPL licenses.
-*/
-
-/*
- * Generate a random uuid.
- *
- * USAGE: Math.uuid(length, radix)
- *   length - the desired number of characters
- *   radix  - the number of allowable values for each character.
- *
- * EXAMPLES:
- *   // No arguments  - returns RFC4122, version 4 ID
- *   >>> Math.uuid()
- *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
- *
- *   // One argument - returns ID of the specified length
- *   >>> Math.uuid(15)     // 15 character ID (default base=62)
- *   "VcydxgltxrVZSTV"
- *
- *   // Two arguments - returns ID of the specified length, and radix. 
- *   // (Radix must be <= 62)
- *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
- *   "01001010"
- *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
- *   "47473046"
- *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
- *   "098F4D35"
- */
-var chars = (
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-  'abcdefghijklmnopqrstuvwxyz'
-).split('');
-function getValue(radix) {
-  return 0 | Math.random() * radix;
-}
-function uuid(len, radix) {
-  radix = radix || chars.length;
-  var out = '';
-  var i = -1;
-
-  if (len) {
-    // Compact form
-    while (++i < len) {
-      out += chars[getValue(radix)];
-    }
-    return out;
-  }
-    // rfc4122, version 4 form
-    // Fill in random data.  At i==19 set the high bits of clock sequence as
-    // per rfc4122, sec. 4.1.5
-  while (++i < 36) {
-    switch (i) {
-      case 8:
-      case 13:
-      case 18:
-      case 23:
-        out += '-';
-        break;
-      case 19:
-        out += chars[(getValue(16) & 0x3) | 0x8];
-        break;
-      default:
-        out += chars[getValue(16)];
-    }
-  }
-
-  return out;
-}
-
-
-
-module.exports = uuid;
-
-
-},{}],4:[function(_dereq_,module,exports){
+}).call(this,_dereq_("C:\\workspace\\pouchdb-authentication\\node_modules\\process\\browser.js"))
+},{"C:\\workspace\\pouchdb-authentication\\node_modules\\process\\browser.js":22,"inherits":8,"pouchdb-ajax":11,"pouchdb-extend":16,"pouchdb-promise":17,"pouchdb-utils":19,"url-join":23}],3:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -476,7 +391,7 @@ function argsArray(fun) {
     }
   };
 }
-},{}],5:[function(_dereq_,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -646,7 +561,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":6}],6:[function(_dereq_,module,exports){
+},{"./debug":5}],5:[function(_dereq_,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -845,7 +760,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":11}],7:[function(_dereq_,module,exports){
+},{"ms":10}],6:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1148,7 +1063,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],8:[function(_dereq_,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 var Mutation = global.MutationObserver || global.WebKitMutationObserver;
@@ -1221,7 +1136,7 @@ function immediate(task) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(_dereq_,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1246,7 +1161,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],10:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 (function(factory) {
   if(typeof exports === 'object') {
     factory(exports);
@@ -1281,7 +1196,7 @@ if (typeof Object.create === 'function') {
   root.extend = extend;
 });
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 /**
  * Helpers.
  */
@@ -1408,7 +1323,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
@@ -1801,145 +1716,7 @@ function ajax(opts, callback) {
 }
 
 module.exports = ajax;
-},{"js-extend":10,"pouchdb-binary-utils":13,"pouchdb-errors":14,"pouchdb-promise":16,"pouchdb-utils":18}],13:[function(_dereq_,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-//Can't find original post, but this is close
-//http://stackoverflow.com/questions/6965107/ (continues on next line)
-//converting-between-strings-and-arraybuffers
-function arrayBufferToBinaryString(buffer) {
-  var binary = '';
-  var bytes = new Uint8Array(buffer);
-  var length = bytes.byteLength;
-  for (var i = 0; i < length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return binary;
-}
-
-var atob$1 = function (str) {
-  return atob(str);
-};
-
-var btoa$1 = function (str) {
-  return btoa(str);
-};
-
-function arrayBufferToBase64(buffer) {
-  return btoa$1(arrayBufferToBinaryString(buffer));
-}
-
-// Abstracts constructing a Blob object, so it also works in older
-// browsers that don't support the native Blob constructor (e.g.
-// old QtWebKit versions, Android < 4.4).
-function createBlob(parts, properties) {
-  /* global BlobBuilder,MSBlobBuilder,MozBlobBuilder,WebKitBlobBuilder */
-  parts = parts || [];
-  properties = properties || {};
-  try {
-    return new Blob(parts, properties);
-  } catch (e) {
-    if (e.name !== "TypeError") {
-      throw e;
-    }
-    var Builder = typeof BlobBuilder !== 'undefined' ? BlobBuilder :
-                  typeof MSBlobBuilder !== 'undefined' ? MSBlobBuilder :
-                  typeof MozBlobBuilder !== 'undefined' ? MozBlobBuilder :
-                  WebKitBlobBuilder;
-    var builder = new Builder();
-    for (var i = 0; i < parts.length; i += 1) {
-      builder.append(parts[i]);
-    }
-    return builder.getBlob(properties.type);
-  }
-}
-
-// From http://stackoverflow.com/questions/14967647/ (continues on next line)
-// encode-decode-image-with-base64-breaks-image (2013-04-21)
-function binaryStringToArrayBuffer(bin) {
-  var length = bin.length;
-  var buf = new ArrayBuffer(length);
-  var arr = new Uint8Array(buf);
-  for (var i = 0; i < length; i++) {
-    arr[i] = bin.charCodeAt(i);
-  }
-  return buf;
-}
-
-function binStringToBluffer(binString, type) {
-  return createBlob([binaryStringToArrayBuffer(binString)], {type: type});
-}
-
-function b64ToBluffer(b64, type) {
-  return binStringToBluffer(atob$1(b64), type);
-}
-
-// shim for browsers that don't support it
-function readAsBinaryString(blob, callback) {
-  if (typeof FileReader === 'undefined') {
-    // fix for Firefox in a web worker
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
-    return callback(arrayBufferToBinaryString(
-      new FileReaderSync().readAsArrayBuffer(blob)));
-  }
-
-  var reader = new FileReader();
-  var hasBinaryString = typeof reader.readAsBinaryString === 'function';
-  reader.onloadend = function (e) {
-    var result = e.target.result || '';
-    if (hasBinaryString) {
-      return callback(result);
-    }
-    callback(arrayBufferToBinaryString(result));
-  };
-  if (hasBinaryString) {
-    reader.readAsBinaryString(blob);
-  } else {
-    reader.readAsArrayBuffer(blob);
-  }
-}
-
-function blobToBase64(blobOrBuffer, callback) {
-  readAsBinaryString(blobOrBuffer, function (bin) {
-    callback(btoa$1(bin));
-  });
-}
-
-// simplified API. universal browser support is assumed
-function readAsArrayBuffer(blob, callback) {
-  if (typeof FileReader === 'undefined') {
-    // fix for Firefox in a web worker:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
-    return callback(new FileReaderSync().readAsArrayBuffer(blob));
-  }
-
-  var reader = new FileReader();
-  reader.onloadend = function (e) {
-    var result = e.target.result || new ArrayBuffer(0);
-    callback(result);
-  };
-  reader.readAsArrayBuffer(blob);
-}
-
-// this is not used in the browser
-function typedBuffer() {
-}
-
-exports.arrayBufferToBase64 = arrayBufferToBase64;
-exports.arrayBufferToBinaryString = arrayBufferToBinaryString;
-exports.atob = atob$1;
-exports.btoa = btoa$1;
-exports.base64StringToBlobOrBuffer = b64ToBluffer;
-exports.binaryStringToArrayBuffer = binaryStringToArrayBuffer;
-exports.binaryStringToBlobOrBuffer = binStringToBluffer;
-exports.blob = createBlob;
-exports.blobOrBufferToBase64 = blobToBase64;
-exports.readAsArrayBuffer = readAsArrayBuffer;
-exports.readAsBinaryString = readAsBinaryString;
-exports.typedBuffer = typedBuffer;
-},{}],14:[function(_dereq_,module,exports){
+},{"js-extend":9,"pouchdb-binary-utils":14,"pouchdb-errors":12,"pouchdb-promise":17,"pouchdb-utils":13}],12:[function(_dereq_,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -2252,454 +2029,7 @@ exports.INVALID_URL = INVALID_URL;
 exports.getErrorTypeByProp = getErrorTypeByProp;
 exports.createError = createError;
 exports.generateErrorFromResponse = generateErrorFromResponse;
-},{"inherits":9}],15:[function(_dereq_,module,exports){
-"use strict";
-
-// Extends method
-// (taken from http://code.jquery.com/jquery-1.9.0.js)
-// Populate the class2type map
-var class2type = {};
-
-var types = [
-  "Boolean", "Number", "String", "Function", "Array",
-  "Date", "RegExp", "Object", "Error"
-];
-for (var i = 0; i < types.length; i++) {
-  var typename = types[i];
-  class2type["[object " + typename + "]"] = typename.toLowerCase();
-}
-
-var core_toString = class2type.toString;
-var core_hasOwn = class2type.hasOwnProperty;
-
-function type(obj) {
-  if (obj === null) {
-    return String(obj);
-  }
-  return typeof obj === "object" || typeof obj === "function" ?
-    class2type[core_toString.call(obj)] || "object" :
-    typeof obj;
-}
-
-function isWindow(obj) {
-  return obj !== null && obj === obj.window;
-}
-
-function isPlainObject(obj) {
-  // Must be an Object.
-  // Because of IE, we also have to check the presence of
-  // the constructor property.
-  // Make sure that DOM nodes and window objects don't pass through, as well
-  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
-    return false;
-  }
-
-  try {
-    // Not own constructor property must be Object
-    if (obj.constructor &&
-      !core_hasOwn.call(obj, "constructor") &&
-      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-      return false;
-    }
-  } catch ( e ) {
-    // IE8,9 Will throw exceptions on certain host objects #9897
-    return false;
-  }
-
-  // Own properties are enumerated firstly, so to speed up,
-  // if last one is own, then all properties are own.
-  var key;
-  for (key in obj) {}
-
-  return key === undefined || core_hasOwn.call(obj, key);
-}
-
-
-function isFunction(obj) {
-  return type(obj) === "function";
-}
-
-var isArray = Array.isArray || function (obj) {
-  return type(obj) === "array";
-};
-
-function extend() {
-  // originally extend() was recursive, but this ended up giving us
-  // "call stack exceeded", so it's been unrolled to use a literal stack
-  // (see https://github.com/pouchdb/pouchdb/issues/2543)
-  var stack = [];
-  var i = -1;
-  var len = arguments.length;
-  var args = new Array(len);
-  while (++i < len) {
-    args[i] = arguments[i];
-  }
-  var container = {};
-  stack.push({args: args, result: {container: container, key: 'key'}});
-  var next;
-  while ((next = stack.pop())) {
-    extendInner(stack, next.args, next.result);
-  }
-  return container.key;
-}
-
-function extendInner(stack, args, result) {
-  var options, name, src, copy, copyIsArray, clone,
-    target = args[0] || {},
-    i = 1,
-    length = args.length,
-    deep = false,
-    numericStringRegex = /\d+/,
-    optionsIsArray;
-
-  // Handle a deep copy situation
-  if (typeof target === "boolean") {
-    deep = target;
-    target = args[1] || {};
-    // skip the boolean and the target
-    i = 2;
-  }
-
-  // Handle case when target is a string or something (possible in deep copy)
-  if (typeof target !== "object" && !isFunction(target)) {
-    target = {};
-  }
-
-  // extend jQuery itself if only one argument is passed
-  if (length === i) {
-    /* jshint validthis: true */
-    target = this;
-    --i;
-  }
-
-  for (; i < length; i++) {
-    // Only deal with non-null/undefined values
-    if ((options = args[i]) != null) {
-      optionsIsArray = isArray(options);
-      // Extend the base object
-      for (name in options) {
-        //if (options.hasOwnProperty(name)) {
-        if (!(name in Object.prototype)) {
-          if (optionsIsArray && !numericStringRegex.test(name)) {
-            continue;
-          }
-
-          src = target[name];
-          copy = options[name];
-
-          // Prevent never-ending loop
-          if (target === copy) {
-            continue;
-          }
-
-          // Recurse if we're merging plain objects or arrays
-          if (deep && copy && (isPlainObject(copy) ||
-              (copyIsArray = isArray(copy)))) {
-            if (copyIsArray) {
-              copyIsArray = false;
-              clone = src && isArray(src) ? src : [];
-
-            } else {
-              clone = src && isPlainObject(src) ? src : {};
-            }
-
-            // Never move original objects, clone them
-            stack.push({
-              args: [deep, clone, copy],
-              result: {
-                container: target,
-                key: name
-              }
-            });
-
-          // Don't bring in undefined values
-          } else if (copy !== undefined) {
-            if (!(isArray(options) && isFunction(copy))) {
-              target[name] = copy;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // "Return" the modified object by setting the key
-  // on the given container
-  result.container[result.key] = target;
-}
-
-
-module.exports = extend;
-
-
-
-},{}],16:[function(_dereq_,module,exports){
-'use strict';
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var lie = _interopDefault(_dereq_('lie'));
-
-/* istanbul ignore next */
-var PouchPromise = typeof Promise === 'function' ? Promise : lie;
-
-module.exports = PouchPromise;
-},{"lie":17}],17:[function(_dereq_,module,exports){
-'use strict';
-var immediate = _dereq_('immediate');
-
-/* istanbul ignore next */
-function INTERNAL() {}
-
-var handlers = {};
-
-var REJECTED = ['REJECTED'];
-var FULFILLED = ['FULFILLED'];
-var PENDING = ['PENDING'];
-
-module.exports = Promise;
-
-function Promise(resolver) {
-  if (typeof resolver !== 'function') {
-    throw new TypeError('resolver must be a function');
-  }
-  this.state = PENDING;
-  this.queue = [];
-  this.outcome = void 0;
-  if (resolver !== INTERNAL) {
-    safelyResolveThenable(this, resolver);
-  }
-}
-
-Promise.prototype["catch"] = function (onRejected) {
-  return this.then(null, onRejected);
-};
-Promise.prototype.then = function (onFulfilled, onRejected) {
-  if (typeof onFulfilled !== 'function' && this.state === FULFILLED ||
-    typeof onRejected !== 'function' && this.state === REJECTED) {
-    return this;
-  }
-  var promise = new this.constructor(INTERNAL);
-  if (this.state !== PENDING) {
-    var resolver = this.state === FULFILLED ? onFulfilled : onRejected;
-    unwrap(promise, resolver, this.outcome);
-  } else {
-    this.queue.push(new QueueItem(promise, onFulfilled, onRejected));
-  }
-
-  return promise;
-};
-function QueueItem(promise, onFulfilled, onRejected) {
-  this.promise = promise;
-  if (typeof onFulfilled === 'function') {
-    this.onFulfilled = onFulfilled;
-    this.callFulfilled = this.otherCallFulfilled;
-  }
-  if (typeof onRejected === 'function') {
-    this.onRejected = onRejected;
-    this.callRejected = this.otherCallRejected;
-  }
-}
-QueueItem.prototype.callFulfilled = function (value) {
-  handlers.resolve(this.promise, value);
-};
-QueueItem.prototype.otherCallFulfilled = function (value) {
-  unwrap(this.promise, this.onFulfilled, value);
-};
-QueueItem.prototype.callRejected = function (value) {
-  handlers.reject(this.promise, value);
-};
-QueueItem.prototype.otherCallRejected = function (value) {
-  unwrap(this.promise, this.onRejected, value);
-};
-
-function unwrap(promise, func, value) {
-  immediate(function () {
-    var returnValue;
-    try {
-      returnValue = func(value);
-    } catch (e) {
-      return handlers.reject(promise, e);
-    }
-    if (returnValue === promise) {
-      handlers.reject(promise, new TypeError('Cannot resolve promise with itself'));
-    } else {
-      handlers.resolve(promise, returnValue);
-    }
-  });
-}
-
-handlers.resolve = function (self, value) {
-  var result = tryCatch(getThen, value);
-  if (result.status === 'error') {
-    return handlers.reject(self, result.value);
-  }
-  var thenable = result.value;
-
-  if (thenable) {
-    safelyResolveThenable(self, thenable);
-  } else {
-    self.state = FULFILLED;
-    self.outcome = value;
-    var i = -1;
-    var len = self.queue.length;
-    while (++i < len) {
-      self.queue[i].callFulfilled(value);
-    }
-  }
-  return self;
-};
-handlers.reject = function (self, error) {
-  self.state = REJECTED;
-  self.outcome = error;
-  var i = -1;
-  var len = self.queue.length;
-  while (++i < len) {
-    self.queue[i].callRejected(error);
-  }
-  return self;
-};
-
-function getThen(obj) {
-  // Make sure we only access the accessor once as required by the spec
-  var then = obj && obj.then;
-  if (obj && typeof obj === 'object' && typeof then === 'function') {
-    return function appyThen() {
-      then.apply(obj, arguments);
-    };
-  }
-}
-
-function safelyResolveThenable(self, thenable) {
-  // Either fulfill, reject or reject with error
-  var called = false;
-  function onError(value) {
-    if (called) {
-      return;
-    }
-    called = true;
-    handlers.reject(self, value);
-  }
-
-  function onSuccess(value) {
-    if (called) {
-      return;
-    }
-    called = true;
-    handlers.resolve(self, value);
-  }
-
-  function tryToUnwrap() {
-    thenable(onSuccess, onError);
-  }
-
-  var result = tryCatch(tryToUnwrap);
-  if (result.status === 'error') {
-    onError(result.value);
-  }
-}
-
-function tryCatch(func, value) {
-  var out = {};
-  try {
-    out.value = func(value);
-    out.status = 'success';
-  } catch (e) {
-    out.status = 'error';
-    out.value = e;
-  }
-  return out;
-}
-
-Promise.resolve = resolve;
-function resolve(value) {
-  if (value instanceof this) {
-    return value;
-  }
-  return handlers.resolve(new this(INTERNAL), value);
-}
-
-Promise.reject = reject;
-function reject(reason) {
-  var promise = new this(INTERNAL);
-  return handlers.reject(promise, reason);
-}
-
-Promise.all = all;
-function all(iterable) {
-  var self = this;
-  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return this.reject(new TypeError('must be an array'));
-  }
-
-  var len = iterable.length;
-  var called = false;
-  if (!len) {
-    return this.resolve([]);
-  }
-
-  var values = new Array(len);
-  var resolved = 0;
-  var i = -1;
-  var promise = new this(INTERNAL);
-
-  while (++i < len) {
-    allResolver(iterable[i], i);
-  }
-  return promise;
-  function allResolver(value, i) {
-    self.resolve(value).then(resolveFromAll, function (error) {
-      if (!called) {
-        called = true;
-        handlers.reject(promise, error);
-      }
-    });
-    function resolveFromAll(outValue) {
-      values[i] = outValue;
-      if (++resolved === len && !called) {
-        called = true;
-        handlers.resolve(promise, values);
-      }
-    }
-  }
-}
-
-Promise.race = race;
-function race(iterable) {
-  var self = this;
-  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return this.reject(new TypeError('must be an array'));
-  }
-
-  var len = iterable.length;
-  var called = false;
-  if (!len) {
-    return this.resolve([]);
-  }
-
-  var i = -1;
-  var promise = new this(INTERNAL);
-
-  while (++i < len) {
-    resolver(iterable[i]);
-  }
-  return promise;
-  function resolver(value) {
-    self.resolve(value).then(function (response) {
-      if (!called) {
-        called = true;
-        handlers.resolve(promise, response);
-      }
-    }, function (error) {
-      if (!called) {
-        called = true;
-        handlers.reject(promise, error);
-      }
-    });
-  }
-}
-
-},{"immediate":8}],18:[function(_dereq_,module,exports){
+},{"inherits":8}],13:[function(_dereq_,module,exports){
 (function (process){
 'use strict';
 
@@ -3552,8 +2882,843 @@ exports.pick = pick;
 exports.toPromise = toPromise;
 exports.upsert = upsert;
 exports.uuid = uuid;
-}).call(this,_dereq_("/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js"))
-},{"/Users/nolan/workspace/pouchdb-authentication/node_modules/process/browser.js":19,"argsarray":4,"debug":5,"events":7,"inherits":9,"pouchdb-errors":14,"pouchdb-promise":16}],19:[function(_dereq_,module,exports){
+}).call(this,_dereq_("C:\\workspace\\pouchdb-authentication\\node_modules\\process\\browser.js"))
+},{"C:\\workspace\\pouchdb-authentication\\node_modules\\process\\browser.js":22,"argsarray":3,"debug":4,"events":6,"inherits":8,"pouchdb-errors":12,"pouchdb-promise":17}],14:[function(_dereq_,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+//Can't find original post, but this is close
+//http://stackoverflow.com/questions/6965107/ (continues on next line)
+//converting-between-strings-and-arraybuffers
+function arrayBufferToBinaryString(buffer) {
+  var binary = '';
+  var bytes = new Uint8Array(buffer);
+  var length = bytes.byteLength;
+  for (var i = 0; i < length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return binary;
+}
+
+var atob$1 = function (str) {
+  return atob(str);
+};
+
+var btoa$1 = function (str) {
+  return btoa(str);
+};
+
+function arrayBufferToBase64(buffer) {
+  return btoa$1(arrayBufferToBinaryString(buffer));
+}
+
+// Abstracts constructing a Blob object, so it also works in older
+// browsers that don't support the native Blob constructor (e.g.
+// old QtWebKit versions, Android < 4.4).
+function createBlob(parts, properties) {
+  /* global BlobBuilder,MSBlobBuilder,MozBlobBuilder,WebKitBlobBuilder */
+  parts = parts || [];
+  properties = properties || {};
+  try {
+    return new Blob(parts, properties);
+  } catch (e) {
+    if (e.name !== "TypeError") {
+      throw e;
+    }
+    var Builder = typeof BlobBuilder !== 'undefined' ? BlobBuilder :
+                  typeof MSBlobBuilder !== 'undefined' ? MSBlobBuilder :
+                  typeof MozBlobBuilder !== 'undefined' ? MozBlobBuilder :
+                  WebKitBlobBuilder;
+    var builder = new Builder();
+    for (var i = 0; i < parts.length; i += 1) {
+      builder.append(parts[i]);
+    }
+    return builder.getBlob(properties.type);
+  }
+}
+
+// From http://stackoverflow.com/questions/14967647/ (continues on next line)
+// encode-decode-image-with-base64-breaks-image (2013-04-21)
+function binaryStringToArrayBuffer(bin) {
+  var length = bin.length;
+  var buf = new ArrayBuffer(length);
+  var arr = new Uint8Array(buf);
+  for (var i = 0; i < length; i++) {
+    arr[i] = bin.charCodeAt(i);
+  }
+  return buf;
+}
+
+function binStringToBluffer(binString, type) {
+  return createBlob([binaryStringToArrayBuffer(binString)], {type: type});
+}
+
+function b64ToBluffer(b64, type) {
+  return binStringToBluffer(atob$1(b64), type);
+}
+
+// shim for browsers that don't support it
+function readAsBinaryString(blob, callback) {
+  if (typeof FileReader === 'undefined') {
+    // fix for Firefox in a web worker
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
+    return callback(arrayBufferToBinaryString(
+      new FileReaderSync().readAsArrayBuffer(blob)));
+  }
+
+  var reader = new FileReader();
+  var hasBinaryString = typeof reader.readAsBinaryString === 'function';
+  reader.onloadend = function (e) {
+    var result = e.target.result || '';
+    if (hasBinaryString) {
+      return callback(result);
+    }
+    callback(arrayBufferToBinaryString(result));
+  };
+  if (hasBinaryString) {
+    reader.readAsBinaryString(blob);
+  } else {
+    reader.readAsArrayBuffer(blob);
+  }
+}
+
+function blobToBase64(blobOrBuffer, callback) {
+  readAsBinaryString(blobOrBuffer, function (bin) {
+    callback(btoa$1(bin));
+  });
+}
+
+// simplified API. universal browser support is assumed
+function readAsArrayBuffer(blob, callback) {
+  if (typeof FileReader === 'undefined') {
+    // fix for Firefox in a web worker:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
+    return callback(new FileReaderSync().readAsArrayBuffer(blob));
+  }
+
+  var reader = new FileReader();
+  reader.onloadend = function (e) {
+    var result = e.target.result || new ArrayBuffer(0);
+    callback(result);
+  };
+  reader.readAsArrayBuffer(blob);
+}
+
+// this is not used in the browser
+function typedBuffer() {
+}
+
+exports.arrayBufferToBase64 = arrayBufferToBase64;
+exports.arrayBufferToBinaryString = arrayBufferToBinaryString;
+exports.atob = atob$1;
+exports.btoa = btoa$1;
+exports.base64StringToBlobOrBuffer = b64ToBluffer;
+exports.binaryStringToArrayBuffer = binaryStringToArrayBuffer;
+exports.binaryStringToBlobOrBuffer = binStringToBluffer;
+exports.blob = createBlob;
+exports.blobOrBufferToBase64 = blobToBase64;
+exports.readAsArrayBuffer = readAsArrayBuffer;
+exports.readAsBinaryString = readAsBinaryString;
+exports.typedBuffer = typedBuffer;
+},{}],15:[function(_dereq_,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var inherits = _interopDefault(_dereq_('inherits'));
+
+inherits(PouchError, Error);
+
+function PouchError(opts) {
+  Error.call(this, opts.reason);
+  this.status = opts.status;
+  this.name = opts.error;
+  this.message = opts.reason;
+  this.error = true;
+}
+
+PouchError.prototype.toString = function () {
+  return JSON.stringify({
+    status: this.status,
+    name: this.name,
+    message: this.message,
+    reason: this.reason
+  });
+};
+
+var UNAUTHORIZED = new PouchError({
+  status: 401,
+  error: 'unauthorized',
+  reason: "Name or password is incorrect."
+});
+
+var MISSING_BULK_DOCS = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: "Missing JSON list of 'docs'"
+});
+
+var MISSING_DOC = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'missing'
+});
+
+var REV_CONFLICT = new PouchError({
+  status: 409,
+  error: 'conflict',
+  reason: 'Document update conflict'
+});
+
+var INVALID_ID = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: '_id field must contain a string'
+});
+
+var MISSING_ID = new PouchError({
+  status: 412,
+  error: 'missing_id',
+  reason: '_id is required for puts'
+});
+
+var RESERVED_ID = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Only reserved document ids may start with underscore.'
+});
+
+var NOT_OPEN = new PouchError({
+  status: 412,
+  error: 'precondition_failed',
+  reason: 'Database not open'
+});
+
+var UNKNOWN_ERROR = new PouchError({
+  status: 500,
+  error: 'unknown_error',
+  reason: 'Database encountered an unknown error'
+});
+
+var BAD_ARG = new PouchError({
+  status: 500,
+  error: 'badarg',
+  reason: 'Some query argument is invalid'
+});
+
+var INVALID_REQUEST = new PouchError({
+  status: 400,
+  error: 'invalid_request',
+  reason: 'Request was invalid'
+});
+
+var QUERY_PARSE_ERROR = new PouchError({
+  status: 400,
+  error: 'query_parse_error',
+  reason: 'Some query parameter is invalid'
+});
+
+var DOC_VALIDATION = new PouchError({
+  status: 500,
+  error: 'doc_validation',
+  reason: 'Bad special document member'
+});
+
+var BAD_REQUEST = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Something wrong with the request'
+});
+
+var NOT_AN_OBJECT = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Document must be a JSON object'
+});
+
+var DB_MISSING = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'Database not found'
+});
+
+var IDB_ERROR = new PouchError({
+  status: 500,
+  error: 'indexed_db_went_bad',
+  reason: 'unknown'
+});
+
+var WSQ_ERROR = new PouchError({
+  status: 500,
+  error: 'web_sql_went_bad',
+  reason: 'unknown'
+});
+
+var LDB_ERROR = new PouchError({
+  status: 500,
+  error: 'levelDB_went_went_bad',
+  reason: 'unknown'
+});
+
+var FORBIDDEN = new PouchError({
+  status: 403,
+  error: 'forbidden',
+  reason: 'Forbidden by design doc validate_doc_update function'
+});
+
+var INVALID_REV = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Invalid rev format'
+});
+
+var FILE_EXISTS = new PouchError({
+  status: 412,
+  error: 'file_exists',
+  reason: 'The database could not be created, the file already exists.'
+});
+
+var MISSING_STUB = new PouchError({
+  status: 412,
+  error: 'missing_stub'
+});
+
+var INVALID_URL = new PouchError({
+  status: 413,
+  error: 'invalid_url',
+  reason: 'Provided URL is invalid'
+});
+
+function createError(error, reason) {
+  function CustomPouchError(reason) {
+    // inherit error properties from our parent error manually
+    // so as to allow proper JSON parsing.
+    /* jshint ignore:start */
+    for (var p in error) {
+      if (typeof error[p] !== 'function') {
+        this[p] = error[p];
+      }
+    }
+    /* jshint ignore:end */
+    if (reason !== undefined) {
+      this.reason = reason;
+    }
+  }
+  CustomPouchError.prototype = PouchError.prototype;
+  return new CustomPouchError(reason);
+}
+
+function generateErrorFromResponse(err) {
+
+  if (typeof err !== 'object') {
+    var data = err;
+    err = UNKNOWN_ERROR;
+    err.data = data;
+  }
+
+  if ('error' in err && err.error === 'conflict') {
+    err.name = 'conflict';
+    err.status = 409;
+  }
+
+  if (!('name' in err)) {
+    err.name = err.error || 'unknown';
+  }
+
+  if (!('status' in err)) {
+    err.status = 500;
+  }
+
+  if (!('message' in err)) {
+    err.message = err.message || err.reason;
+  }
+
+  return err;
+}
+
+exports.UNAUTHORIZED = UNAUTHORIZED;
+exports.MISSING_BULK_DOCS = MISSING_BULK_DOCS;
+exports.MISSING_DOC = MISSING_DOC;
+exports.REV_CONFLICT = REV_CONFLICT;
+exports.INVALID_ID = INVALID_ID;
+exports.MISSING_ID = MISSING_ID;
+exports.RESERVED_ID = RESERVED_ID;
+exports.NOT_OPEN = NOT_OPEN;
+exports.UNKNOWN_ERROR = UNKNOWN_ERROR;
+exports.BAD_ARG = BAD_ARG;
+exports.INVALID_REQUEST = INVALID_REQUEST;
+exports.QUERY_PARSE_ERROR = QUERY_PARSE_ERROR;
+exports.DOC_VALIDATION = DOC_VALIDATION;
+exports.BAD_REQUEST = BAD_REQUEST;
+exports.NOT_AN_OBJECT = NOT_AN_OBJECT;
+exports.DB_MISSING = DB_MISSING;
+exports.WSQ_ERROR = WSQ_ERROR;
+exports.LDB_ERROR = LDB_ERROR;
+exports.FORBIDDEN = FORBIDDEN;
+exports.INVALID_REV = INVALID_REV;
+exports.FILE_EXISTS = FILE_EXISTS;
+exports.MISSING_STUB = MISSING_STUB;
+exports.IDB_ERROR = IDB_ERROR;
+exports.INVALID_URL = INVALID_URL;
+exports.createError = createError;
+exports.generateErrorFromResponse = generateErrorFromResponse;
+},{"inherits":8}],16:[function(_dereq_,module,exports){
+"use strict";
+
+// Extends method
+// (taken from http://code.jquery.com/jquery-1.9.0.js)
+// Populate the class2type map
+var class2type = {};
+
+var types = [
+  "Boolean", "Number", "String", "Function", "Array",
+  "Date", "RegExp", "Object", "Error"
+];
+for (var i = 0; i < types.length; i++) {
+  var typename = types[i];
+  class2type["[object " + typename + "]"] = typename.toLowerCase();
+}
+
+var core_toString = class2type.toString;
+var core_hasOwn = class2type.hasOwnProperty;
+
+function type(obj) {
+  if (obj === null) {
+    return String(obj);
+  }
+  return typeof obj === "object" || typeof obj === "function" ?
+    class2type[core_toString.call(obj)] || "object" :
+    typeof obj;
+}
+
+function isWindow(obj) {
+  return obj !== null && obj === obj.window;
+}
+
+function isPlainObject(obj) {
+  // Must be an Object.
+  // Because of IE, we also have to check the presence of
+  // the constructor property.
+  // Make sure that DOM nodes and window objects don't pass through, as well
+  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
+    return false;
+  }
+
+  try {
+    // Not own constructor property must be Object
+    if (obj.constructor &&
+      !core_hasOwn.call(obj, "constructor") &&
+      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+      return false;
+    }
+  } catch ( e ) {
+    // IE8,9 Will throw exceptions on certain host objects #9897
+    return false;
+  }
+
+  // Own properties are enumerated firstly, so to speed up,
+  // if last one is own, then all properties are own.
+  var key;
+  for (key in obj) {}
+
+  return key === undefined || core_hasOwn.call(obj, key);
+}
+
+
+function isFunction(obj) {
+  return type(obj) === "function";
+}
+
+var isArray = Array.isArray || function (obj) {
+  return type(obj) === "array";
+};
+
+function extend() {
+  // originally extend() was recursive, but this ended up giving us
+  // "call stack exceeded", so it's been unrolled to use a literal stack
+  // (see https://github.com/pouchdb/pouchdb/issues/2543)
+  var stack = [];
+  var i = -1;
+  var len = arguments.length;
+  var args = new Array(len);
+  while (++i < len) {
+    args[i] = arguments[i];
+  }
+  var container = {};
+  stack.push({args: args, result: {container: container, key: 'key'}});
+  var next;
+  while ((next = stack.pop())) {
+    extendInner(stack, next.args, next.result);
+  }
+  return container.key;
+}
+
+function extendInner(stack, args, result) {
+  var options, name, src, copy, copyIsArray, clone,
+    target = args[0] || {},
+    i = 1,
+    length = args.length,
+    deep = false,
+    numericStringRegex = /\d+/,
+    optionsIsArray;
+
+  // Handle a deep copy situation
+  if (typeof target === "boolean") {
+    deep = target;
+    target = args[1] || {};
+    // skip the boolean and the target
+    i = 2;
+  }
+
+  // Handle case when target is a string or something (possible in deep copy)
+  if (typeof target !== "object" && !isFunction(target)) {
+    target = {};
+  }
+
+  // extend jQuery itself if only one argument is passed
+  if (length === i) {
+    /* jshint validthis: true */
+    target = this;
+    --i;
+  }
+
+  for (; i < length; i++) {
+    // Only deal with non-null/undefined values
+    if ((options = args[i]) != null) {
+      optionsIsArray = isArray(options);
+      // Extend the base object
+      for (name in options) {
+        //if (options.hasOwnProperty(name)) {
+        if (!(name in Object.prototype)) {
+          if (optionsIsArray && !numericStringRegex.test(name)) {
+            continue;
+          }
+
+          src = target[name];
+          copy = options[name];
+
+          // Prevent never-ending loop
+          if (target === copy) {
+            continue;
+          }
+
+          // Recurse if we're merging plain objects or arrays
+          if (deep && copy && (isPlainObject(copy) ||
+              (copyIsArray = isArray(copy)))) {
+            if (copyIsArray) {
+              copyIsArray = false;
+              clone = src && isArray(src) ? src : [];
+
+            } else {
+              clone = src && isPlainObject(src) ? src : {};
+            }
+
+            // Never move original objects, clone them
+            stack.push({
+              args: [deep, clone, copy],
+              result: {
+                container: target,
+                key: name
+              }
+            });
+
+          // Don't bring in undefined values
+          } else if (copy !== undefined) {
+            if (!(isArray(options) && isFunction(copy))) {
+              target[name] = copy;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // "Return" the modified object by setting the key
+  // on the given container
+  result.container[result.key] = target;
+}
+
+
+module.exports = extend;
+
+
+
+},{}],17:[function(_dereq_,module,exports){
+'use strict';
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var lie = _interopDefault(_dereq_('lie'));
+
+/* istanbul ignore next */
+var PouchPromise = typeof Promise === 'function' ? Promise : lie;
+
+module.exports = PouchPromise;
+},{"lie":18}],18:[function(_dereq_,module,exports){
+'use strict';
+var immediate = _dereq_('immediate');
+
+/* istanbul ignore next */
+function INTERNAL() {}
+
+var handlers = {};
+
+var REJECTED = ['REJECTED'];
+var FULFILLED = ['FULFILLED'];
+var PENDING = ['PENDING'];
+
+module.exports = Promise;
+
+function Promise(resolver) {
+  if (typeof resolver !== 'function') {
+    throw new TypeError('resolver must be a function');
+  }
+  this.state = PENDING;
+  this.queue = [];
+  this.outcome = void 0;
+  if (resolver !== INTERNAL) {
+    safelyResolveThenable(this, resolver);
+  }
+}
+
+Promise.prototype["catch"] = function (onRejected) {
+  return this.then(null, onRejected);
+};
+Promise.prototype.then = function (onFulfilled, onRejected) {
+  if (typeof onFulfilled !== 'function' && this.state === FULFILLED ||
+    typeof onRejected !== 'function' && this.state === REJECTED) {
+    return this;
+  }
+  var promise = new this.constructor(INTERNAL);
+  if (this.state !== PENDING) {
+    var resolver = this.state === FULFILLED ? onFulfilled : onRejected;
+    unwrap(promise, resolver, this.outcome);
+  } else {
+    this.queue.push(new QueueItem(promise, onFulfilled, onRejected));
+  }
+
+  return promise;
+};
+function QueueItem(promise, onFulfilled, onRejected) {
+  this.promise = promise;
+  if (typeof onFulfilled === 'function') {
+    this.onFulfilled = onFulfilled;
+    this.callFulfilled = this.otherCallFulfilled;
+  }
+  if (typeof onRejected === 'function') {
+    this.onRejected = onRejected;
+    this.callRejected = this.otherCallRejected;
+  }
+}
+QueueItem.prototype.callFulfilled = function (value) {
+  handlers.resolve(this.promise, value);
+};
+QueueItem.prototype.otherCallFulfilled = function (value) {
+  unwrap(this.promise, this.onFulfilled, value);
+};
+QueueItem.prototype.callRejected = function (value) {
+  handlers.reject(this.promise, value);
+};
+QueueItem.prototype.otherCallRejected = function (value) {
+  unwrap(this.promise, this.onRejected, value);
+};
+
+function unwrap(promise, func, value) {
+  immediate(function () {
+    var returnValue;
+    try {
+      returnValue = func(value);
+    } catch (e) {
+      return handlers.reject(promise, e);
+    }
+    if (returnValue === promise) {
+      handlers.reject(promise, new TypeError('Cannot resolve promise with itself'));
+    } else {
+      handlers.resolve(promise, returnValue);
+    }
+  });
+}
+
+handlers.resolve = function (self, value) {
+  var result = tryCatch(getThen, value);
+  if (result.status === 'error') {
+    return handlers.reject(self, result.value);
+  }
+  var thenable = result.value;
+
+  if (thenable) {
+    safelyResolveThenable(self, thenable);
+  } else {
+    self.state = FULFILLED;
+    self.outcome = value;
+    var i = -1;
+    var len = self.queue.length;
+    while (++i < len) {
+      self.queue[i].callFulfilled(value);
+    }
+  }
+  return self;
+};
+handlers.reject = function (self, error) {
+  self.state = REJECTED;
+  self.outcome = error;
+  var i = -1;
+  var len = self.queue.length;
+  while (++i < len) {
+    self.queue[i].callRejected(error);
+  }
+  return self;
+};
+
+function getThen(obj) {
+  // Make sure we only access the accessor once as required by the spec
+  var then = obj && obj.then;
+  if (obj && typeof obj === 'object' && typeof then === 'function') {
+    return function appyThen() {
+      then.apply(obj, arguments);
+    };
+  }
+}
+
+function safelyResolveThenable(self, thenable) {
+  // Either fulfill, reject or reject with error
+  var called = false;
+  function onError(value) {
+    if (called) {
+      return;
+    }
+    called = true;
+    handlers.reject(self, value);
+  }
+
+  function onSuccess(value) {
+    if (called) {
+      return;
+    }
+    called = true;
+    handlers.resolve(self, value);
+  }
+
+  function tryToUnwrap() {
+    thenable(onSuccess, onError);
+  }
+
+  var result = tryCatch(tryToUnwrap);
+  if (result.status === 'error') {
+    onError(result.value);
+  }
+}
+
+function tryCatch(func, value) {
+  var out = {};
+  try {
+    out.value = func(value);
+    out.status = 'success';
+  } catch (e) {
+    out.status = 'error';
+    out.value = e;
+  }
+  return out;
+}
+
+Promise.resolve = resolve;
+function resolve(value) {
+  if (value instanceof this) {
+    return value;
+  }
+  return handlers.resolve(new this(INTERNAL), value);
+}
+
+Promise.reject = reject;
+function reject(reason) {
+  var promise = new this(INTERNAL);
+  return handlers.reject(promise, reason);
+}
+
+Promise.all = all;
+function all(iterable) {
+  var self = this;
+  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
+    return this.reject(new TypeError('must be an array'));
+  }
+
+  var len = iterable.length;
+  var called = false;
+  if (!len) {
+    return this.resolve([]);
+  }
+
+  var values = new Array(len);
+  var resolved = 0;
+  var i = -1;
+  var promise = new this(INTERNAL);
+
+  while (++i < len) {
+    allResolver(iterable[i], i);
+  }
+  return promise;
+  function allResolver(value, i) {
+    self.resolve(value).then(resolveFromAll, function (error) {
+      if (!called) {
+        called = true;
+        handlers.reject(promise, error);
+      }
+    });
+    function resolveFromAll(outValue) {
+      values[i] = outValue;
+      if (++resolved === len && !called) {
+        called = true;
+        handlers.resolve(promise, values);
+      }
+    }
+  }
+}
+
+Promise.race = race;
+function race(iterable) {
+  var self = this;
+  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
+    return this.reject(new TypeError('must be an array'));
+  }
+
+  var len = iterable.length;
+  var called = false;
+  if (!len) {
+    return this.resolve([]);
+  }
+
+  var i = -1;
+  var promise = new this(INTERNAL);
+
+  while (++i < len) {
+    resolver(iterable[i]);
+  }
+  return promise;
+  function resolver(value) {
+    self.resolve(value).then(function (response) {
+      if (!called) {
+        called = true;
+        handlers.resolve(promise, response);
+      }
+    }, function (error) {
+      if (!called) {
+        called = true;
+        handlers.reject(promise, error);
+      }
+    });
+  }
+}
+
+},{"immediate":7}],19:[function(_dereq_,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"C:\\workspace\\pouchdb-authentication\\node_modules\\process\\browser.js":22,"argsarray":3,"debug":4,"events":6,"inherits":8,"pouchdb-errors":15,"pouchdb-promise":21}],20:[function(_dereq_,module,exports){
+module.exports=_dereq_(18)
+},{"immediate":7}],21:[function(_dereq_,module,exports){
+module.exports=_dereq_(17)
+},{"lie":20}],22:[function(_dereq_,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -3615,7 +3780,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],20:[function(_dereq_,module,exports){
+},{}],23:[function(_dereq_,module,exports){
 (function (name, context, definition) {
   if (typeof module !== 'undefined' && module.exports) module.exports = definition();
   else if (typeof define === 'function' && define.amd) define(definition);
