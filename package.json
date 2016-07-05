@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "inherits": "2.0.1",
-    "lie": "3.0.2",
     "pouchdb-ajax": "5.4.4",
     "pouchdb-extend": "0.1.2",
     "pouchdb-promise": "5.4.4",
@@ -37,19 +36,19 @@
     "url-join": "1.1.0"
   },
   "devDependencies": {
-    "bluebird": "1.2.4",
-    "browserify": "3.44.2",
+    "bluebird": "^2.0.0",
+    "browserify": "13.0.1",
     "bundle-collapser": "^1.2.1",
-    "chai": "1.8.1",
-    "chai-as-promised": "4.1.1",
-    "istanbul": "0.1.46",
-    "jshint": "2.3.0",
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.3.0",
+    "istanbul": "^0.1.46",
+    "jshint": "2.8.0",
     "mkdirp": "^0.5.1",
-    "mocha": "1.21.5",
+    "mocha": "^2.3.3",
     "phantomjs-prebuilt": "2.1.7",
     "pouchdb-memory": "^1.1.0",
-    "uglify-js": "2.4.24",
-    "zuul": "3.10.1"
+    "uglify-js": "^2.4.24",
+    "zuul": "^3.10.1"
   },
   "files": [
     "lib",
