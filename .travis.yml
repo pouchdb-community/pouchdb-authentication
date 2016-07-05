@@ -4,7 +4,7 @@ services:
   - couchdb
 
 node_js:
-  - "stable"
+  - "5"
 
 sudo: false
 

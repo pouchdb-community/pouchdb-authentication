@@ -8,7 +8,7 @@
     "url": "git://github.com/nolanlawson/pouchdb-authentication.git"
   },
   "scripts": {
-    "jshint": "jshint -c .jshintrc lib/*.js test/test.js",
+    "jshint": "jshint -c .jshintrc lib/ test/test.js",
     "build-js": "mkdir -p dist && browserify lib/index.js -s PouchAuthentication -o dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
@@ -33,6 +33,7 @@
     "pouchdb-ajax": "5.4.4",
     "pouchdb-extend": "0.1.2",
     "pouchdb-promise": "5.4.4",
+    "pouchdb-utils": "5.4.5",
     "url-join": "1.1.0"
   },
   "devDependencies": {
