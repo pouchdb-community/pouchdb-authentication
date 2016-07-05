@@ -9,7 +9,7 @@
   },
   "scripts": {
     "jshint": "jshint -c .jshintrc lib/ test/test.js",
-    "build-js": "mkdir -p dist && browserify lib/index.js -s PouchAuthentication -o dist/pouchdb.authentication.js",
+    "build-js": "mkdirp dist && browserify lib/index.js -s PouchAuthentication -o dist/pouchdb.authentication.js",
     "min": "uglifyjs dist/pouchdb.authentication.js -mc > dist/pouchdb.authentication.min.js",
     "build": "npm run build-js && npm run min",
     "dev": "zuul --local 9000 --no-coverage --ui mocha-bdd test/test.js",
@@ -43,6 +43,7 @@
     "chai-as-promised": "4.1.1",
     "istanbul": "0.1.46",
     "jshint": "2.3.0",
+    "mkdirp": "^0.5.1",
     "mocha": "1.21.5",
     "phantomjs-prebuilt": "2.1.7",
     "pouchdb-memory": "^1.1.0",
