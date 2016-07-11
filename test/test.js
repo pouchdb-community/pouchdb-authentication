@@ -14,20 +14,26 @@ var users = ['batman', 'superman', 'green_lantern', 'robin', 'aquaman', 'spiderm
 
 var testCases = [
   'normal',
-  'trailing-slash'
+  'trailing-slash',
+  'basic-auth'
 ];
 
 testCases.forEach(function (testCase) {
 
   describe('authentication-' + testCase, function () {
 
-    var dbName = testCase === 'normal' ?
+    var dbName = testCase === 'normal' || testCase === 'basic-auth' ?
       'http://localhost:5984/testdb' :
-      'http://localhost:5984/testdb/'; // trailing slash
+        'http://localhost:5984/testdb/'; // trailing slash
 
     var db;
 
     beforeEach(function () {
+      if (testCase === 'basic-auth') {
+        return new PouchDB(dbName).signup('admin2', 'password').then(function () {
+          db = new PouchDB(dbName.replace('http://', 'http://admin2:password@'));
+        });
+      }
       db = new PouchDB(dbName);
       return db;
     });
