@@ -29,10 +29,10 @@
   },
   "dependencies": {
     "inherits": "2.0.1",
-    "pouchdb-ajax": "5.4.4",
+    "pouchdb-ajax": "6.0.3",
     "pouchdb-extend": "0.1.2",
-    "pouchdb-promise": "5.4.4",
-    "pouchdb-utils": "5.4.5",
+    "pouchdb-promise": "6.0.3",
+    "pouchdb-utils": "6.0.3",
     "url-join": "1.1.0"
   },
   "devDependencies": {
@@ -46,7 +46,7 @@
     "mkdirp": "^0.5.1",
     "mocha": "^2.3.3",
     "phantomjs-prebuilt": "2.1.7",
-    "pouchdb-memory": "^1.1.0",
+    "pouchdb-memory": "^6.0.0",
     "uglify-js": "^2.4.24",
     "zuul": "^3.10.1"
   },

@@ -35,23 +35,22 @@ testCases.forEach(function (testCase) {
       return db.logout().then(function () {
         return db.destroy().then(function () {
           var usersUrl = utils.getUsersUrl(db);
-          return new PouchDB(usersUrl).then(function (usersDb) {
-            // remove the fake users, hopefully we're in the admin party
-            return usersDb.allDocs({
-              include_docs: true,
-              keys: users.map(function (user) {
-                return 'org.couchdb.user:' + user;
-              })
-            }).then(function (res) {
-              var rows = res.rows.filter(function (row) {
-                return row.doc;
-              });
-              var docs = rows.map(function (row) {
-                row.doc._deleted = true;
-                return row.doc;
-              });
-              return usersDb.bulkDocs({docs: docs});
+          var usersDb = new PouchDB(usersUrl);
+          // remove the fake users, hopefully we're in the admin party
+          return usersDb.allDocs({
+            include_docs: true,
+            keys: users.map(function (user) {
+              return 'org.couchdb.user:' + user;
+            })
+          }).then(function (res) {
+            var rows = res.rows.filter(function (row) {
+              return row.doc;
             });
+            var docs = rows.map(function (row) {
+              row.doc._deleted = true;
+              return row.doc;
+            });
+            return usersDb.bulkDocs({docs: docs});
           });
         });
       });
