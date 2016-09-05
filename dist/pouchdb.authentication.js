@@ -2,11 +2,15 @@
 (function (process){
 'use strict';
 
-var Promise = require(16);
-var urlJoin = require(21);
+var Promise = require(13);
+var urlJoin = require(16);
 
 function getBaseUrl(db) {
-  return db.getUrl().replace(/\/[^\/]+\/?$/, '');
+  if (typeof db.getUrl === 'function') { // pouchdb pre-6.0.0
+    return db.getUrl().replace(/\/[^\/]+\/?$/, '');
+  } else { // pouchdb post-6.0.0
+    return db.name.replace(/\/[^\/]+\/?$/, '');
+  }
 }
 exports.getUsersUrl = function (db) {
   return urlJoin(getBaseUrl(db), '/_users');
@@ -84,16 +88,16 @@ exports.toPromise = function (func) {
 };
 
 exports.inherits = require(7);
-exports.extend = require(15);
+exports.extend = require(12);
 exports.ajax = require(11);
 exports.clone = function (obj) {
   return exports.extend(true, {}, obj);
 };
-exports.uuid = require(17).uuid;
+exports.uuid = require(14).uuid;
 exports.Promise = Promise;
 
-}).call(this,require(20))
-},{"11":11,"15":15,"16":16,"17":17,"20":20,"21":21,"7":7}],2:[function(require,module,exports){
+}).call(this,require(15))
+},{"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"7":7}],2:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -1306,16 +1310,63 @@ function plural(ms, n, name) {
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var pouchdbBinaryUtils = require(13);
-var Promise = _interopDefault(require(16));
+var lie = _interopDefault(require(9));
 var jsExtend = require(8);
-var pouchdbErrors = require(14);
-var pouchdbUtils = require(12);
+var inherits = _interopDefault(require(7));
+var getArguments = _interopDefault(require(2));
+var debug = _interopDefault(require(3));
+var events = require(5);
 
+// Abstracts constructing a Blob object, so it also works in older
+// browsers that don't support the native Blob constructor (e.g.
+// old QtWebKit versions, Android < 4.4).
+function createBlob(parts, properties) {
+  /* global BlobBuilder,MSBlobBuilder,MozBlobBuilder,WebKitBlobBuilder */
+  parts = parts || [];
+  properties = properties || {};
+  try {
+    return new Blob(parts, properties);
+  } catch (e) {
+    if (e.name !== "TypeError") {
+      throw e;
+    }
+    var Builder = typeof BlobBuilder !== 'undefined' ? BlobBuilder :
+                  typeof MSBlobBuilder !== 'undefined' ? MSBlobBuilder :
+                  typeof MozBlobBuilder !== 'undefined' ? MozBlobBuilder :
+                  WebKitBlobBuilder;
+    var builder = new Builder();
+    for (var i = 0; i < parts.length; i += 1) {
+      builder.append(parts[i]);
+    }
+    return builder.getBlob(properties.type);
+  }
+}
+
+// simplified API. universal browser support is assumed
+function readAsArrayBuffer(blob, callback) {
+  if (typeof FileReader === 'undefined') {
+    // fix for Firefox in a web worker:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
+    return callback(new FileReaderSync().readAsArrayBuffer(blob));
+  }
+
+  var reader = new FileReader();
+  reader.onloadend = function (e) {
+    var result = e.target.result || new ArrayBuffer(0);
+    callback(result);
+  };
+  reader.readAsArrayBuffer(blob);
+}
+
+/* istanbul ignore next */
+var PouchPromise = typeof Promise === 'function' ? Promise : lie;
+
+/* global fetch */
+/* global Headers */
 function wrappedFetch() {
   var wrappedPromise = {};
 
-  var promise = new Promise(function (resolve, reject) {
+  var promise = new PouchPromise(function (resolve, reject) {
     wrappedPromise.resolve = resolve;
     wrappedPromise.reject = reject;
   });
@@ -1328,7 +1379,7 @@ function wrappedFetch() {
 
   wrappedPromise.promise = promise;
 
-  Promise.resolve().then(function () {
+  PouchPromise.resolve().then(function () {
     return fetch.apply(null, args);
   }).then(function (response) {
     wrappedPromise.resolve(response);
@@ -1357,7 +1408,7 @@ function fetchRequest(options, callback) {
   }
 
   if (options.body && (options.body instanceof Blob)) {
-    pouchdbBinaryUtils.readAsArrayBuffer(options.body, function (arrayBuffer) {
+    readAsArrayBuffer(options.body, function (arrayBuffer) {
       fetchOptions.body = arrayBuffer;
     });
   } else if (options.body &&
@@ -1419,11 +1470,28 @@ function xhRequest(options, callback) {
 
   var abortReq = function () {
     xhr.abort();
+    cleanUp();
   };
 
   var timeoutReq = function () {
     timedout = true;
     xhr.abort();
+    cleanUp();
+  };
+
+  var ret = {abort: abortReq};
+
+  var cleanUp = function () {
+    clearTimeout(timer);
+    ret.abort = function () {};
+    if (xhr) {
+      xhr.onprogress = undefined;
+      if (xhr.upload) {
+        xhr.upload.onprogress = undefined;
+      }
+      xhr.onreadystatechange = undefined;
+      xhr = undefined;
+    }
   };
 
   if (options.xhr) {
@@ -1435,8 +1503,7 @@ function xhRequest(options, callback) {
   try {
     xhr.open(options.method, options.url);
   } catch (exception) {
-   /* error code hardcoded to throw INVALID_URL */
-    callback(exception, {statusCode: 413});
+    return callback(new Error(exception.name || 'Url is invalid'));
   }
 
   xhr.withCredentials = ('withCredentials' in options) ?
@@ -1494,7 +1561,7 @@ function xhRequest(options, callback) {
     if (xhr.status >= 200 && xhr.status < 300) {
       var data;
       if (options.binary) {
-        data = pouchdbBinaryUtils.blob([xhr.response || ''], {
+        data = createBlob([xhr.response || ''], {
           type: xhr.getResponseHeader('Content-Type')
         });
       } else {
@@ -1503,27 +1570,29 @@ function xhRequest(options, callback) {
       callback(null, response, data);
     } else {
       var err = {};
-      if(timedout) {
+      if (timedout) {
         err = new Error('ETIMEDOUT');
-        response.statusCode = 400;      // for consistency with node request
-      } else {
+        err.code = 'ETIMEDOUT';
+      } else if (typeof xhr.response === 'string') {
         try {
           err = JSON.parse(xhr.response);
         } catch(e) {}
       }
-      callback(err, response);
+      err.status = xhr.status;
+      callback(err);
     }
+    cleanUp();
   };
 
   if (options.body && (options.body instanceof Blob)) {
-    pouchdbBinaryUtils.readAsArrayBuffer(options.body, function (arrayBuffer) {
+    readAsArrayBuffer(options.body, function (arrayBuffer) {
       xhr.send(arrayBuffer);
     });
   } else {
     xhr.send(options.body);
   }
 
-  return {abort: abortReq};
+  return ret;
 }
 
 function testXhr() {
@@ -1545,172 +1614,198 @@ function ajax$1(options, callback) {
   }
 }
 
-// the blob already has a type; do nothing
-var res = function () {};
+inherits(PouchError, Error);
 
-function defaultBody() {
-  return '';
+function PouchError(opts) {
+  Error.call(this, opts.reason);
+  this.status = opts.status;
+  this.name = opts.error;
+  this.message = opts.reason;
+  this.error = true;
 }
 
-function ajaxCore(options, callback) {
-
-  options = pouchdbUtils.clone(options);
-
-  var defaultOptions = {
-    method : "GET",
-    headers: {},
-    json: true,
-    processData: true,
-    timeout: 10000,
-    cache: false
-  };
-
-  options = jsExtend.extend(defaultOptions, options);
-
-  function onSuccess(obj, resp, cb) {
-    if (!options.binary && options.json && typeof obj === 'string') {
-      try {
-        obj = JSON.parse(obj);
-      } catch (e) {
-        // Probably a malformed JSON from server
-        return cb(e);
-      }
-    }
-    if (Array.isArray(obj)) {
-      obj = obj.map(function (v) {
-        if (v.error || v.missing) {
-          return pouchdbErrors.generateErrorFromResponse(v);
-        } else {
-          return v;
-        }
-      });
-    }
-    if (options.binary) {
-      res(obj, resp);
-    }
-    cb(null, obj, resp);
-  }
-
-  function onError(err, cb) {
-    var errParsed, errObj;
-    if (err.code && err.status) {
-      var err2 = new Error(err.message || err.code);
-      err2.status = err.status;
-      return cb(err2);
-    }
-    /* istanbul ignore if */
-    if (err.message && err.message === 'ETIMEDOUT') {
-      return cb(err);
-    }
-    // We always get code && status in node
-    /* istanbul ignore next */
-    try {
-      errParsed = JSON.parse(err.responseText);
-      //would prefer not to have a try/catch clause
-      errObj = pouchdbErrors.generateErrorFromResponse(errParsed);
-    } catch (e) {
-      errObj = pouchdbErrors.generateErrorFromResponse(err);
-    }
-    /* istanbul ignore next */
-    cb(errObj);
-  }
-
-
-  if (options.json) {
-    if (!options.binary) {
-      options.headers.Accept = 'application/json';
-    }
-    options.headers['Content-Type'] = options.headers['Content-Type'] ||
-      'application/json';
-  }
-
-  if (options.binary) {
-    options.encoding = null;
-    options.json = false;
-  }
-
-  if (!options.processData) {
-    options.json = false;
-  }
-
-  return ajax$1(options, function (err, response, body) {
-    if (err) {
-      err.status = response ? response.statusCode : 400;
-      return onError(err, callback);
-    }
-
-    var error;
-    var content_type = response.headers && response.headers['content-type'];
-    var data = body || defaultBody();
-
-    // CouchDB doesn't always return the right content-type for JSON data, so
-    // we check for ^{ and }$ (ignoring leading/trailing whitespace)
-    if (!options.binary && (options.json || !options.processData) &&
-        typeof data !== 'object' &&
-        (/json/.test(content_type) ||
-         (/^[\s]*\{/.test(data) && /\}[\s]*$/.test(data)))) {
-      try {
-        data = JSON.parse(data.toString());
-      } catch (e) {}
-    }
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      onSuccess(data, response, callback);
-    } else {
-      error = pouchdbErrors.generateErrorFromResponse(data);
-      error.status = response.statusCode;
-      callback(error);
-    }
+PouchError.prototype.toString = function () {
+  return JSON.stringify({
+    status: this.status,
+    name: this.name,
+    message: this.message,
+    reason: this.reason
   });
-}
+};
 
-function ajax(opts, callback) {
+var UNAUTHORIZED = new PouchError({
+  status: 401,
+  error: 'unauthorized',
+  reason: "Name or password is incorrect."
+});
 
-  // cache-buster, specifically designed to work around IE's aggressive caching
-  // see http://www.dashbay.com/2011/05/internet-explorer-caches-ajax/
-  // Also Safari caches POSTs, so we need to cache-bust those too.
-  var ua = (navigator && navigator.userAgent) ?
-    navigator.userAgent.toLowerCase() : '';
+var MISSING_BULK_DOCS = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: "Missing JSON list of 'docs'"
+});
 
-  var isSafari = ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1;
-  var isIE = ua.indexOf('msie') !== -1;
-  var isEdge = ua.indexOf('edge') !== -1;
+var MISSING_DOC = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'missing'
+});
 
-  // it appears the new version of safari also caches GETs,
-  // see https://github.com/pouchdb/pouchdb/issues/5010
-  var shouldCacheBust = (isSafari ||
-    ((isIE || isEdge) && opts.method === 'GET'));
+var REV_CONFLICT = new PouchError({
+  status: 409,
+  error: 'conflict',
+  reason: 'Document update conflict'
+});
 
-  var cache = 'cache' in opts ? opts.cache : true;
+var INVALID_ID = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: '_id field must contain a string'
+});
 
-  var isBlobUrl = /^blob:/.test(opts.url); // don't append nonces for blob URLs
+var MISSING_ID = new PouchError({
+  status: 412,
+  error: 'missing_id',
+  reason: '_id is required for puts'
+});
 
-  if (!isBlobUrl && (shouldCacheBust || !cache)) {
-    var hasArgs = opts.url.indexOf('?') !== -1;
-    opts.url += (hasArgs ? '&' : '?') + '_nonce=' + Date.now();
+var RESERVED_ID = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Only reserved document ids may start with underscore.'
+});
+
+var NOT_OPEN = new PouchError({
+  status: 412,
+  error: 'precondition_failed',
+  reason: 'Database not open'
+});
+
+var UNKNOWN_ERROR = new PouchError({
+  status: 500,
+  error: 'unknown_error',
+  reason: 'Database encountered an unknown error'
+});
+
+var BAD_ARG = new PouchError({
+  status: 500,
+  error: 'badarg',
+  reason: 'Some query argument is invalid'
+});
+
+var INVALID_REQUEST = new PouchError({
+  status: 400,
+  error: 'invalid_request',
+  reason: 'Request was invalid'
+});
+
+var QUERY_PARSE_ERROR = new PouchError({
+  status: 400,
+  error: 'query_parse_error',
+  reason: 'Some query parameter is invalid'
+});
+
+var DOC_VALIDATION = new PouchError({
+  status: 500,
+  error: 'doc_validation',
+  reason: 'Bad special document member'
+});
+
+var BAD_REQUEST = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Something wrong with the request'
+});
+
+var NOT_AN_OBJECT = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Document must be a JSON object'
+});
+
+var DB_MISSING = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'Database not found'
+});
+
+var IDB_ERROR = new PouchError({
+  status: 500,
+  error: 'indexed_db_went_bad',
+  reason: 'unknown'
+});
+
+var WSQ_ERROR = new PouchError({
+  status: 500,
+  error: 'web_sql_went_bad',
+  reason: 'unknown'
+});
+
+var LDB_ERROR = new PouchError({
+  status: 500,
+  error: 'levelDB_went_went_bad',
+  reason: 'unknown'
+});
+
+var FORBIDDEN = new PouchError({
+  status: 403,
+  error: 'forbidden',
+  reason: 'Forbidden by design doc validate_doc_update function'
+});
+
+var INVALID_REV = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Invalid rev format'
+});
+
+var FILE_EXISTS = new PouchError({
+  status: 412,
+  error: 'file_exists',
+  reason: 'The database could not be created, the file already exists.'
+});
+
+var MISSING_STUB = new PouchError({
+  status: 412,
+  error: 'missing_stub'
+});
+
+var INVALID_URL = new PouchError({
+  status: 413,
+  error: 'invalid_url',
+  reason: 'Provided URL is invalid'
+});
+
+function generateErrorFromResponse(err) {
+
+  if (typeof err !== 'object') {
+    var data = err;
+    err = UNKNOWN_ERROR;
+    err.data = data;
   }
 
-  return ajaxCore(opts, callback);
+  if ('error' in err && err.error === 'conflict') {
+    err.name = 'conflict';
+    err.status = 409;
+  }
+
+  if (!('name' in err)) {
+    err.name = err.error || 'unknown';
+  }
+
+  if (!('status' in err)) {
+    err.status = 500;
+  }
+
+  if (!('message' in err)) {
+    err.message = err.message || err.reason;
+  }
+
+  return err;
 }
-
-module.exports = ajax;
-},{"12":12,"13":13,"14":14,"16":16,"8":8}],12:[function(require,module,exports){
-(function (process){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var Promise = _interopDefault(require(16));
-var getArguments = _interopDefault(require(2));
-var debug = _interopDefault(require(3));
-var events = require(5);
-var inherits = _interopDefault(require(7));
-var pouchdbErrors = require(14);
 
 function isBinaryObject(object) {
-  return object instanceof ArrayBuffer ||
+  return (typeof ArrayBuffer !== 'undefined' && object instanceof ArrayBuffer) ||
     (typeof Blob !== 'undefined' && object instanceof Blob);
 }
 
@@ -1791,6 +1886,615 @@ function clone(object) {
 
   newObject = {};
   for (i in object) {
+    /* istanbul ignore else */
+    if (Object.prototype.hasOwnProperty.call(object, i)) {
+      var value = clone(object[i]);
+      if (typeof value !== 'undefined') {
+        newObject[i] = value;
+      }
+    }
+  }
+  return newObject;
+}
+
+var log = debug('pouchdb:api');
+
+// like underscore/lodash _.pick()
+function pick(obj, arr) {
+  var res = {};
+  for (var i = 0, len = arr.length; i < len; i++) {
+    var prop = arr[i];
+    if (prop in obj) {
+      res[prop] = obj[prop];
+    }
+  }
+  return res;
+}
+
+function isChromeApp() {
+  return (typeof chrome !== "undefined" &&
+    typeof chrome.storage !== "undefined" &&
+    typeof chrome.storage.local !== "undefined");
+}
+
+var hasLocal;
+
+if (isChromeApp()) {
+  hasLocal = false;
+} else {
+  try {
+    localStorage.setItem('_pouch_check_localstorage', 1);
+    hasLocal = !!localStorage.getItem('_pouch_check_localstorage');
+  } catch (e) {
+    hasLocal = false;
+  }
+}
+
+function hasLocalStorage() {
+  return hasLocal;
+}
+
+inherits(Changes, events.EventEmitter);
+
+/* istanbul ignore next */
+function attachBrowserEvents(self) {
+  if (isChromeApp()) {
+    chrome.storage.onChanged.addListener(function (e) {
+      // make sure it's event addressed to us
+      if (e.db_name != null) {
+        //object only has oldValue, newValue members
+        self.emit(e.dbName.newValue);
+      }
+    });
+  } else if (hasLocalStorage()) {
+    if (typeof addEventListener !== 'undefined') {
+      addEventListener("storage", function (e) {
+        self.emit(e.key);
+      });
+    } else { // old IE
+      window.attachEvent("storage", function (e) {
+        self.emit(e.key);
+      });
+    }
+  }
+}
+
+function Changes() {
+  events.EventEmitter.call(this);
+  this._listeners = {};
+
+  attachBrowserEvents(this);
+}
+Changes.prototype.addListener = function (dbName, id, db, opts) {
+  /* istanbul ignore if */
+  if (this._listeners[id]) {
+    return;
+  }
+  var self = this;
+  var inprogress = false;
+  function eventFunction() {
+    /* istanbul ignore if */
+    if (!self._listeners[id]) {
+      return;
+    }
+    if (inprogress) {
+      inprogress = 'waiting';
+      return;
+    }
+    inprogress = true;
+    var changesOpts = pick(opts, [
+      'style', 'include_docs', 'attachments', 'conflicts', 'filter',
+      'doc_ids', 'view', 'since', 'query_params', 'binary'
+    ]);
+
+    /* istanbul ignore next */
+    function onError() {
+      inprogress = false;
+    }
+
+    db.changes(changesOpts).on('change', function (c) {
+      if (c.seq > opts.since && !opts.cancelled) {
+        opts.since = c.seq;
+        opts.onChange(c);
+      }
+    }).on('complete', function () {
+      if (inprogress === 'waiting') {
+        setTimeout(function (){
+          eventFunction();
+        },0);
+      }
+      inprogress = false;
+    }).on('error', onError);
+  }
+  this._listeners[id] = eventFunction;
+  this.on(dbName, eventFunction);
+};
+
+Changes.prototype.removeListener = function (dbName, id) {
+  /* istanbul ignore if */
+  if (!(id in this._listeners)) {
+    return;
+  }
+  events.EventEmitter.prototype.removeListener.call(this, dbName,
+    this._listeners[id]);
+  delete this._listeners[id];
+};
+
+
+/* istanbul ignore next */
+Changes.prototype.notifyLocalWindows = function (dbName) {
+  //do a useless change on a storage thing
+  //in order to get other windows's listeners to activate
+  if (isChromeApp()) {
+    chrome.storage.local.set({dbName: dbName});
+  } else if (hasLocalStorage()) {
+    localStorage[dbName] = (localStorage[dbName] === "a") ? "b" : "a";
+  }
+};
+
+Changes.prototype.notify = function (dbName) {
+  this.emit(dbName);
+  this.notifyLocalWindows(dbName);
+};
+
+// BEGIN Math.uuid.js
+
+/*!
+Math.uuid.js (v1.4)
+http://www.broofa.com
+mailto:robert@broofa.com
+
+Copyright (c) 2010 Robert Kieffer
+Dual licensed under the MIT and GPL licenses.
+*/
+
+/*
+ * Generate a random uuid.
+ *
+ * USAGE: Math.uuid(length, radix)
+ *   length - the desired number of characters
+ *   radix  - the number of allowable values for each character.
+ *
+ * EXAMPLES:
+ *   // No arguments  - returns RFC4122, version 4 ID
+ *   >>> Math.uuid()
+ *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+ *
+ *   // One argument - returns ID of the specified length
+ *   >>> Math.uuid(15)     // 15 character ID (default base=62)
+ *   "VcydxgltxrVZSTV"
+ *
+ *   // Two arguments - returns ID of the specified length, and radix. 
+ *   // (Radix must be <= 62)
+ *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
+ *   "01001010"
+ *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
+ *   "47473046"
+ *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
+ *   "098F4D35"
+ */
+var chars = (
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+  'abcdefghijklmnopqrstuvwxyz'
+).split('');
+
+// the blob already has a type; do nothing
+var res$2 = function () {};
+
+function defaultBody() {
+  return '';
+}
+
+function ajaxCore(options, callback) {
+
+  options = clone(options);
+
+  var defaultOptions = {
+    method : "GET",
+    headers: {},
+    json: true,
+    processData: true,
+    timeout: 10000,
+    cache: false
+  };
+
+  options = jsExtend.extend(defaultOptions, options);
+
+  function onSuccess(obj, resp, cb) {
+    if (!options.binary && options.json && typeof obj === 'string') {
+      /* istanbul ignore next */
+      try {
+        obj = JSON.parse(obj);
+      } catch (e) {
+        // Probably a malformed JSON from server
+        return cb(e);
+      }
+    }
+    if (Array.isArray(obj)) {
+      obj = obj.map(function (v) {
+        if (v.error || v.missing) {
+          return generateErrorFromResponse(v);
+        } else {
+          return v;
+        }
+      });
+    }
+    if (options.binary) {
+      res$2(obj, resp);
+    }
+    cb(null, obj, resp);
+  }
+
+  if (options.json) {
+    if (!options.binary) {
+      options.headers.Accept = 'application/json';
+    }
+    options.headers['Content-Type'] = options.headers['Content-Type'] ||
+      'application/json';
+  }
+
+  if (options.binary) {
+    options.encoding = null;
+    options.json = false;
+  }
+
+  if (!options.processData) {
+    options.json = false;
+  }
+
+  return ajax$1(options, function (err, response, body) {
+
+    if (err) {
+      return callback(generateErrorFromResponse(err));
+    }
+
+    var error;
+    var content_type = response.headers && response.headers['content-type'];
+    var data = body || defaultBody();
+
+    // CouchDB doesn't always return the right content-type for JSON data, so
+    // we check for ^{ and }$ (ignoring leading/trailing whitespace)
+    if (!options.binary && (options.json || !options.processData) &&
+        typeof data !== 'object' &&
+        (/json/.test(content_type) ||
+         (/^[\s]*\{/.test(data) && /\}[\s]*$/.test(data)))) {
+      try {
+        data = JSON.parse(data.toString());
+      } catch (e) {}
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      onSuccess(data, response, callback);
+    } else {
+      error = generateErrorFromResponse(data);
+      error.status = response.statusCode;
+      callback(error);
+    }
+  });
+}
+
+function ajax(opts, callback) {
+
+  // cache-buster, specifically designed to work around IE's aggressive caching
+  // see http://www.dashbay.com/2011/05/internet-explorer-caches-ajax/
+  // Also Safari caches POSTs, so we need to cache-bust those too.
+  var ua = (navigator && navigator.userAgent) ?
+    navigator.userAgent.toLowerCase() : '';
+
+  var isSafari = ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1;
+  var isIE = ua.indexOf('msie') !== -1;
+  var isEdge = ua.indexOf('edge') !== -1;
+
+  // it appears the new version of safari also caches GETs,
+  // see https://github.com/pouchdb/pouchdb/issues/5010
+  var shouldCacheBust = (isSafari ||
+    ((isIE || isEdge) && opts.method === 'GET'));
+
+  var cache = 'cache' in opts ? opts.cache : true;
+
+  var isBlobUrl = /^blob:/.test(opts.url); // don't append nonces for blob URLs
+
+  if (!isBlobUrl && (shouldCacheBust || !cache)) {
+    var hasArgs = opts.url.indexOf('?') !== -1;
+    opts.url += (hasArgs ? '&' : '?') + '_nonce=' + Date.now();
+  }
+
+  return ajaxCore(opts, callback);
+}
+
+module.exports = ajax;
+},{"2":2,"3":3,"5":5,"7":7,"8":8,"9":9}],12:[function(require,module,exports){
+"use strict";
+
+// Extends method
+// (taken from http://code.jquery.com/jquery-1.9.0.js)
+// Populate the class2type map
+var class2type = {};
+
+var types = [
+  "Boolean", "Number", "String", "Function", "Array",
+  "Date", "RegExp", "Object", "Error"
+];
+for (var i = 0; i < types.length; i++) {
+  var typename = types[i];
+  class2type["[object " + typename + "]"] = typename.toLowerCase();
+}
+
+var core_toString = class2type.toString;
+var core_hasOwn = class2type.hasOwnProperty;
+
+function type(obj) {
+  if (obj === null) {
+    return String(obj);
+  }
+  return typeof obj === "object" || typeof obj === "function" ?
+    class2type[core_toString.call(obj)] || "object" :
+    typeof obj;
+}
+
+function isWindow(obj) {
+  return obj !== null && obj === obj.window;
+}
+
+function isPlainObject(obj) {
+  // Must be an Object.
+  // Because of IE, we also have to check the presence of
+  // the constructor property.
+  // Make sure that DOM nodes and window objects don't pass through, as well
+  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
+    return false;
+  }
+
+  try {
+    // Not own constructor property must be Object
+    if (obj.constructor &&
+      !core_hasOwn.call(obj, "constructor") &&
+      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+      return false;
+    }
+  } catch ( e ) {
+    // IE8,9 Will throw exceptions on certain host objects #9897
+    return false;
+  }
+
+  // Own properties are enumerated firstly, so to speed up,
+  // if last one is own, then all properties are own.
+  var key;
+  for (key in obj) {}
+
+  return key === undefined || core_hasOwn.call(obj, key);
+}
+
+
+function isFunction(obj) {
+  return type(obj) === "function";
+}
+
+var isArray = Array.isArray || function (obj) {
+  return type(obj) === "array";
+};
+
+function extend() {
+  // originally extend() was recursive, but this ended up giving us
+  // "call stack exceeded", so it's been unrolled to use a literal stack
+  // (see https://github.com/pouchdb/pouchdb/issues/2543)
+  var stack = [];
+  var i = -1;
+  var len = arguments.length;
+  var args = new Array(len);
+  while (++i < len) {
+    args[i] = arguments[i];
+  }
+  var container = {};
+  stack.push({args: args, result: {container: container, key: 'key'}});
+  var next;
+  while ((next = stack.pop())) {
+    extendInner(stack, next.args, next.result);
+  }
+  return container.key;
+}
+
+function extendInner(stack, args, result) {
+  var options, name, src, copy, copyIsArray, clone,
+    target = args[0] || {},
+    i = 1,
+    length = args.length,
+    deep = false,
+    numericStringRegex = /\d+/,
+    optionsIsArray;
+
+  // Handle a deep copy situation
+  if (typeof target === "boolean") {
+    deep = target;
+    target = args[1] || {};
+    // skip the boolean and the target
+    i = 2;
+  }
+
+  // Handle case when target is a string or something (possible in deep copy)
+  if (typeof target !== "object" && !isFunction(target)) {
+    target = {};
+  }
+
+  // extend jQuery itself if only one argument is passed
+  if (length === i) {
+    /* jshint validthis: true */
+    target = this;
+    --i;
+  }
+
+  for (; i < length; i++) {
+    // Only deal with non-null/undefined values
+    if ((options = args[i]) != null) {
+      optionsIsArray = isArray(options);
+      // Extend the base object
+      for (name in options) {
+        //if (options.hasOwnProperty(name)) {
+        if (!(name in Object.prototype)) {
+          if (optionsIsArray && !numericStringRegex.test(name)) {
+            continue;
+          }
+
+          src = target[name];
+          copy = options[name];
+
+          // Prevent never-ending loop
+          if (target === copy) {
+            continue;
+          }
+
+          // Recurse if we're merging plain objects or arrays
+          if (deep && copy && (isPlainObject(copy) ||
+              (copyIsArray = isArray(copy)))) {
+            if (copyIsArray) {
+              copyIsArray = false;
+              clone = src && isArray(src) ? src : [];
+
+            } else {
+              clone = src && isPlainObject(src) ? src : {};
+            }
+
+            // Never move original objects, clone them
+            stack.push({
+              args: [deep, clone, copy],
+              result: {
+                container: target,
+                key: name
+              }
+            });
+
+          // Don't bring in undefined values
+          } else if (copy !== undefined) {
+            if (!(isArray(options) && isFunction(copy))) {
+              target[name] = copy;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // "Return" the modified object by setting the key
+  // on the given container
+  result.container[result.key] = target;
+}
+
+
+module.exports = extend;
+
+
+
+},{}],13:[function(require,module,exports){
+'use strict';
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var lie = _interopDefault(require(9));
+
+/* istanbul ignore next */
+var PouchPromise = typeof Promise === 'function' ? Promise : lie;
+
+module.exports = PouchPromise;
+},{"9":9}],14:[function(require,module,exports){
+(function (process){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var lie = _interopDefault(require(9));
+var getArguments = _interopDefault(require(2));
+var debug = _interopDefault(require(3));
+var events = require(5);
+var inherits = _interopDefault(require(7));
+
+/* istanbul ignore next */
+var PouchPromise = typeof Promise === 'function' ? Promise : lie;
+
+function isBinaryObject(object) {
+  return (typeof ArrayBuffer !== 'undefined' && object instanceof ArrayBuffer) ||
+    (typeof Blob !== 'undefined' && object instanceof Blob);
+}
+
+function cloneArrayBuffer(buff) {
+  if (typeof buff.slice === 'function') {
+    return buff.slice(0);
+  }
+  // IE10-11 slice() polyfill
+  var target = new ArrayBuffer(buff.byteLength);
+  var targetArray = new Uint8Array(target);
+  var sourceArray = new Uint8Array(buff);
+  targetArray.set(sourceArray);
+  return target;
+}
+
+function cloneBinaryObject(object) {
+  if (object instanceof ArrayBuffer) {
+    return cloneArrayBuffer(object);
+  }
+  var size = object.size;
+  var type = object.type;
+  // Blob
+  if (typeof object.slice === 'function') {
+    return object.slice(0, size, type);
+  }
+  // PhantomJS slice() replacement
+  return object.webkitSlice(0, size, type);
+}
+
+// most of this is borrowed from lodash.isPlainObject:
+// https://github.com/fis-components/lodash.isplainobject/
+// blob/29c358140a74f252aeb08c9eb28bef86f2217d4a/index.js
+
+var funcToString = Function.prototype.toString;
+var objectCtorString = funcToString.call(Object);
+
+function isPlainObject(value) {
+  var proto = Object.getPrototypeOf(value);
+  /* istanbul ignore if */
+  if (proto === null) { // not sure when this happens, but I guess it can
+    return true;
+  }
+  var Ctor = proto.constructor;
+  return (typeof Ctor == 'function' &&
+    Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+}
+
+function clone(object) {
+  var newObject;
+  var i;
+  var len;
+
+  if (!object || typeof object !== 'object') {
+    return object;
+  }
+
+  if (Array.isArray(object)) {
+    newObject = [];
+    for (i = 0, len = object.length; i < len; i++) {
+      newObject[i] = clone(object[i]);
+    }
+    return newObject;
+  }
+
+  // special case: to avoid inconsistencies between IndexedDB
+  // and other backends, we automatically stringify Dates
+  if (object instanceof Date) {
+    return object.toISOString();
+  }
+
+  if (isBinaryObject(object)) {
+    return cloneBinaryObject(object);
+  }
+
+  if (!isPlainObject(object)) {
+    return object; // don't clone objects like Workers
+  }
+
+  newObject = {};
+  for (i in object) {
+    /* istanbul ignore else */
     if (Object.prototype.hasOwnProperty.call(object, i)) {
       var value = clone(object[i]);
       if (typeof value !== 'undefined') {
@@ -1834,7 +2538,7 @@ function toPromise(func) {
         });
       };
     }
-    var promise = new Promise(function (fulfill, reject) {
+    var promise = new PouchPromise(function (fulfill, reject) {
       var resp;
       try {
         var callback = once(function (err, mesg) {
@@ -1871,7 +2575,7 @@ function adapterFun(name, callback) {
   function logApiCall(self, name, args) {
     /* istanbul ignore if */
     if (log.enabled) {
-      var logArgs = [self._db_name, name];
+      var logArgs = [self.name, name];
       for (var i = 0; i < args.length - 1; i++) {
         logArgs.push(args[i]);
       }
@@ -1880,7 +2584,7 @@ function adapterFun(name, callback) {
       // override the callback itself to log the response
       var origCallback = args[args.length - 1];
       args[args.length - 1] = function (err, res) {
-        var responseArgs = [self._db_name, name];
+        var responseArgs = [self.name, name];
         responseArgs = responseArgs.concat(
           err ? ['error', err] : ['success', res]
         );
@@ -1892,15 +2596,15 @@ function adapterFun(name, callback) {
 
   return toPromise(getArguments(function (args) {
     if (this._closed) {
-      return Promise.reject(new Error('database is closed'));
+      return PouchPromise.reject(new Error('database is closed'));
     }
     if (this._destroyed) {
-      return Promise.reject(new Error('database is destroyed'));
+      return PouchPromise.reject(new Error('database is destroyed'));
     }
     var self = this;
     logApiCall(self, name, args);
     if (!this.taskqueue.isReady) {
-      return new Promise(function (fulfill, reject) {
+      return new PouchPromise(function (fulfill, reject) {
         self.taskqueue.addTask(function (failed) {
           if (failed) {
             reject(failed);
@@ -2160,6 +2864,7 @@ Changes.prototype.removeListener = function (dbName, id) {
   }
   events.EventEmitter.prototype.removeListener.call(this, dbName,
     this._listeners[id]);
+  delete this._listeners[id];
 };
 
 
@@ -2180,6 +2885,7 @@ Changes.prototype.notify = function (dbName) {
 };
 
 function guardedConsole(method) {
+  /* istanbul ignore else */
   if (console !== 'undefined' && method in console) {
     var args = Array.prototype.slice.call(arguments, 1);
     console[method].apply(console, args);
@@ -2238,969 +2944,6 @@ function extend(obj, obj2, obj3) {
   }
   return obj;
 }
-
-function tryFilter(filter, doc, req) {
-  try {
-    return !filter(doc, req);
-  } catch (err) {
-    var msg = 'Filter function threw: ' + err.toString();
-    return pouchdbErrors.createError(pouchdbErrors.BAD_REQUEST, msg);
-  }
-}
-
-function filterChange(opts) {
-  var req = {};
-  var hasFilter = opts.filter && typeof opts.filter === 'function';
-  req.query = opts.query_params;
-
-  return function filter(change) {
-    if (!change.doc) {
-      // CSG sends events on the changes feed that don't have documents,
-      // this hack makes a whole lot of existing code robust.
-      change.doc = {};
-    }
-
-    var filterReturn = hasFilter && tryFilter(opts.filter, change.doc, req);
-
-    if (typeof filterReturn === 'object') {
-      return filterReturn;
-    }
-
-    if (filterReturn) {
-      return false;
-    }
-
-    if (!opts.include_docs) {
-      delete change.doc;
-    } else if (!opts.attachments) {
-      for (var att in change.doc._attachments) {
-        /* istanbul ignore else */
-        if (change.doc._attachments.hasOwnProperty(att)) {
-          change.doc._attachments[att].stub = true;
-        }
-      }
-    }
-    return true;
-  };
-}
-
-function flatten(arrs) {
-  var res = [];
-  for (var i = 0, len = arrs.length; i < len; i++) {
-    res = res.concat(arrs[i]);
-  }
-  return res;
-}
-
-// shim for Function.prototype.name,
-// for browsers that don't support it like IE
-
-/* istanbul ignore next */
-function f() {}
-
-var hasName = f.name;
-var res;
-
-// We dont run coverage in IE
-/* istanbul ignore else */
-if (hasName) {
-  res = function (fun) {
-    return fun.name;
-  };
-} else {
-  res = function (fun) {
-    return fun.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
-  };
-}
-
-var functionName = res;
-
-// Determine id an ID is valid
-//   - invalid IDs begin with an underescore that does not begin '_design' or
-//     '_local'
-//   - any other string value is a valid id
-// Returns the specific error object for each case
-function invalidIdError(id) {
-  var err;
-  if (!id) {
-    err = pouchdbErrors.createError(pouchdbErrors.MISSING_ID);
-  } else if (typeof id !== 'string') {
-    err = pouchdbErrors.createError(pouchdbErrors.INVALID_ID);
-  } else if (/^_/.test(id) && !(/^_(design|local)/).test(id)) {
-    err = pouchdbErrors.createError(pouchdbErrors.RESERVED_ID);
-  }
-  if (err) {
-    throw err;
-  }
-}
-
-function isCordova() {
-  return (typeof cordova !== "undefined" ||
-  typeof PhoneGap !== "undefined" ||
-  typeof phonegap !== "undefined");
-}
-
-function listenerCount(ee, type) {
-  return 'listenerCount' in ee ? ee.listenerCount(type) :
-                                 events.EventEmitter.listenerCount(ee, type);
-}
-
-function parseDesignDocFunctionName(s) {
-  if (!s) {
-    return null;
-  }
-  var parts = s.split('/');
-  if (parts.length === 2) {
-    return parts;
-  }
-  if (parts.length === 1) {
-    return [s, s];
-  }
-  return null;
-}
-
-function normalizeDesignDocFunctionName(s) {
-  var normalized = parseDesignDocFunctionName(s);
-  return normalized ? normalized.join('/') : null;
-}
-
-// originally parseUri 1.2.2, now patched by us
-// (c) Steven Levithan <stevenlevithan.com>
-// MIT License
-var keys = ["source", "protocol", "authority", "userInfo", "user", "password",
-    "host", "port", "relative", "path", "directory", "file", "query", "anchor"];
-var qName ="queryKey";
-var qParser = /(?:^|&)([^&=]*)=?([^&]*)/g;
-
-// use the "loose" parser
-/* jshint maxlen: false */
-var parser = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
-
-function parseUri(str) {
-  var m = parser.exec(str);
-  var uri = {};
-  var i = 14;
-
-  while (i--) {
-    var key = keys[i];
-    var value = m[i] || "";
-    var encoded = ['user', 'password'].indexOf(key) !== -1;
-    uri[key] = encoded ? decodeURIComponent(value) : value;
-  }
-
-  uri[qName] = {};
-  uri[keys[12]].replace(qParser, function ($0, $1, $2) {
-    if ($1) {
-      uri[qName][$1] = $2;
-    }
-  });
-
-  return uri;
-}
-
-// this is essentially the "update sugar" function from daleharvey/pouchdb#1388
-// the diffFun tells us what delta to apply to the doc.  it either returns
-// the doc, or false if it doesn't need to do an update after all
-function upsert(db, docId, diffFun) {
-  return new Promise(function (fulfill, reject) {
-    db.get(docId, function (err, doc) {
-      if (err) {
-        /* istanbul ignore next */
-        if (err.status !== 404) {
-          return reject(err);
-        }
-        doc = {};
-      }
-
-      // the user might change the _rev, so save it for posterity
-      var docRev = doc._rev;
-      var newDoc = diffFun(doc);
-
-      if (!newDoc) {
-        // if the diffFun returns falsy, we short-circuit as
-        // an optimization
-        return fulfill({updated: false, rev: docRev});
-      }
-
-      // users aren't allowed to modify these values,
-      // so reset them here
-      newDoc._id = docId;
-      newDoc._rev = docRev;
-      fulfill(tryAndPut(db, newDoc, diffFun));
-    });
-  });
-}
-
-function tryAndPut(db, doc, diffFun) {
-  return db.put(doc).then(function (res) {
-    return {
-      updated: true,
-      rev: res.rev
-    };
-  }, function (err) {
-    /* istanbul ignore next */
-    if (err.status !== 409) {
-      throw err;
-    }
-    return upsert(db, doc._id, diffFun);
-  });
-}
-
-// BEGIN Math.uuid.js
-
-/*!
-Math.uuid.js (v1.4)
-http://www.broofa.com
-mailto:robert@broofa.com
-
-Copyright (c) 2010 Robert Kieffer
-Dual licensed under the MIT and GPL licenses.
-*/
-
-/*
- * Generate a random uuid.
- *
- * USAGE: Math.uuid(length, radix)
- *   length - the desired number of characters
- *   radix  - the number of allowable values for each character.
- *
- * EXAMPLES:
- *   // No arguments  - returns RFC4122, version 4 ID
- *   >>> Math.uuid()
- *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
- *
- *   // One argument - returns ID of the specified length
- *   >>> Math.uuid(15)     // 15 character ID (default base=62)
- *   "VcydxgltxrVZSTV"
- *
- *   // Two arguments - returns ID of the specified length, and radix. 
- *   // (Radix must be <= 62)
- *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
- *   "01001010"
- *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
- *   "47473046"
- *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
- *   "098F4D35"
- */
-var chars = (
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-  'abcdefghijklmnopqrstuvwxyz'
-).split('');
-function getValue(radix) {
-  return 0 | Math.random() * radix;
-}
-function uuid(len, radix) {
-  radix = radix || chars.length;
-  var out = '';
-  var i = -1;
-
-  if (len) {
-    // Compact form
-    while (++i < len) {
-      out += chars[getValue(radix)];
-    }
-    return out;
-  }
-    // rfc4122, version 4 form
-    // Fill in random data.  At i==19 set the high bits of clock sequence as
-    // per rfc4122, sec. 4.1.5
-  while (++i < 36) {
-    switch (i) {
-      case 8:
-      case 13:
-      case 18:
-      case 23:
-        out += '-';
-        break;
-      case 19:
-        out += chars[(getValue(16) & 0x3) | 0x8];
-        break;
-      default:
-        out += chars[getValue(16)];
-    }
-  }
-
-  return out;
-}
-
-exports.adapterFun = adapterFun;
-exports.bulkGetShim = bulkGet;
-exports.changesHandler = Changes;
-exports.clone = clone;
-exports.defaultBackOff = defaultBackOff;
-exports.explainError = explainError;
-exports.extend = extend;
-exports.filterChange = filterChange;
-exports.flatten = flatten;
-exports.functionName = functionName;
-exports.guardedConsole = guardedConsole;
-exports.hasLocalStorage = hasLocalStorage;
-exports.invalidIdError = invalidIdError;
-exports.isChromeApp = isChromeApp;
-exports.isCordova = isCordova;
-exports.listenerCount = listenerCount;
-exports.normalizeDdocFunctionName = normalizeDesignDocFunctionName;
-exports.once = once;
-exports.parseDdocFunctionName = parseDesignDocFunctionName;
-exports.parseUri = parseUri;
-exports.pick = pick;
-exports.toPromise = toPromise;
-exports.upsert = upsert;
-exports.uuid = uuid;
-}).call(this,require(20))
-},{"14":14,"16":16,"2":2,"20":20,"3":3,"5":5,"7":7}],13:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-//Can't find original post, but this is close
-//http://stackoverflow.com/questions/6965107/ (continues on next line)
-//converting-between-strings-and-arraybuffers
-function arrayBufferToBinaryString(buffer) {
-  var binary = '';
-  var bytes = new Uint8Array(buffer);
-  var length = bytes.byteLength;
-  for (var i = 0; i < length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return binary;
-}
-
-var atob$1 = function (str) {
-  return atob(str);
-};
-
-var btoa$1 = function (str) {
-  return btoa(str);
-};
-
-function arrayBufferToBase64(buffer) {
-  return btoa$1(arrayBufferToBinaryString(buffer));
-}
-
-// Abstracts constructing a Blob object, so it also works in older
-// browsers that don't support the native Blob constructor (e.g.
-// old QtWebKit versions, Android < 4.4).
-function createBlob(parts, properties) {
-  /* global BlobBuilder,MSBlobBuilder,MozBlobBuilder,WebKitBlobBuilder */
-  parts = parts || [];
-  properties = properties || {};
-  try {
-    return new Blob(parts, properties);
-  } catch (e) {
-    if (e.name !== "TypeError") {
-      throw e;
-    }
-    var Builder = typeof BlobBuilder !== 'undefined' ? BlobBuilder :
-                  typeof MSBlobBuilder !== 'undefined' ? MSBlobBuilder :
-                  typeof MozBlobBuilder !== 'undefined' ? MozBlobBuilder :
-                  WebKitBlobBuilder;
-    var builder = new Builder();
-    for (var i = 0; i < parts.length; i += 1) {
-      builder.append(parts[i]);
-    }
-    return builder.getBlob(properties.type);
-  }
-}
-
-// From http://stackoverflow.com/questions/14967647/ (continues on next line)
-// encode-decode-image-with-base64-breaks-image (2013-04-21)
-function binaryStringToArrayBuffer(bin) {
-  var length = bin.length;
-  var buf = new ArrayBuffer(length);
-  var arr = new Uint8Array(buf);
-  for (var i = 0; i < length; i++) {
-    arr[i] = bin.charCodeAt(i);
-  }
-  return buf;
-}
-
-function binStringToBluffer(binString, type) {
-  return createBlob([binaryStringToArrayBuffer(binString)], {type: type});
-}
-
-function b64ToBluffer(b64, type) {
-  return binStringToBluffer(atob$1(b64), type);
-}
-
-// shim for browsers that don't support it
-function readAsBinaryString(blob, callback) {
-  if (typeof FileReader === 'undefined') {
-    // fix for Firefox in a web worker
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
-    return callback(arrayBufferToBinaryString(
-      new FileReaderSync().readAsArrayBuffer(blob)));
-  }
-
-  var reader = new FileReader();
-  var hasBinaryString = typeof reader.readAsBinaryString === 'function';
-  reader.onloadend = function (e) {
-    var result = e.target.result || '';
-    if (hasBinaryString) {
-      return callback(result);
-    }
-    callback(arrayBufferToBinaryString(result));
-  };
-  if (hasBinaryString) {
-    reader.readAsBinaryString(blob);
-  } else {
-    reader.readAsArrayBuffer(blob);
-  }
-}
-
-function blobToBase64(blobOrBuffer, callback) {
-  readAsBinaryString(blobOrBuffer, function (bin) {
-    callback(btoa$1(bin));
-  });
-}
-
-// simplified API. universal browser support is assumed
-function readAsArrayBuffer(blob, callback) {
-  if (typeof FileReader === 'undefined') {
-    // fix for Firefox in a web worker:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=901097
-    return callback(new FileReaderSync().readAsArrayBuffer(blob));
-  }
-
-  var reader = new FileReader();
-  reader.onloadend = function (e) {
-    var result = e.target.result || new ArrayBuffer(0);
-    callback(result);
-  };
-  reader.readAsArrayBuffer(blob);
-}
-
-// this is not used in the browser
-function typedBuffer() {
-}
-
-exports.arrayBufferToBase64 = arrayBufferToBase64;
-exports.arrayBufferToBinaryString = arrayBufferToBinaryString;
-exports.atob = atob$1;
-exports.btoa = btoa$1;
-exports.base64StringToBlobOrBuffer = b64ToBluffer;
-exports.binaryStringToArrayBuffer = binaryStringToArrayBuffer;
-exports.binaryStringToBlobOrBuffer = binStringToBluffer;
-exports.blob = createBlob;
-exports.blobOrBufferToBase64 = blobToBase64;
-exports.readAsArrayBuffer = readAsArrayBuffer;
-exports.readAsBinaryString = readAsBinaryString;
-exports.typedBuffer = typedBuffer;
-},{}],14:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var inherits = _interopDefault(require(7));
-
-inherits(PouchError, Error);
-
-function PouchError(opts) {
-  Error.call(this, opts.reason);
-  this.status = opts.status;
-  this.name = opts.error;
-  this.message = opts.reason;
-  this.error = true;
-}
-
-PouchError.prototype.toString = function () {
-  return JSON.stringify({
-    status: this.status,
-    name: this.name,
-    message: this.message,
-    reason: this.reason
-  });
-};
-
-var UNAUTHORIZED = new PouchError({
-  status: 401,
-  error: 'unauthorized',
-  reason: "Name or password is incorrect."
-});
-
-var MISSING_BULK_DOCS = new PouchError({
-  status: 400,
-  error: 'bad_request',
-  reason: "Missing JSON list of 'docs'"
-});
-
-var MISSING_DOC = new PouchError({
-  status: 404,
-  error: 'not_found',
-  reason: 'missing'
-});
-
-var REV_CONFLICT = new PouchError({
-  status: 409,
-  error: 'conflict',
-  reason: 'Document update conflict'
-});
-
-var INVALID_ID = new PouchError({
-  status: 400,
-  error: 'invalid_id',
-  reason: '_id field must contain a string'
-});
-
-var MISSING_ID = new PouchError({
-  status: 412,
-  error: 'missing_id',
-  reason: '_id is required for puts'
-});
-
-var RESERVED_ID = new PouchError({
-  status: 400,
-  error: 'bad_request',
-  reason: 'Only reserved document ids may start with underscore.'
-});
-
-var NOT_OPEN = new PouchError({
-  status: 412,
-  error: 'precondition_failed',
-  reason: 'Database not open'
-});
-
-var UNKNOWN_ERROR = new PouchError({
-  status: 500,
-  error: 'unknown_error',
-  reason: 'Database encountered an unknown error'
-});
-
-var BAD_ARG = new PouchError({
-  status: 500,
-  error: 'badarg',
-  reason: 'Some query argument is invalid'
-});
-
-var INVALID_REQUEST = new PouchError({
-  status: 400,
-  error: 'invalid_request',
-  reason: 'Request was invalid'
-});
-
-var QUERY_PARSE_ERROR = new PouchError({
-  status: 400,
-  error: 'query_parse_error',
-  reason: 'Some query parameter is invalid'
-});
-
-var DOC_VALIDATION = new PouchError({
-  status: 500,
-  error: 'doc_validation',
-  reason: 'Bad special document member'
-});
-
-var BAD_REQUEST = new PouchError({
-  status: 400,
-  error: 'bad_request',
-  reason: 'Something wrong with the request'
-});
-
-var NOT_AN_OBJECT = new PouchError({
-  status: 400,
-  error: 'bad_request',
-  reason: 'Document must be a JSON object'
-});
-
-var DB_MISSING = new PouchError({
-  status: 404,
-  error: 'not_found',
-  reason: 'Database not found'
-});
-
-var IDB_ERROR = new PouchError({
-  status: 500,
-  error: 'indexed_db_went_bad',
-  reason: 'unknown'
-});
-
-var WSQ_ERROR = new PouchError({
-  status: 500,
-  error: 'web_sql_went_bad',
-  reason: 'unknown'
-});
-
-var LDB_ERROR = new PouchError({
-  status: 500,
-  error: 'levelDB_went_went_bad',
-  reason: 'unknown'
-});
-
-var FORBIDDEN = new PouchError({
-  status: 403,
-  error: 'forbidden',
-  reason: 'Forbidden by design doc validate_doc_update function'
-});
-
-var INVALID_REV = new PouchError({
-  status: 400,
-  error: 'bad_request',
-  reason: 'Invalid rev format'
-});
-
-var FILE_EXISTS = new PouchError({
-  status: 412,
-  error: 'file_exists',
-  reason: 'The database could not be created, the file already exists.'
-});
-
-var MISSING_STUB = new PouchError({
-  status: 412,
-  error: 'missing_stub'
-});
-
-var INVALID_URL = new PouchError({
-  status: 413,
-  error: 'invalid_url',
-  reason: 'Provided URL is invalid'
-});
-
-var allErrors = [
-  UNAUTHORIZED,
-  MISSING_BULK_DOCS,
-  MISSING_DOC,
-  REV_CONFLICT,
-  INVALID_ID,
-  MISSING_ID,
-  RESERVED_ID,
-  NOT_OPEN,
-  UNKNOWN_ERROR,
-  BAD_ARG,
-  INVALID_REQUEST,
-  QUERY_PARSE_ERROR,
-  DOC_VALIDATION,
-  BAD_REQUEST,
-  NOT_AN_OBJECT,
-  DB_MISSING,
-  WSQ_ERROR,
-  LDB_ERROR,
-  FORBIDDEN,
-  INVALID_REV,
-  FILE_EXISTS,
-  MISSING_STUB,
-  IDB_ERROR,
-  INVALID_URL
-];
-
-function createError(error, reason, name) {
-  function CustomPouchError(reason) {
-    // inherit error properties from our parent error manually
-    // so as to allow proper JSON parsing.
-    /* jshint ignore:start */
-    for (var p in error) {
-      if (typeof error[p] !== 'function') {
-        this[p] = error[p];
-      }
-    }
-    /* jshint ignore:end */
-    if (name !== undefined) {
-      this.name = name;
-    }
-    if (reason !== undefined) {
-      this.reason = reason;
-    }
-  }
-  CustomPouchError.prototype = PouchError.prototype;
-  return new CustomPouchError(reason);
-}
-
-// Find one of the errors defined above based on the value
-// of the specified property.
-// If reason is provided prefer the error matching that reason.
-// This is for differentiating between errors with the same name and status,
-// eg, bad_request.
-var getErrorTypeByProp = function (prop, value, reason) {
-  var errorsByProp = allErrors.filter(function (error) {
-    return error[prop] === value;
-  });
-  return (reason && errorsByProp.filter(function (error) {
-    return error.message === reason;
-  })[0]) || errorsByProp[0];
-};
-
-function generateErrorFromResponse(res) {
-  var error, errName, errType, errMsg, errReason;
-
-  errName = (res.error === true && typeof res.name === 'string') ?
-    res.name :
-    res.error;
-  errReason = res.reason;
-  errType = getErrorTypeByProp('name', errName, errReason);
-
-  if (res.missing ||
-    errReason === 'missing' ||
-    errReason === 'deleted' ||
-    errName === 'not_found') {
-    errType = MISSING_DOC;
-  } else if (errName === 'doc_validation') {
-    // doc validation needs special treatment since
-    // res.reason depends on the validation error.
-    // see utils.js
-    errType = DOC_VALIDATION;
-    errMsg = errReason;
-  } else if (errName === 'bad_request' && errType.message !== errReason) {
-    // if bad_request error already found based on reason don't override.
-    errType = BAD_REQUEST;
-  }
-
-  // fallback to error by status or unknown error.
-  if (!errType) {
-    errType = getErrorTypeByProp('status', res.status, errReason) ||
-      UNKNOWN_ERROR;
-  }
-
-  error = createError(errType, errReason, errName);
-
-  // Keep custom message.
-  if (errMsg) {
-    error.message = errMsg;
-  }
-
-  // Keep helpful response data in our error messages.
-  if (res.id) {
-    error.id = res.id;
-  }
-  if (res.status) {
-    error.status = res.status;
-  }
-  if (res.missing) {
-    error.missing = res.missing;
-  }
-
-  return error;
-}
-
-exports.UNAUTHORIZED = UNAUTHORIZED;
-exports.MISSING_BULK_DOCS = MISSING_BULK_DOCS;
-exports.MISSING_DOC = MISSING_DOC;
-exports.REV_CONFLICT = REV_CONFLICT;
-exports.INVALID_ID = INVALID_ID;
-exports.MISSING_ID = MISSING_ID;
-exports.RESERVED_ID = RESERVED_ID;
-exports.NOT_OPEN = NOT_OPEN;
-exports.UNKNOWN_ERROR = UNKNOWN_ERROR;
-exports.BAD_ARG = BAD_ARG;
-exports.INVALID_REQUEST = INVALID_REQUEST;
-exports.QUERY_PARSE_ERROR = QUERY_PARSE_ERROR;
-exports.DOC_VALIDATION = DOC_VALIDATION;
-exports.BAD_REQUEST = BAD_REQUEST;
-exports.NOT_AN_OBJECT = NOT_AN_OBJECT;
-exports.DB_MISSING = DB_MISSING;
-exports.WSQ_ERROR = WSQ_ERROR;
-exports.LDB_ERROR = LDB_ERROR;
-exports.FORBIDDEN = FORBIDDEN;
-exports.INVALID_REV = INVALID_REV;
-exports.FILE_EXISTS = FILE_EXISTS;
-exports.MISSING_STUB = MISSING_STUB;
-exports.IDB_ERROR = IDB_ERROR;
-exports.INVALID_URL = INVALID_URL;
-exports.getErrorTypeByProp = getErrorTypeByProp;
-exports.createError = createError;
-exports.generateErrorFromResponse = generateErrorFromResponse;
-},{"7":7}],15:[function(require,module,exports){
-"use strict";
-
-// Extends method
-// (taken from http://code.jquery.com/jquery-1.9.0.js)
-// Populate the class2type map
-var class2type = {};
-
-var types = [
-  "Boolean", "Number", "String", "Function", "Array",
-  "Date", "RegExp", "Object", "Error"
-];
-for (var i = 0; i < types.length; i++) {
-  var typename = types[i];
-  class2type["[object " + typename + "]"] = typename.toLowerCase();
-}
-
-var core_toString = class2type.toString;
-var core_hasOwn = class2type.hasOwnProperty;
-
-function type(obj) {
-  if (obj === null) {
-    return String(obj);
-  }
-  return typeof obj === "object" || typeof obj === "function" ?
-    class2type[core_toString.call(obj)] || "object" :
-    typeof obj;
-}
-
-function isWindow(obj) {
-  return obj !== null && obj === obj.window;
-}
-
-function isPlainObject(obj) {
-  // Must be an Object.
-  // Because of IE, we also have to check the presence of
-  // the constructor property.
-  // Make sure that DOM nodes and window objects don't pass through, as well
-  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
-    return false;
-  }
-
-  try {
-    // Not own constructor property must be Object
-    if (obj.constructor &&
-      !core_hasOwn.call(obj, "constructor") &&
-      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-      return false;
-    }
-  } catch ( e ) {
-    // IE8,9 Will throw exceptions on certain host objects #9897
-    return false;
-  }
-
-  // Own properties are enumerated firstly, so to speed up,
-  // if last one is own, then all properties are own.
-  var key;
-  for (key in obj) {}
-
-  return key === undefined || core_hasOwn.call(obj, key);
-}
-
-
-function isFunction(obj) {
-  return type(obj) === "function";
-}
-
-var isArray = Array.isArray || function (obj) {
-  return type(obj) === "array";
-};
-
-function extend() {
-  // originally extend() was recursive, but this ended up giving us
-  // "call stack exceeded", so it's been unrolled to use a literal stack
-  // (see https://github.com/pouchdb/pouchdb/issues/2543)
-  var stack = [];
-  var i = -1;
-  var len = arguments.length;
-  var args = new Array(len);
-  while (++i < len) {
-    args[i] = arguments[i];
-  }
-  var container = {};
-  stack.push({args: args, result: {container: container, key: 'key'}});
-  var next;
-  while ((next = stack.pop())) {
-    extendInner(stack, next.args, next.result);
-  }
-  return container.key;
-}
-
-function extendInner(stack, args, result) {
-  var options, name, src, copy, copyIsArray, clone,
-    target = args[0] || {},
-    i = 1,
-    length = args.length,
-    deep = false,
-    numericStringRegex = /\d+/,
-    optionsIsArray;
-
-  // Handle a deep copy situation
-  if (typeof target === "boolean") {
-    deep = target;
-    target = args[1] || {};
-    // skip the boolean and the target
-    i = 2;
-  }
-
-  // Handle case when target is a string or something (possible in deep copy)
-  if (typeof target !== "object" && !isFunction(target)) {
-    target = {};
-  }
-
-  // extend jQuery itself if only one argument is passed
-  if (length === i) {
-    /* jshint validthis: true */
-    target = this;
-    --i;
-  }
-
-  for (; i < length; i++) {
-    // Only deal with non-null/undefined values
-    if ((options = args[i]) != null) {
-      optionsIsArray = isArray(options);
-      // Extend the base object
-      for (name in options) {
-        //if (options.hasOwnProperty(name)) {
-        if (!(name in Object.prototype)) {
-          if (optionsIsArray && !numericStringRegex.test(name)) {
-            continue;
-          }
-
-          src = target[name];
-          copy = options[name];
-
-          // Prevent never-ending loop
-          if (target === copy) {
-            continue;
-          }
-
-          // Recurse if we're merging plain objects or arrays
-          if (deep && copy && (isPlainObject(copy) ||
-              (copyIsArray = isArray(copy)))) {
-            if (copyIsArray) {
-              copyIsArray = false;
-              clone = src && isArray(src) ? src : [];
-
-            } else {
-              clone = src && isPlainObject(src) ? src : {};
-            }
-
-            // Never move original objects, clone them
-            stack.push({
-              args: [deep, clone, copy],
-              result: {
-                container: target,
-                key: name
-              }
-            });
-
-          // Don't bring in undefined values
-          } else if (copy !== undefined) {
-            if (!(isArray(options) && isFunction(copy))) {
-              target[name] = copy;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // "Return" the modified object by setting the key
-  // on the given container
-  result.container[result.key] = target;
-}
-
-
-module.exports = extend;
-
-
-
-},{}],16:[function(require,module,exports){
-'use strict';
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var lie = _interopDefault(require(9));
-
-/* istanbul ignore next */
-var PouchPromise = typeof Promise === 'function' ? Promise : lie;
-
-module.exports = PouchPromise;
-},{"9":9}],17:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"12":12,"18":18,"19":19,"2":2,"20":20,"3":3,"5":5,"7":7}],18:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var inherits = _interopDefault(require(7));
 
 inherits(PouchError, Error);
 
@@ -3383,63 +3126,316 @@ function createError(error, reason) {
   return new CustomPouchError(reason);
 }
 
-function generateErrorFromResponse(err) {
-
-  if (typeof err !== 'object') {
-    var data = err;
-    err = UNKNOWN_ERROR;
-    err.data = data;
+function tryFilter(filter, doc, req) {
+  try {
+    return !filter(doc, req);
+  } catch (err) {
+    var msg = 'Filter function threw: ' + err.toString();
+    return createError(BAD_REQUEST, msg);
   }
-
-  if ('error' in err && err.error === 'conflict') {
-    err.name = 'conflict';
-    err.status = 409;
-  }
-
-  if (!('name' in err)) {
-    err.name = err.error || 'unknown';
-  }
-
-  if (!('status' in err)) {
-    err.status = 500;
-  }
-
-  if (!('message' in err)) {
-    err.message = err.message || err.reason;
-  }
-
-  return err;
 }
 
-exports.UNAUTHORIZED = UNAUTHORIZED;
-exports.MISSING_BULK_DOCS = MISSING_BULK_DOCS;
-exports.MISSING_DOC = MISSING_DOC;
-exports.REV_CONFLICT = REV_CONFLICT;
-exports.INVALID_ID = INVALID_ID;
-exports.MISSING_ID = MISSING_ID;
-exports.RESERVED_ID = RESERVED_ID;
-exports.NOT_OPEN = NOT_OPEN;
-exports.UNKNOWN_ERROR = UNKNOWN_ERROR;
-exports.BAD_ARG = BAD_ARG;
-exports.INVALID_REQUEST = INVALID_REQUEST;
-exports.QUERY_PARSE_ERROR = QUERY_PARSE_ERROR;
-exports.DOC_VALIDATION = DOC_VALIDATION;
-exports.BAD_REQUEST = BAD_REQUEST;
-exports.NOT_AN_OBJECT = NOT_AN_OBJECT;
-exports.DB_MISSING = DB_MISSING;
-exports.WSQ_ERROR = WSQ_ERROR;
-exports.LDB_ERROR = LDB_ERROR;
-exports.FORBIDDEN = FORBIDDEN;
-exports.INVALID_REV = INVALID_REV;
-exports.FILE_EXISTS = FILE_EXISTS;
-exports.MISSING_STUB = MISSING_STUB;
-exports.IDB_ERROR = IDB_ERROR;
-exports.INVALID_URL = INVALID_URL;
-exports.createError = createError;
-exports.generateErrorFromResponse = generateErrorFromResponse;
-},{"7":7}],19:[function(require,module,exports){
-arguments[4][16][0].apply(exports,arguments)
-},{"16":16,"9":9}],20:[function(require,module,exports){
+function filterChange(opts) {
+  var req = {};
+  var hasFilter = opts.filter && typeof opts.filter === 'function';
+  req.query = opts.query_params;
+
+  return function filter(change) {
+    if (!change.doc) {
+      // CSG sends events on the changes feed that don't have documents,
+      // this hack makes a whole lot of existing code robust.
+      change.doc = {};
+    }
+
+    var filterReturn = hasFilter && tryFilter(opts.filter, change.doc, req);
+
+    if (typeof filterReturn === 'object') {
+      return filterReturn;
+    }
+
+    if (filterReturn) {
+      return false;
+    }
+
+    if (!opts.include_docs) {
+      delete change.doc;
+    } else if (!opts.attachments) {
+      for (var att in change.doc._attachments) {
+        /* istanbul ignore else */
+        if (change.doc._attachments.hasOwnProperty(att)) {
+          change.doc._attachments[att].stub = true;
+        }
+      }
+    }
+    return true;
+  };
+}
+
+function flatten(arrs) {
+  var res = [];
+  for (var i = 0, len = arrs.length; i < len; i++) {
+    res = res.concat(arrs[i]);
+  }
+  return res;
+}
+
+// shim for Function.prototype.name,
+// for browsers that don't support it like IE
+
+/* istanbul ignore next */
+function f() {}
+
+var hasName = f.name;
+var res;
+
+// We dont run coverage in IE
+/* istanbul ignore else */
+if (hasName) {
+  res = function (fun) {
+    return fun.name;
+  };
+} else {
+  res = function (fun) {
+    return fun.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
+  };
+}
+
+var functionName = res;
+
+// Determine id an ID is valid
+//   - invalid IDs begin with an underescore that does not begin '_design' or
+//     '_local'
+//   - any other string value is a valid id
+// Returns the specific error object for each case
+function invalidIdError(id) {
+  var err;
+  if (!id) {
+    err = createError(MISSING_ID);
+  } else if (typeof id !== 'string') {
+    err = createError(INVALID_ID);
+  } else if (/^_/.test(id) && !(/^_(design|local)/).test(id)) {
+    err = createError(RESERVED_ID);
+  }
+  if (err) {
+    throw err;
+  }
+}
+
+function isCordova() {
+  return (typeof cordova !== "undefined" ||
+  typeof PhoneGap !== "undefined" ||
+  typeof phonegap !== "undefined");
+}
+
+function listenerCount(ee, type) {
+  return 'listenerCount' in ee ? ee.listenerCount(type) :
+                                 events.EventEmitter.listenerCount(ee, type);
+}
+
+function parseDesignDocFunctionName(s) {
+  if (!s) {
+    return null;
+  }
+  var parts = s.split('/');
+  if (parts.length === 2) {
+    return parts;
+  }
+  if (parts.length === 1) {
+    return [s, s];
+  }
+  return null;
+}
+
+function normalizeDesignDocFunctionName(s) {
+  var normalized = parseDesignDocFunctionName(s);
+  return normalized ? normalized.join('/') : null;
+}
+
+// originally parseUri 1.2.2, now patched by us
+// (c) Steven Levithan <stevenlevithan.com>
+// MIT License
+var keys = ["source", "protocol", "authority", "userInfo", "user", "password",
+    "host", "port", "relative", "path", "directory", "file", "query", "anchor"];
+var qName ="queryKey";
+var qParser = /(?:^|&)([^&=]*)=?([^&]*)/g;
+
+// use the "loose" parser
+/* jshint maxlen: false */
+var parser = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+
+function parseUri(str) {
+  var m = parser.exec(str);
+  var uri = {};
+  var i = 14;
+
+  while (i--) {
+    var key = keys[i];
+    var value = m[i] || "";
+    var encoded = ['user', 'password'].indexOf(key) !== -1;
+    uri[key] = encoded ? decodeURIComponent(value) : value;
+  }
+
+  uri[qName] = {};
+  uri[keys[12]].replace(qParser, function ($0, $1, $2) {
+    if ($1) {
+      uri[qName][$1] = $2;
+    }
+  });
+
+  return uri;
+}
+
+// this is essentially the "update sugar" function from daleharvey/pouchdb#1388
+// the diffFun tells us what delta to apply to the doc.  it either returns
+// the doc, or false if it doesn't need to do an update after all
+function upsert(db, docId, diffFun) {
+  return new PouchPromise(function (fulfill, reject) {
+    db.get(docId, function (err, doc) {
+      if (err) {
+        /* istanbul ignore next */
+        if (err.status !== 404) {
+          return reject(err);
+        }
+        doc = {};
+      }
+
+      // the user might change the _rev, so save it for posterity
+      var docRev = doc._rev;
+      var newDoc = diffFun(doc);
+
+      if (!newDoc) {
+        // if the diffFun returns falsy, we short-circuit as
+        // an optimization
+        return fulfill({updated: false, rev: docRev});
+      }
+
+      // users aren't allowed to modify these values,
+      // so reset them here
+      newDoc._id = docId;
+      newDoc._rev = docRev;
+      fulfill(tryAndPut(db, newDoc, diffFun));
+    });
+  });
+}
+
+function tryAndPut(db, doc, diffFun) {
+  return db.put(doc).then(function (res) {
+    return {
+      updated: true,
+      rev: res.rev
+    };
+  }, function (err) {
+    /* istanbul ignore next */
+    if (err.status !== 409) {
+      throw err;
+    }
+    return upsert(db, doc._id, diffFun);
+  });
+}
+
+// BEGIN Math.uuid.js
+
+/*!
+Math.uuid.js (v1.4)
+http://www.broofa.com
+mailto:robert@broofa.com
+
+Copyright (c) 2010 Robert Kieffer
+Dual licensed under the MIT and GPL licenses.
+*/
+
+/*
+ * Generate a random uuid.
+ *
+ * USAGE: Math.uuid(length, radix)
+ *   length - the desired number of characters
+ *   radix  - the number of allowable values for each character.
+ *
+ * EXAMPLES:
+ *   // No arguments  - returns RFC4122, version 4 ID
+ *   >>> Math.uuid()
+ *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+ *
+ *   // One argument - returns ID of the specified length
+ *   >>> Math.uuid(15)     // 15 character ID (default base=62)
+ *   "VcydxgltxrVZSTV"
+ *
+ *   // Two arguments - returns ID of the specified length, and radix. 
+ *   // (Radix must be <= 62)
+ *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
+ *   "01001010"
+ *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
+ *   "47473046"
+ *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
+ *   "098F4D35"
+ */
+var chars = (
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+  'abcdefghijklmnopqrstuvwxyz'
+).split('');
+function getValue(radix) {
+  return 0 | Math.random() * radix;
+}
+function uuid(len, radix) {
+  radix = radix || chars.length;
+  var out = '';
+  var i = -1;
+
+  if (len) {
+    // Compact form
+    while (++i < len) {
+      out += chars[getValue(radix)];
+    }
+    return out;
+  }
+    // rfc4122, version 4 form
+    // Fill in random data.  At i==19 set the high bits of clock sequence as
+    // per rfc4122, sec. 4.1.5
+  while (++i < 36) {
+    switch (i) {
+      case 8:
+      case 13:
+      case 18:
+      case 23:
+        out += '-';
+        break;
+      case 19:
+        out += chars[(getValue(16) & 0x3) | 0x8];
+        break;
+      default:
+        out += chars[getValue(16)];
+    }
+  }
+
+  return out;
+}
+
+exports.adapterFun = adapterFun;
+exports.bulkGetShim = bulkGet;
+exports.changesHandler = Changes;
+exports.clone = clone;
+exports.defaultBackOff = defaultBackOff;
+exports.explainError = explainError;
+exports.extend = extend;
+exports.filterChange = filterChange;
+exports.flatten = flatten;
+exports.functionName = functionName;
+exports.guardedConsole = guardedConsole;
+exports.hasLocalStorage = hasLocalStorage;
+exports.invalidIdError = invalidIdError;
+exports.isChromeApp = isChromeApp;
+exports.isCordova = isCordova;
+exports.listenerCount = listenerCount;
+exports.normalizeDdocFunctionName = normalizeDesignDocFunctionName;
+exports.once = once;
+exports.parseDdocFunctionName = parseDesignDocFunctionName;
+exports.parseUri = parseUri;
+exports.pick = pick;
+exports.toPromise = toPromise;
+exports.upsert = upsert;
+exports.uuid = uuid;
+}).call(this,require(15))
+},{"15":15,"2":2,"3":3,"5":5,"7":7,"9":9}],15:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -3451,25 +3447,40 @@ var process = module.exports = {};
 var cachedSetTimeout;
 var cachedClearTimeout;
 
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
 (function () {
     try {
-        cachedSetTimeout = setTimeout;
-    } catch (e) {
-        cachedSetTimeout = function () {
-            throw new Error('setTimeout is not defined');
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
         }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
     }
     try {
-        cachedClearTimeout = clearTimeout;
-    } catch (e) {
-        cachedClearTimeout = function () {
-            throw new Error('clearTimeout is not defined');
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
         }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
     }
 } ())
 function runTimeout(fun) {
     if (cachedSetTimeout === setTimeout) {
         //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
         return setTimeout(fun, 0);
     }
     try {
@@ -3490,6 +3501,11 @@ function runTimeout(fun) {
 function runClearTimeout(marker) {
     if (cachedClearTimeout === clearTimeout) {
         //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
         return clearTimeout(marker);
     }
     try {
@@ -3601,7 +3617,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],21:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 (function (name, context, definition) {
   if (typeof module !== 'undefined' && module.exports) module.exports = definition();
   else if (typeof define === 'function' && define.amd) define(definition);
@@ -3641,7 +3657,7 @@ process.umask = function() { return 0; };
 
 });
 
-},{}],22:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var utils = require(1);
@@ -3919,5 +3935,5 @@ if (typeof window !== 'undefined' && window.PouchDB) {
   window.PouchDB.plugin(exports);
 }
 
-},{"1":1}]},{},[22])(22)
+},{"1":1}]},{},[17])(17)
 });
