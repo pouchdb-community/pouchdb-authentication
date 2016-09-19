@@ -115,8 +115,8 @@ testCases.forEach(function (testCase) {
         return db.getUser('robin');
       }).then(function (user) {
         user.name.should.equal('robin');
-        user.alias.should.equal('boywonder');
-        user.profession.should.equal('acrobat');
+        user.metadata.alias.should.equal('boywonder');
+        user.metadata.profession.should.equal('acrobat');
       });
     });
 
@@ -131,16 +131,16 @@ testCases.forEach(function (testCase) {
         return db.getUser('robin');
       }).then(function (user) {
         user.name.should.equal('robin');
-        user.alias.should.equal('boywonder');
-        user.profession.should.equal('acrobat');
+        user.metadata.alias.should.equal('boywonder');
+        user.metadata.profession.should.equal('acrobat');
       }).then(function () {
         return db.putUser('robin', {metadata: newMetadata});
       }).then(function () {
         return db.getUser('robin');
       }).then(function (user) {
         user.name.should.equal('robin');
-        user.alias.should.equal('rednowyob');
-        user.profession.should.equal('taborca');
+        user.metadata.alias.should.equal('rednowyob');
+        user.metadata.profession.should.equal('taborca');
       });
     });
 
