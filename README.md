@@ -6,7 +6,7 @@ PouchDB Authentication [![Build Status](https://travis-ci.org/nolanlawson/pouchd
 Easy user authentication for PouchDB/CouchDB.
 
 ```js
-var db = new PouchDB('http://mysite:5984/mydb', {skipSetup: true});
+var db = new PouchDB('http://mysite:5984/mydb', {skip_setup: true});
 db.login('batman', 'brucewayne').then(function (batman) {
   console.log("I'm Batman.");
   return db.logout();
