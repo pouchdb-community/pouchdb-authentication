@@ -521,7 +521,9 @@ There are a few different ways to accomplish this, and unfortunately you can't d
 
 #### [CouchPerUser](https://github.com/etrepum/couchperuser)
 
-Native CouchDB Erlang plugin that automatically creates one database per user.  Eventually CouchDB will have a plugin repository, and you'll be able to just click a button to install, but for now you have to install manually.
+Native CouchDB Erlang plugin that automatically creates one database per user.  The database name is just a hex-encoded hash of the user name, and it completely predictable.
+
+**Update!** This is now much easier to use, because there are [prebuilt Docker images](https://hub.docker.com/r/klaemo/couchdb/) containing the `CouchPerUser` plugin.
 
 #### [couchdb-dbperuser-provisioning](https://github.com/pegli/couchdb-dbperuser-provisioning)
 
