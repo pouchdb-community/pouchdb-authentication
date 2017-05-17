@@ -116,10 +116,10 @@ In a production environment, don't forget to set up [SSL][].
 Create a `PouchDB` attached to an HTTP backend.  This is the one you'll use for `pouchdb-authentication` stuff.
 
 ```js
-var db = new PouchDB('http://localhost:5984/mydb', {skipSetup: true});
+var db = new PouchDB('http://localhost:5984/mydb', {skip_setup: true});
 ```
 
-*(Note that the users are shared across the entire CouchDB instance, not just `mydb`. Also, the `skipSetup` is to prevent PouchDB from doing any HTTP requests to the server while we're not logged in, which would cause a modal authentication popup.)*
+*(Note that the users are shared across the entire CouchDB instance, not just `mydb`. Also, the `skip_setup` is to prevent PouchDB from doing any HTTP requests to the server while we're not logged in, which would cause a modal authentication popup.)*
 
 Of course, you'll probably want to sync that database with a local one:
 
@@ -555,7 +555,7 @@ The highest level of security offered by CouchDB.  No requests *whatsoever* are 
 
 First, ensure that at least one CouchDB user has been created (if you've [disabled admin party](#first-step-disable-the-admin-party), you'll already have at least one admin user).  Next, if you're using CORS, ensure the `cors.headers` array contains `authorization` (this should already be set if you've followed [CouchDB setup](#couchdb-setup)).  Finally, set `httpd.require_valid_user` to `true`.
 
-To prevent browser HTTP basic authentication modal dialogs of ye olde times, we have to be subtle in the way we use PouchDB.  To prevent a rogue unauthenticated request to CouchDB (used to [check whether the remote DB exists][skipsetup]), pass `skipSetup: true` in Pouch's constructor options.  Secondly, to authenticate the request against `_session`, add the HTTP basic authorization header to `db.login()`'s [AJAX options](#api).
+To prevent browser HTTP basic authentication modal dialogs of ye olde times, we have to be subtle in the way we use PouchDB.  To prevent a rogue unauthenticated request to CouchDB (used to [check whether the remote DB exists][skipsetup]), pass `skip_setup: true` in Pouch's constructor options.  Secondly, to authenticate the request against `_session`, add the HTTP basic authorization header to `db.login()`'s [AJAX options](#api).
 
 Example usage:
 
@@ -566,7 +566,7 @@ var user = {
 };
 
 var pouchOpts = {
-  skipSetup: true
+  skip_setup: true
 };
 
 var ajaxOpts = {
