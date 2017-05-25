@@ -1,6 +1,8 @@
 PouchDB Authentication [![Build Status](https://travis-ci.org/nolanlawson/pouchdb-authentication.svg?branch=master)](https://travis-ci.org/nolanlawson/pouchdb-authentication)
 =====
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/pouchdb-community/pouchdb-authentication.svg)](https://greenkeeper.io/)
+
 <img alt="PouchDB Authentication logo by nickcolley" title="PouchDB Authentication logo by nickcolley" width="150px" src="https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/logo.png"/>
 
 Easy user authentication for PouchDB/CouchDB.
