@@ -63,7 +63,7 @@ Setup
 
 ### Requirements
 
-- CouchDB v1.3.0+ or IrisCouch
+- CouchDB v1.3.0+
 - PouchDB v2.0.0+
 
 ### PouchDB setup
@@ -101,12 +101,10 @@ sudo apt-get install couchdb # debian, ubuntu, etc.
 brew install couchdb         # mac
 ```
 
-Or, get yourself a hosted one at [IrisCouch](http://iriscouch.com/). It works the same.
-
 Next, set up CORS so that PouchDB can access your CouchDB from any URL. For convenience we'll use [add-cors-to-couchdb](https://github.com/pouchdb/add-cors-to-couchdb).
 
     npm install -g add-cors-to-couchdb # may require sudo
-    add-cors-to-couchdb                # for IrisCouch, see add-cors-to-couchdb instructions
+    add-cors-to-couchdb                #
 
 
 In a production environment, don't forget to set up [SSL][].
