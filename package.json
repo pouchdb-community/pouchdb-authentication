@@ -29,10 +29,9 @@
   },
   "dependencies": {
     "inherits": "2.0.1",
-    "pouchdb-ajax": "6.0.3",
-    "pouchdb-extend": "0.1.2",
-    "pouchdb-promise": "6.0.3",
-    "pouchdb-utils": "6.0.3",
+    "pouchdb-ajax": "6.1.1",
+    "pouchdb-promise": "6.1.1",
+    "pouchdb-utils": "6.1.1",
     "url-join": "1.1.0"
   },
   "devDependencies": {
