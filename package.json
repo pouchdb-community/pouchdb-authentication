@@ -19,8 +19,11 @@
     "build": "npm-run-all clean rollup browserify minify",
     "prepublishOnly": "npm run build",
     "lint": "eslint bin/ src/ test/",
-    "dev": "npm run rollup-cjs && zuul --local 9000 --no-coverage --ui mocha-bdd test/*",
-    "test": "npm run rollup-cjs && zuul --phantom --ui mocha-bdd test/*",
+    "dev": "npm run test-local",
+    "test": "npm run rollup-cjs && node bin/run-test.js",
+    "test-local": "CLIENT=local npm run test",
+    "test-node": "CLIENT=node npm run test",
+    "test-phantom": "CLIENT=phantom npm run test",
     "release": "standard-version"
   },
   "keywords": [
@@ -56,7 +59,6 @@
     "mkdirp": "^0.5.1",
     "mocha": "^4.0.1",
     "npm-run-all": "^3.1.2",
-    "phantomjs-prebuilt": "2.1.16",
     "pouchdb-memory": "^6.0.0",
     "rimraf": "^2.5.4",
     "rollup": "^0.51.7",

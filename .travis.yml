@@ -26,13 +26,23 @@ after_script:
   # upload the updated package-lock.json
   - greenkeeper-lockfile-upload
 
-script: npm test
+script: npm run $COMMAND
+
+env:
+  global:
+  - NPM_CONFIG_PROGRESS="false"
+  - secure: "U7yqHtQrvzNob8YMh9iH34piyr4N0ZoX/G45VUuGlOoXe2gjhwHMAERRISZLtdzHawYu780SZ7g42HP2jsgwXqGGUmxLNMTFY44V19030Fn2QFEIZ30Ni/t0VRpvt1gwiAwRQJlVyKxS4B6qctf6HGm+hS2gQHnGuj4uX9WMZ8A="
+
+  matrix:
+  - CLIENT=node COMMAND=test
+  - CLIENT=phantom COMMAND=test
+
+matrix:
+  allow_failures:
+    # Waiting for pouchdb/pouchdb#6814
+    - env: CLIENT=node COMMAND=test
 
 branches:
   only:
   - master
   - /^greenkeeper/.*$/
-
-env:
-  global:
-    - secure: "U7yqHtQrvzNob8YMh9iH34piyr4N0ZoX/G45VUuGlOoXe2gjhwHMAERRISZLtdzHawYu780SZ7g42HP2jsgwXqGGUmxLNMTFY44V19030Fn2QFEIZ30Ni/t0VRpvt1gwiAwRQJlVyKxS4B6qctf6HGm+hS2gQHnGuj4uX9WMZ8A="
