@@ -39,8 +39,8 @@
     "bluebird": "^3.5.1",
     "browserify": "14.5.0",
     "bundle-collapser": "^1.2.1",
-    "chai": "^4.1.2",
-    "chai-as-promised": "^7.1.1",
+    "chai": "3.5.0",
+    "chai-as-promised": "5.3.0",
     "istanbul": "^0.4.5",
     "jshint": "2.9.5",
     "mkdirp": "^0.5.1",
@@ -49,6 +49,14 @@
     "pouchdb-memory": "^6.0.0",
     "uglify-js": "^3.1.9",
     "zuul": "^3.10.1"
+  },
+  "// greenkeeper": [
+    "// chai-as-promised is pinned because of breaking changes in 6.0.0 which make phantomjs crash"
+  ],
+  "greenkeeper": {
+    "ignore": [
+      "chai-as-promised"
+    ]
   },
   "files": [
     "lib",
