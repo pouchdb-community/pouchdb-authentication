@@ -114,7 +114,7 @@ plugin.login = toPromise(function (username, password, opts, callback) {
     method : 'POST',
     url : getSessionUrl(db),
     headers : {'Content-Type': 'application/json'},
-    body : JSON.stringify({name: username, password: password})
+    body : {name: username, password: password}
   }, opts.ajax || {});
   ajaxCore(ajaxOpts, wrapError(callback));
 });
