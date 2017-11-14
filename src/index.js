@@ -1,12 +1,12 @@
 'use strict';
 
-var utils = require('./utils');
+import { getSessionUrl, getUsersUrl } from './utils';
 
-var Promise = require('pouchdb-promise');
-var pouchdbAjax = require('pouchdb-ajax');
-var pouchdbUtils = require('pouchdb-utils');
+import Promise from 'pouchdb-promise';
+import ajaxCore from 'pouchdb-ajax';
+import { assign, clone, toPromise } from 'pouchdb-utils';
 
-var inherits = require('inherits');
+import inherits from 'inherits';
 
 function wrapError(callback) {
   // provide more helpful error message
@@ -31,19 +31,26 @@ function putUser(db, user, opts, callback) {
         }
       }
     }
-    user = pouchdbUtils.assign(user, opts.metadata);
+    user = assign(user, opts.metadata);
   }
 
-  var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(user._id);
-  var ajaxOpts = pouchdbUtils.assign({
+  var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+  var ajaxOpts = assign({
     method : 'PUT',
     url : url,
     body : user
   }, opts.ajax || {});
-  pouchdbAjax(ajaxOpts, wrapError(callback));
+  ajaxCore(ajaxOpts, wrapError(callback));
 }
 
-exports.signup = pouchdbUtils.toPromise(function (username, password, opts, callback) {
+var plugin = {};
+
+plugin.getUsersDatabaseUrl = function () {
+  var db = this;
+  return getUsersUrl(db);
+};
+
+plugin.signup = toPromise(function (username, password, opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
@@ -71,9 +78,9 @@ exports.signup = pouchdbUtils.toPromise(function (username, password, opts, call
   putUser(db, user, opts, callback);
 });
 
-exports.signUp = exports.signup;
+plugin.signUp = plugin.signup;
 
-exports.login = pouchdbUtils.toPromise(function (username, password, opts, callback) {
+plugin.login = toPromise(function (username, password, opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = opts;
@@ -89,48 +96,48 @@ exports.login = pouchdbUtils.toPromise(function (username, password, opts, callb
     return callback(new AuthError('you must provide a password'));
   }
 
-  var ajaxOpts = pouchdbUtils.assign({
+  var ajaxOpts = assign({
     method : 'POST',
-    url : utils.getSessionUrl(db),
+    url : getSessionUrl(db),
     headers : {'Content-Type': 'application/json'},
     body : JSON.stringify({name: username, password: password})
   }, opts.ajax || {});
-  pouchdbAjax(ajaxOpts, wrapError(callback));
+  ajaxCore(ajaxOpts, wrapError(callback));
 });
 
-exports.logIn = exports.login;
+plugin.logIn = plugin.login;
 
-exports.logout = pouchdbUtils.toPromise(function (opts, callback) {
+plugin.logout = toPromise(function (opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
   }
-  var ajaxOpts = pouchdbUtils.assign({
+  var ajaxOpts = assign({
     method : 'DELETE',
-    url : utils.getSessionUrl(db)
+    url : getSessionUrl(db)
   }, opts.ajax || {});
-  pouchdbAjax(ajaxOpts, wrapError(callback));
+  ajaxCore(ajaxOpts, wrapError(callback));
 });
 
-exports.logOut = exports.logout;
+plugin.logOut = plugin.logout;
 
-exports.getSession = pouchdbUtils.toPromise(function (opts, callback) {
+plugin.getSession = toPromise(function (opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = opts;
     opts = {};
   }
-  var url = utils.getSessionUrl(db);
+  var url = getSessionUrl(db);
 
-  var ajaxOpts = pouchdbUtils.assign({
+  var ajaxOpts = assign({
     method : 'GET',
     url : url
   }, opts.ajax || {});
-  pouchdbAjax(ajaxOpts, wrapError(callback));
+  ajaxCore(ajaxOpts, wrapError(callback));
 });
 
-exports.getUser = pouchdbUtils.toPromise(function (username, opts, callback) {
+plugin.getUser = toPromise(function (username, opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? username : opts;
@@ -140,15 +147,15 @@ exports.getUser = pouchdbUtils.toPromise(function (username, opts, callback) {
     return callback(new AuthError('you must provide a username'));
   }
 
-  var url = utils.getUsersUrl(db);
-  var ajaxOpts = pouchdbUtils.assign({
+  var url = getUsersUrl(db);
+  var ajaxOpts = assign({
     method : 'GET',
     url : url + '/' + encodeURIComponent('org.couchdb.user:' + username)
   }, opts.ajax || {});
-  pouchdbAjax(ajaxOpts, wrapError(callback));
+  ajaxCore(ajaxOpts, wrapError(callback));
 });
 
-exports.putUser = pouchdbUtils.toPromise(function (username, opts, callback) {
+plugin.putUser = toPromise(function (username, opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? username : opts;
@@ -170,7 +177,7 @@ exports.putUser = pouchdbUtils.toPromise(function (username, opts, callback) {
   });
 });
 
-exports.changePassword = pouchdbUtils.toPromise(function (username, password, opts, callback) {
+plugin.changePassword = toPromise(function (username, password, opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
     callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
@@ -193,23 +200,22 @@ exports.changePassword = pouchdbUtils.toPromise(function (username, password, op
 
     user.password = password;
 
-    var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(user._id);
-    var ajaxOpts = pouchdbUtils.assign({
+    var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+    var ajaxOpts = assign({
       method : 'PUT',
       url : url,
       body : user
     }, opts.ajax || {});
-    pouchdbAjax(ajaxOpts, wrapError(callback));
+    ajaxCore(ajaxOpts, wrapError(callback));
   });
 });
 
-exports.changeUsername =
-    pouchdbUtils.toPromise(function (oldUsername, newUsername, opts, callback) {
+plugin.changeUsername = toPromise(function (oldUsername, newUsername, opts, callback) {
   var db = this;
   var USERNAME_PREFIX = 'org.couchdb.user:';
   var ajax = function (opts) {
     return new Promise(function (resolve, reject) {
-      pouchdbAjax(opts, wrapError(function (err, res) {
+      ajaxCore(opts, wrapError(function (err, res) {
         if (err) {
           return reject(err);
         }
@@ -218,8 +224,8 @@ exports.changeUsername =
     });
   };
   var updateUser = function (user, opts) {
-    var url = utils.getUsersUrl(db) + '/' + encodeURIComponent(user._id);
-    var updateOpts = pouchdbUtils.assign({
+    var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+    var updateOpts = assign({
       method : 'PUT',
       url : url,
       body: user
@@ -251,7 +257,7 @@ exports.changeUsername =
     return db.getUser(oldUsername, opts);
   })
   .then(function (user) {
-    var newUser = pouchdbUtils.clone(user);
+    var newUser = clone(user);
     delete newUser._rev;
     newUser._id = USERNAME_PREFIX + newUsername;
     newUser.name = newUsername;
@@ -281,3 +287,5 @@ inherits(AuthError, Error);
 if (typeof window !== 'undefined' && window.PouchDB) {
   window.PouchDB.plugin(exports);
 }
+
+export default plugin;

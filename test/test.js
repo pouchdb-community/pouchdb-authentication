@@ -1,11 +1,8 @@
-/*jshint expr:true */
-/* global sum */
 'use strict';
 
 var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
-var utils = require('../lib/utils');
 var chai = require('chai');
 var should = chai.should();
 chai.use(require('chai-as-promised'));
@@ -34,7 +31,7 @@ testCases.forEach(function (testCase) {
     afterEach(function () {
       return db.logout().then(function () {
         return db.destroy().then(function () {
-          var usersUrl = utils.getUsersUrl(db);
+          var usersUrl = db.getUsersDatabaseUrl();
           var usersDb = new PouchDB(usersUrl);
           // remove the fake users, hopefully we're in the admin party
           return usersDb.allDocs({

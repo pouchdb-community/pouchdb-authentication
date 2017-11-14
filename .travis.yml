@@ -11,7 +11,7 @@ sudo: false
 before_script:
   - "npm install add-cors-to-couchdb"
   - "./node_modules/.bin/add-cors-to-couchdb"
-  - "npm run jshint"
+  - "npm run lint"
 
 script: npm test
 

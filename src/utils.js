@@ -1,18 +1,21 @@
 'use strict';
 
-var urlJoin = require('url-join');
+import urlJoin from 'url-join';
 
 function getBaseUrl(db) {
   if (typeof db.getUrl === 'function') { // pouchdb pre-6.0.0
-    return db.getUrl().replace(/\/[^\/]+\/?$/, '');
+    return db.getUrl().replace(/[^/]+\/?$/, '');
   } else { // pouchdb post-6.0.0
-    return db.name.replace(/\/[^\/]+\/?$/, '');
+    return db.name.replace(/[^/]+\/?$/, '');
   }
 }
 
-exports.getUsersUrl = function (db) {
+function getUsersUrl(db) {
   return urlJoin(getBaseUrl(db), '/_users');
-};
-exports.getSessionUrl = function (db) {
+}
+
+function getSessionUrl(db) {
   return urlJoin(getBaseUrl(db), '/_session');
-};
+}
+
+export { getSessionUrl, getUsersUrl };
