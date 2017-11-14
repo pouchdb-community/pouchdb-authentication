@@ -211,6 +211,50 @@ testCases.forEach(function (testCase) {
       });
     });
 
+    it('Test that admin can change roles', function () {
+      var roles = ['sidekick'];
+      var newRoles = ['superhero', 'villain'];
+      return db.signup('robin', 'dickgrayson', {roles: roles}).then(function (res) {
+        res.ok.should.equal(true);
+        return db.getUser('robin');
+      }).then(function (user) {
+        user.roles.should.deep.equal(roles);
+      }).then(function () {
+        return db.putUser('robin', {roles: newRoles});
+      }).then(function (res) {
+        res.ok.should.equal(true);
+        return db.getUser('robin');
+      }).then(function (user) {
+        user.roles.should.deep.equal(newRoles);
+      }).catch(function (err) {
+        should.not.exist(err);
+      });
+    });
+
+    it('Test that user cannot change roles', function () {
+      var roles = ['sidekick'];
+      var newRoles = ['superhero', 'villain'];
+      // We can't test for initial roles as we are in admin party
+      // Let us have faith in CouchDB
+      return db.signup('robin', 'dickgrayson', {roles: roles}).then(function (res) {
+        res.ok.should.equal(true);
+        return db.login('robin', 'dickgrayson');
+      }).then(function () {
+        return db.getUser('robin');
+      }).then(function (user) {
+        user.roles.should.deep.equal(roles);
+      }).then(function () {
+        return db.putUser('robin', {roles: newRoles});
+      }).then(function (res) {
+        res.ok.should.not.equal(true);
+        return db.getUser('robin').then(function (user) {
+          user.roles.should.deep.equal(roles);
+        });
+      }).catch(function (err) {
+        should.exist(err);
+      });
+    });
+
     it('Test wrong user for getUser', function () {
       return db.signup('robin', 'dickgrayson').then(function (res) {
         return db.signup('aquaman', 'sleeps_with_fishes');
