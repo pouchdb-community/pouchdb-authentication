@@ -44,6 +44,10 @@ function putUser(db, user, opts, callback) {
     user = assign(user, opts.metadata);
   }
 
+  if (opts.roles) {
+    user = assign(user, {roles: opts.roles});
+  }
+
   var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
   var ajaxOpts = assign({
     method : 'PUT',
@@ -80,7 +84,7 @@ plugin.signup = toPromise(function (username, password, opts, callback) {
   var user = {
     name     : username,
     password : password,
-    roles    : opts.roles || [],
+    roles    : [],
     type     : 'user',
     _id      : userId
   };
