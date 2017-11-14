@@ -20,7 +20,8 @@
     "build": "npm-run-all clean rollup minify",
     "lint": "eslint bin/ src/ tests/",
     "dev": "npm run rollup-cjs && zuul --local 9000 --no-coverage --ui mocha-bdd test/test.js",
-    "test": "npm run rollup-cjs && zuul --phantom --ui mocha-bdd test/test.js"
+    "test": "npm run rollup-cjs && zuul --phantom --ui mocha-bdd test/test.js",
+    "release": "standard-version"
   },
   "keywords": [
     "pouch",
@@ -62,6 +63,7 @@
     "rollup-plugin-inject": "^2.0.0",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-replace": "^1.1.1",
+    "standard-version": "^4.2.0",
     "uglify-js": "^3.1.9",
     "zuul": "^3.10.1"
   },
@@ -72,6 +74,11 @@
     "ignore": [
       "chai-as-promised"
     ]
+  },
+  "standard-version": {
+    "scripts": {
+      "postbump": "git checkout -- bower.json"
+    }
   },
   "files": [
     "src",
