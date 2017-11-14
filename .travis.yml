@@ -4,14 +4,27 @@ services:
   - couchdb
 
 node_js:
-  - "5"
+  - "6"
 
 sudo: false
 
+before_install:
+  # package-lock.json was introduced in npm@5
+  - npm install -g npm@5 # skip this if you are using node 9
+  - npm install -g greenkeeper-lockfile@1
+
 before_script:
-  - "npm install add-cors-to-couchdb"
-  - "./node_modules/.bin/add-cors-to-couchdb"
-  - "npm run lint"
+  # update package-lock.json
+  - greenkeeper-lockfile-update
+  # ensure correct CORS configuration of the couchdb service
+  - npm install add-cors-to-couchdb
+  - ./node_modules/.bin/add-cors-to-couchdb
+  # run linter before the tests
+  - npm run lint
+
+after_script:
+  # upload the updated package-lock.json
+  - greenkeeper-lockfile-upload
 
 script: npm test
 
@@ -19,3 +32,7 @@ branches:
   only:
   - master
   - /^greenkeeper/.*$/
+
+env:
+  global:
+    - secure: "U7yqHtQrvzNob8YMh9iH34piyr4N0ZoX/G45VUuGlOoXe2gjhwHMAERRISZLtdzHawYu780SZ7g42HP2jsgwXqGGUmxLNMTFY44V19030Fn2QFEIZ30Ni/t0VRpvt1gwiAwRQJlVyKxS4B6qctf6HGm+hS2gQHnGuj4uX9WMZ8A="
