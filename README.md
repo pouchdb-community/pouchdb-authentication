@@ -1,5 +1,9 @@
-PouchDB Authentication [![Build Status](https://travis-ci.org/nolanlawson/pouchdb-authentication.svg?branch=master)](https://travis-ci.org/nolanlawson/pouchdb-authentication)
+PouchDB Authentication
 =====
+
+[![Build Status](https://travis-ci.org/pouchdb-community/pouchdb-authentication.svg?branch=master)](https://travis-ci.org/nolanlawson/pouchdb-authentication)
+[![Greenkeeper badge](https://badges.greenkeeper.io/pouchdb-community/pouchdb-authentication.svg)](https://greenkeeper.io/)
+[![npm version](https://img.shields.io/npm/v/pouchdb-authentication.svg)](https://www.npmjs.com/package/pouchdb-authentication)
 
 <img alt="PouchDB Authentication logo by nickcolley" title="PouchDB Authentication logo by nickcolley" width="150px" src="https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/logo.png"/>
 

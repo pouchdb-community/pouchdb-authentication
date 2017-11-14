@@ -28,26 +28,35 @@
     "url": "https://github.com/nolanlawson/pouchdb-authentication/issues"
   },
   "dependencies": {
-    "inherits": "2.0.1",
-    "pouchdb-ajax": "6.1.1",
-    "pouchdb-promise": "6.1.1",
-    "pouchdb-utils": "6.1.1",
-    "url-join": "1.1.0"
+    "inherits": "2.0.3",
+    "pouchdb-ajax": "6.3.4",
+    "pouchdb-extend": "0.1.2",
+    "pouchdb-promise": "6.3.4",
+    "pouchdb-utils": "6.3.4",
+    "url-join": "2.0.2"
   },
   "devDependencies": {
-    "bluebird": "^2.0.0",
-    "browserify": "13.0.1",
+    "bluebird": "^3.5.1",
+    "browserify": "14.5.0",
     "bundle-collapser": "^1.2.1",
-    "chai": "^3.5.0",
-    "chai-as-promised": "^5.3.0",
-    "istanbul": "^0.1.46",
-    "jshint": "2.8.0",
+    "chai": "3.5.0",
+    "chai-as-promised": "5.3.0",
+    "istanbul": "^0.4.5",
+    "jshint": "2.9.5",
     "mkdirp": "^0.5.1",
-    "mocha": "^2.3.3",
-    "phantomjs-prebuilt": "2.1.7",
+    "mocha": "^4.0.1",
+    "phantomjs-prebuilt": "2.1.16",
     "pouchdb-memory": "^6.0.0",
-    "uglify-js": "^2.4.24",
+    "uglify-js": "^3.1.9",
     "zuul": "^3.10.1"
+  },
+  "// greenkeeper": [
+    "// chai-as-promised is pinned because of breaking changes in 6.0.0 which make phantomjs crash"
+  ],
+  "greenkeeper": {
+    "ignore": [
+      "chai-as-promised"
+    ]
   },
   "files": [
     "lib",
