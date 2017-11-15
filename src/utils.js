@@ -1,14 +1,15 @@
 'use strict';
 
 import urlJoin from 'url-join';
+import urlParse from 'url-parse';
 
 function getBaseUrl(db) {
   if (typeof db.getUrl === 'function') { // pouchdb pre-6.0.0
-    return db.getUrl().replace(/[^/]+\/?$/, '');
+    return urlParse(db.getUrl()).origin;
   } else if (db.__opts && db.__opts.prefix) { // PouchDB.defaults
     return db.__opts.prefix;
   } else { // pouchdb post-6.0.0
-    return db.name.replace(/[^/]+\/?$/, '');
+    return urlParse(db.name).origin;
   }
 }
 
