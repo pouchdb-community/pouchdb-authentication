@@ -33,7 +33,8 @@
     "pouchdb-extend": "0.1.2",
     "pouchdb-promise": "6.3.4",
     "pouchdb-utils": "6.3.4",
-    "url-join": "2.0.2"
+    "url-join": "2.0.2",
+    "url-parse": "1.2.0"
   },
   "devDependencies": {
     "bluebird": "^3.5.1",
