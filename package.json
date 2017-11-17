@@ -19,8 +19,8 @@
     "prepublishOnly": "npm run build",
     "build": "npm-run-all clean rollup minify",
     "lint": "eslint bin/ src/ tests/",
-    "dev": "npm run rollup-cjs && zuul --local 9000 --no-coverage --ui mocha-bdd test/test.js",
-    "test": "npm run rollup-cjs && zuul --phantom --ui mocha-bdd test/test.js",
+    "dev": "npm run rollup-cjs && zuul --local 9000 --no-coverage --ui mocha-bdd test/*",
+    "test": "npm run rollup-cjs && zuul --phantom --ui mocha-bdd test/*",
     "release": "standard-version"
   },
   "keywords": [
