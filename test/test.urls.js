@@ -4,12 +4,12 @@ var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
 var chai = require('chai');
-var should = chai.should();
+chai.should();
 
 describe('urls', function () {
 
   var hostUrl = 'http://localhost:5984';
-  var dbName = 'testdb'
+  var dbName = 'testdb';
   var dbUrl = hostUrl + '/' + dbName;
 
   it('Correct users database url for database without trailing slash', function () {

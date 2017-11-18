@@ -18,7 +18,7 @@
     "minify": "uglifyjs -mc < dist/pouchdb.authentication.js > dist/pouchdb.authentication.min.js",
     "prepublishOnly": "npm run build",
     "build": "npm-run-all clean rollup minify",
-    "lint": "eslint bin/ src/ tests/",
+    "lint": "eslint bin/ src/ test/",
     "dev": "npm run rollup-cjs && zuul --local 9000 --no-coverage --ui mocha-bdd test/*",
     "test": "npm run rollup-cjs && zuul --phantom --ui mocha-bdd test/*",
     "release": "standard-version"

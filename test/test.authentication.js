@@ -75,7 +75,7 @@ describe('authentication', function () {
   });
 
   it('Test login/logout', function () {
-    return db.signup('aquaman', 'sleeps_with_fishes').then(function (res) {
+    return db.signup('aquaman', 'sleeps_with_fishes').then(function () {
       return db.getSession();
     }).then(function (res) {
       should.equal(res.userCtx.name, null);
@@ -244,7 +244,7 @@ describe('authentication', function () {
   });
 
   it('Test wrong user for getUser', function () {
-    return db.signup('robin', 'dickgrayson').then(function (res) {
+    return db.signup('robin', 'dickgrayson').then(function () {
       return db.signup('aquaman', 'sleeps_with_fishes');
     }).then(function () {
       return db.login('robin', 'dickgrayson');
@@ -274,7 +274,7 @@ describe('authentication', function () {
   });
 
   it('Test change password', function () {
-    return db.signup('spiderman', 'will-forget').then(function (res) {
+    return db.signup('spiderman', 'will-forget').then(function () {
       return db.changePassword('spiderman', 'will-remember').then(function (res) {
         res.ok.should.equal(true);
       }).then(function () {
@@ -286,7 +286,7 @@ describe('authentication', function () {
   });
 
   it('Test change username', function () {
-    return db.signup('spiderman', 'will-forget').then(function (res) {
+    return db.signup('spiderman', 'will-forget').then(function () {
       return db.changeUsername('spiderman', 'batman').then(function () {
         return db.login('batman', 'will-forget');
       }).then(function (res) {
@@ -296,7 +296,7 @@ describe('authentication', function () {
   });
 
   it('Shouldn\'t change username if new username already exists', function () {
-    return db.signup('spiderman', 'will-forget').then(function (res) {
+    return db.signup('spiderman', 'will-forget').then(function () {
       return db.signup('batman', 'will-remember');
     }).then(function () {
       return db.changeUsername('spiderman', 'batman');
