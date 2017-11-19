@@ -10,7 +10,6 @@ export default config => {
       format: config.format,
       file: config.dest
     },
-    name: 'PouchdbAuthentication',
     external: external,
     plugins: [
       buble(),
