@@ -1,5 +1,6 @@
 'use strict';
 
+import { deleteAdmin, getMembership, signUpAdmin } from "./admins";
 import { getSession, logIn, logOut } from "./authentication";
 import {
   changePassword,
@@ -18,6 +19,10 @@ plugin.logIn = logIn;
 plugin.logout = logOut;
 plugin.logOut = logOut;
 plugin.getSession = getSession;
+
+plugin.getMembership = getMembership;
+plugin.signUpAdmin = signUpAdmin;
+plugin.deleteAdmin = deleteAdmin;
 
 plugin.getUsersDatabaseUrl = getUsersDatabaseUrl;
 plugin.signup = signUp;

@@ -14,6 +14,10 @@ function getBaseUrl(db) {
   }
 }
 
+function getConfigUrl(db, nodeName) {
+  return urlJoin(getBaseUrl(db), (nodeName ? '/_node/' + nodeName : '') + '/_config');
+}
+
 function getUsersUrl(db) {
   return urlJoin(getBaseUrl(db), '/_users');
 }
@@ -47,4 +51,4 @@ function AuthError(message) {
 
 inherits(AuthError, Error);
 
-export { AuthError, getSessionUrl, getUsersUrl, wrapError };
+export { AuthError, getBaseUrl, getConfigUrl, getSessionUrl, getUsersUrl, wrapError };
