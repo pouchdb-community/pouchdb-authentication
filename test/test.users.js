@@ -3,15 +3,15 @@
 var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
+
 var chai = require('chai');
 var should = chai.should();
-chai.use(require('chai-as-promised'));
-
-var users = ['batman', 'superman', 'green_lantern', 'robin', 'aquaman', 'spiderman'];
+var utils = require('./test-utils');
 
 describe('users', function () {
 
   var dbName = 'http://localhost:5984/testdb';
+  var users = ['batman', 'superman', 'green_lantern', 'robin', 'aquaman', 'spiderman'];
 
   var db;
 
@@ -22,24 +22,8 @@ describe('users', function () {
   afterEach(function () {
     return db.logout().then(function () {
       return db.destroy().then(function () {
-        var usersUrl = db.getUsersDatabaseUrl();
-        var usersDb = new PouchDB(usersUrl);
         // remove the fake users, hopefully we're in the admin party
-        return usersDb.allDocs({
-          include_docs: true,
-          keys: users.map(function (user) {
-            return 'org.couchdb.user:' + user;
-          })
-        }).then(function (res) {
-          var rows = res.rows.filter(function (row) {
-            return row.doc;
-          });
-          var docs = rows.map(function (row) {
-            row.doc._deleted = true;
-            return row.doc;
-          });
-          return usersDb.bulkDocs({docs: docs});
-        });
+        return utils.deleteUsers(db, users);
       });
     });
   });
