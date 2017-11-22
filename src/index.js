@@ -4,6 +4,7 @@ import { getSession, logIn, logOut } from "./authentication";
 import {
   changePassword,
   changeUsername,
+  deleteUser,
   getUser,
   getUsersDatabaseUrl,
   putUser,
@@ -23,6 +24,7 @@ plugin.signup = signUp;
 plugin.signUp = signUp;
 plugin.getUser = getUser;
 plugin.putUser = putUser;
+plugin.deleteUser = deleteUser;
 plugin.changePassword = changePassword;
 plugin.changeUsername = changeUsername;
 

@@ -132,6 +132,29 @@ describe('users', function () {
     });
   });
 
+  it('Test delete user', function () {
+    return db.signup('robin', 'dickgrayson').then(function () {
+      return db.login('robin', 'dickgrayson');
+    }).then(function () {
+      return db.getUser('robin');
+    }).then(function (res) {
+      res.name.should.equal('robin');
+    }).then(function () {
+      return db.deleteUser('robin');
+    }).then(function (res) {
+      res.ok.should.equal(true);
+    }).then(function () {
+      return db.login('robin', 'dickgrayson');
+    }).then(function () {
+      throw new Error('shouldn\'t have worked');
+    }, function (err) {
+      should.exist(err);
+      err.error.should.equal('unauthorized');
+      err.reason.should.equal('Name or password is incorrect.');
+      err.status.should.equal(401);
+    });
+  });
+
   it('Test change password', function () {
     return db.signup('spiderman', 'will-forget').then(function () {
       return db.changePassword('spiderman', 'will-remember').then(function (res) {

@@ -115,6 +115,33 @@ var putUser = toPromise(function (username, opts, callback) {
   });
 });
 
+var deleteUser = toPromise(function (username, opts, callback) {
+  var db = this;
+  if (typeof callback === 'undefined') {
+    callback = typeof opts === 'undefined' ? username : opts;
+    opts = {};
+  }
+  if (['http', 'https'].indexOf(db.type()) === -1) {
+    return callback(new AuthError('This plugin only works for the http/https adapter. ' +
+      'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
+  } else if (!username) {
+    return callback(new AuthError('You must provide a username'));
+  }
+
+  db.getUser(username, opts, function (error, user) {
+    if (error) {
+      return callback(error);
+    }
+
+    var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id) + '?rev=' + user._rev;
+    var ajaxOpts = assign({
+      method: 'DELETE',
+      url: url,
+    }, opts.ajax || {});
+    ajaxCore(ajaxOpts, wrapError(callback));
+  });
+});
+
 var changePassword = toPromise(function (username, password, opts, callback) {
   var db = this;
   if (typeof callback === 'undefined') {
@@ -209,4 +236,12 @@ var changeUsername = toPromise(function (oldUsername, newUsername, opts, callbac
   }).catch(callback);
 });
 
-export { getUsersDatabaseUrl, signUp, getUser, putUser, changePassword, changeUsername };
+export {
+  getUsersDatabaseUrl,
+  signUp,
+  getUser,
+  putUser,
+  deleteUser,
+  changePassword,
+  changeUsername,
+};
