@@ -208,7 +208,7 @@ Log in an existing user. Throws an error if the user doesn't exist yet, the pass
 ```js
 db.login('superman', 'clarkkent', function (err, response) {
   if (err) {
-    if (err.name === 'unauthorized') {
+    if (err.name === 'unauthorized' || err.name === 'forbidden') {
       // name or password incorrect
     } else {
       // cosmic rays, a meteor, etc.
