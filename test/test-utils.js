@@ -1,5 +1,11 @@
 var PouchDB = require('pouchdb-memory');
 
+module.exports.ensureUsersDatabaseExists = function (db) {
+  var usersUrl = db.getUsersDatabaseUrl();
+  var usersDb = new PouchDB(usersUrl);
+  return usersDb.info();
+};
+
 module.exports.deleteUsers = function (db, users) {
   var usersUrl = db.getUsersDatabaseUrl();
   var usersDb = new PouchDB(usersUrl);

@@ -4,9 +4,9 @@ var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
 
+var utils = require('./test-utils');
 var chai = require('chai');
 var should = chai.should();
-var utils = require('./test-utils');
 
 describe('authentication', function () {
 
@@ -17,8 +17,9 @@ describe('authentication', function () {
 
   beforeEach(function () {
     db = new PouchDB(dbName);
-    return db;
+    return utils.ensureUsersDatabaseExists(db);
   });
+
   afterEach(function () {
     return db.logout().then(function () {
       return db.destroy().then(function () {
