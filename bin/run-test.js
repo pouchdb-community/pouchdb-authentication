@@ -1,17 +1,27 @@
 #!/usr/bin/env node
 'use strict';
 
-var childProcess = require('child_process');
-var karma = require('karma');
+var utils = require('./utils');
+var runServer = require('./run-server');
 
-var binDir = 'node_modules/.bin/';
-
+var server = process.env.SERVER;
 var client = process.env.CLIENT || 'phantom';
 
-if (client === 'node') {
-  npmRun('mocha', ['--ui', 'bdd', 'test/*']);
-} else {
+runServer(server, function () {
+  return runTests(client);
+});
 
+function runTests(client) {
+  if (client === 'node') {
+    console.log('\nRunning mocha tests on Node.js');
+    return utils.npmRun('mocha', ['--ui', 'bdd', 'test/*']);
+  } else {
+    var options = buildKarmaConf(client);
+    return utils.karmaRun(options);
+  }
+}
+
+function buildKarmaConf(client) {
   // Karma base configuration
   var options = {
     basePath: '',
@@ -36,7 +46,7 @@ if (client === 'node') {
   if (client === 'phantom') {
     options.browsers = ['PhantomJS'];
     options.phantomJsLauncher = {
-      exitOnResourceError: true
+      exitOnResourceError: true,
     };
   } else if (client === 'local') {
     options.browsers = [];
@@ -46,12 +56,12 @@ if (client === 'node') {
       runner: tmp[0] || 'saucelabs',
       browser: tmp[1] || 'firefox',
       version: tmp[2] || null, // Latest
-      platform: tmp[3] || null
+      platform: tmp[3] || null,
     };
 
     if (process.env.TRAVIS &&
-        client.runner === 'saucelabs' &&
-        process.env.TRAVIS_SECURE_ENV_VARS === 'false') {
+      client.runner === 'saucelabs' &&
+      process.env.TRAVIS_SECURE_ENV_VARS === 'false') {
       console.error('Not running test, cannot connect to saucelabs');
       process.exit(0);
     }
@@ -87,22 +97,10 @@ if (client === 'node') {
       options.client = {
         mocha: {
           timeout: 30 * 60 * 1000,
-        }
+        },
       };
     }
   }
 
-  var server = new karma.Server(options);
-  server.start();
-}
-
-function npmRun(bin, args) {
-  var testProcess = childProcess.spawn(binDir + bin, args, {
-    env: process.env,
-    stdio: 'inherit'
-  });
-
-  testProcess.on('close', function (code) {
-    process.exit(code);
-  });
+  return options;
 }
