@@ -1,6 +1,6 @@
 'use strict';
 
-import { AuthError, getSessionUrl, wrapError } from './utils';
+import { AuthError, getBasicAuthHeaders, getSessionUrl, wrapError } from './utils';
 
 import ajaxCore from 'pouchdb-ajax';
 import { assign, toPromise } from 'pouchdb-utils';
@@ -24,7 +24,7 @@ var logIn = toPromise(function (username, password, opts, callback) {
   var ajaxOpts = assign({
     method: 'POST',
     url: getSessionUrl(db),
-    headers: {'Content-Type': 'application/json'},
+    headers: assign({'Content-Type': 'application/json'}, getBasicAuthHeaders(db)),
     body: {name: username, password: password},
   }, opts.ajax || {});
   ajaxCore(ajaxOpts, wrapError(callback));
@@ -39,6 +39,7 @@ var logOut = toPromise(function (opts, callback) {
   var ajaxOpts = assign({
     method: 'DELETE',
     url: getSessionUrl(db),
+    headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
   ajaxCore(ajaxOpts, wrapError(callback));
 });
@@ -54,6 +55,7 @@ var getSession = toPromise(function (opts, callback) {
   var ajaxOpts = assign({
     method: 'GET',
     url: url,
+    headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
   ajaxCore(ajaxOpts, wrapError(callback));
 });

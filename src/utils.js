@@ -3,6 +3,7 @@
 import urlJoin from 'url-join';
 import urlParse from 'url-parse';
 import inherits from 'inherits';
+import { btoa } from 'pouchdb-binary-utils';
 
 function getBaseUrl(db) {
   if (typeof db.getUrl === 'function') { // pouchdb pre-6.0.0
@@ -24,6 +25,17 @@ function getUsersUrl(db) {
 
 function getSessionUrl(db) {
   return urlJoin(getBaseUrl(db), '/_session');
+}
+
+function getBasicAuthHeaders(db) {
+  var url = urlParse(db.name);
+  if (!url.auth) {
+    return {};
+  }
+
+  var str = url.username + ':' + url.password;
+  var token = btoa(unescape(encodeURIComponent(str)));
+  return {Authorization: 'Basic ' + token};
 }
 
 function wrapError(callback) {
@@ -51,4 +63,12 @@ function AuthError(message) {
 
 inherits(AuthError, Error);
 
-export { AuthError, getBaseUrl, getConfigUrl, getSessionUrl, getUsersUrl, wrapError };
+export {
+  AuthError,
+  getBaseUrl,
+  getBasicAuthHeaders,
+  getConfigUrl,
+  getSessionUrl,
+  getUsersUrl,
+  wrapError,
+};

@@ -1,6 +1,6 @@
 'use strict';
 
-import { AuthError, getUsersUrl, wrapError } from './utils';
+import { AuthError, getBasicAuthHeaders, getUsersUrl, wrapError } from './utils';
 
 import Promise from 'pouchdb-promise';
 import ajaxCore from 'pouchdb-ajax';
@@ -43,6 +43,7 @@ function updateUser(db, user, opts, callback) {
     method: 'PUT',
     url: url,
     body: user,
+    headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
   ajaxCore(ajaxOpts, wrapError(callback));
 }
@@ -89,6 +90,7 @@ var getUser = toPromise(function (username, opts, callback) {
   var ajaxOpts = assign({
     method: 'GET',
     url: url + '/' + encodeURIComponent('org.couchdb.user:' + username),
+    headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
   ajaxCore(ajaxOpts, wrapError(callback));
 });
@@ -137,6 +139,7 @@ var deleteUser = toPromise(function (username, opts, callback) {
     var ajaxOpts = assign({
       method: 'DELETE',
       url: url,
+      headers: getBasicAuthHeaders(db),
     }, opts.ajax || {});
     ajaxCore(ajaxOpts, wrapError(callback));
   });
@@ -169,6 +172,7 @@ var changePassword = toPromise(function (username, password, opts, callback) {
     var ajaxOpts = assign({
       method: 'PUT',
       url: url,
+      headers: getBasicAuthHeaders(db),
       body: user,
     }, opts.ajax || {});
     ajaxCore(ajaxOpts, wrapError(callback));
@@ -193,6 +197,7 @@ var changeUsername = toPromise(function (oldUsername, newUsername, opts, callbac
     var updateOpts = assign({
       method: 'PUT',
       url: url,
+      headers: getBasicAuthHeaders(db),
       body: user,
     }, opts.ajax);
     return ajax(updateOpts);
