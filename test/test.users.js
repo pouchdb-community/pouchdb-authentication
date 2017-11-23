@@ -135,8 +135,6 @@ describe('users', function () {
 
   it('Test delete user', function () {
     return db.signup('robin', 'dickgrayson').then(function () {
-      return db.login('robin', 'dickgrayson');
-    }).then(function () {
       return db.getUser('robin');
     }).then(function (res) {
       res.name.should.equal('robin');
@@ -145,14 +143,13 @@ describe('users', function () {
     }).then(function (res) {
       res.ok.should.equal(true);
     }).then(function () {
-      return db.login('robin', 'dickgrayson');
+      return db.getUser('robin');
     }).then(function () {
-      throw new Error('shouldn\'t have worked');
+      throw new Error('shouldn\'t have found user');
     }, function (err) {
       should.exist(err);
-      err.error.should.equal('unauthorized');
-      err.reason.should.equal('Name or password is incorrect.');
-      err.status.should.equal(401);
+      err.error.should.equal('not_found');
+      err.reason.should.equal('deleted');
     });
   });
 
