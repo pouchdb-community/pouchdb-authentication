@@ -14,20 +14,32 @@ function runServer(server, runTests) {
       version: tmp[1] || 'latest',
     };
 
+    // CouchDB
     if (server.name === 'couchdb') {
       var dockerImage = 'apache/couchdb:' + server.version;
 
       return utils.dockerRun(dockerImage, ['5984:5984']);
-    } else {
-      console.log('Unknown SERVER $SERVER. Did you mean couchdb:latest?');
+    }
+
+    // PouchDB Server
+    else if (server.name === 'pouchdb-server') {
+      return utils.npmRunDaemon('pouchdb-server', ['--in-memory']);
+    }
+
+    // Unknown
+    else {
+      console.log('Unknown SERVER \'' + server.name + '\'. Did you mean pouchdb-server?');
     }
 
     return null;
   }).then(function (handle) {
     return waitForCouch('http://localhost:5984/')
     .then(function () {
-      console.log('\nExecuting add-cors-to-couchdb');
-      return utils.npmRun('add-cors-to-couchdb');
+      // To workaround pouchdb/add-cors-to-couchdb#24
+      if (server.name !== 'pouchdb-server') {
+        console.log('\nExecuting add-cors-to-couchdb');
+        return utils.npmRun('add-cors-to-couchdb');
+      }
     }).then(function () {
       return runTests();
     }).catch(function (exitCode) {

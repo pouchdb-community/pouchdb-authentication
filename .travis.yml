@@ -39,6 +39,9 @@ env:
   - SERVER=couchdb:1.7.1 CLIENT=node COMMAND=test
   - SERVER=couchdb:1.7.1 CLIENT=phantom COMMAND=test
 
+  - SERVER=pouchdb-server CLIENT=node COMMAND=test
+  - SERVER=pouchdb-server CLIENT=phantom COMMAND=test
+
   - SERVER=couchdb:latest CLIENT=saucelabs:Chrome COMMAND=test
   - SERVER=couchdb:latest CLIENT=saucelabs:Firefox COMMAND=test
   - SERVER=couchdb:latest CLIENT=saucelabs:Safari:7 COMMAND=test
@@ -50,6 +53,7 @@ matrix:
     # Waiting for pouchdb/pouchdb#6814
     - env: SERVER=couchdb:latest CLIENT=node COMMAND=test
     - env: SERVER=couchdb:1.7.1 CLIENT=node COMMAND=test
+    - env: SERVER=pouchdb-server CLIENT=node COMMAND=test
     # Waiting for pouchdb/pouchdb#6855
     - env: SERVER=couchdb:latest CLIENT="saucelabs:Internet Explorer:11:Windows 10" COMMAND=test
 

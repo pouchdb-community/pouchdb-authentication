@@ -149,7 +149,7 @@ describe('users', function () {
     }, function (err) {
       should.exist(err);
       err.error.should.equal('not_found');
-      err.reason.should.equal('deleted');
+      err.reason.should.be.oneOf(['missing', 'deleted']);
     });
   });
 

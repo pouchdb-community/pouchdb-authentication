@@ -1,8 +1,12 @@
 var childProcess = require('child_process');
 var karma = require('karma');
 
-function npmRun(bin, args) {
-  return run('node_modules/.bin/' + bin, args, 'inherit');
+function npmRun(bin, args, stdio) {
+  return run('node_modules/.bin/' + bin, args, stdio);
+}
+
+function npmRunDaemon(bin, args, stdio) {
+  return runDaemon('node_modules/.bin/' + bin, args, stdio);
 }
 
 function karmaRun(options) {
@@ -49,7 +53,7 @@ function run(bin, args, stdio) {
 
     var testProcess = childProcess.spawn(bin, args, {
       env: process.env,
-      stdio: stdio,
+      stdio: stdio || 'inherit',
     });
 
     testProcess.on('close', function (code) {
@@ -62,8 +66,30 @@ function run(bin, args, stdio) {
   });
 }
 
+
+function runDaemon(bin, args, stdio) {
+  var cmd = bin + (args ? ' ' + args.join(' ') : '');
+
+  var daemonProcess = childProcess.spawn(bin, args, {
+    env: process.env,
+    stdio: stdio || 'ignore',
+  });
+
+  console.log('\nStarting daemon');
+  console.log('> ' + cmd);
+  return Promise.resolve().then(function () {
+    return {
+      destroy: function () {
+        console.log('\nStopping daemon');
+        daemonProcess.kill();
+      },
+    };
+  });
+}
+
 module.exports = {
   npmRun,
+  npmRunDaemon,
   dockerRun,
   karmaRun,
 };
