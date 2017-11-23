@@ -17,6 +17,13 @@ function runTests(client) {
     return utils.npmRun('mocha', ['--ui', 'bdd', 'test/*']);
   } else {
     var options = buildKarmaConf(client);
+
+    // buildKarmaConf returns null if we can't run the tests
+    // e.g. SauceLabs with no credentials on Travis
+    if (!options) {
+      return Promise.resolve();
+    }
+
     return utils.karmaRun(options);
   }
 }
@@ -63,7 +70,7 @@ function buildKarmaConf(client) {
       client.runner === 'saucelabs' &&
       process.env.TRAVIS_SECURE_ENV_VARS === 'false') {
       console.error('Not running test, cannot connect to saucelabs');
-      process.exit(0);
+      return null;
     }
 
     if (client.runner === 'saucelabs') {
