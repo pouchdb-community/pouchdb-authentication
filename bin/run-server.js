@@ -16,7 +16,7 @@ function runServer(server, runTests) {
 
     // CouchDB
     if (server.name === 'couchdb') {
-      var dockerImage = 'apache/couchdb:' + server.version;
+      var dockerImage = 'couchdb:' + server.version;
 
       return utils.dockerRun(dockerImage, ['5984:5984']);
     }
