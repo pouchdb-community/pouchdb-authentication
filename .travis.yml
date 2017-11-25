@@ -9,11 +9,6 @@ node_js:
 sudo: false
 
 before_install:
-  # package-lock.json was introduced in npm@5
-  - npm install -g npm@5 # skip this if you are using node 9
-  - npm install -g greenkeeper-lockfile@1
-
-before_script:
   # Install PhantomJS and cache it
   # See https://github.com/Medium/phantomjs#continuous-integration
   - "export PHANTOMJS_VERSION=2.1.1"
@@ -22,6 +17,12 @@ before_script:
   - "if [ $(phantomjs --version) != $PHANTOMJS_VERSION ]; then wget https://github.com/Medium/phantomjs/releases/download/v$PHANTOMJS_VERSION/phantomjs-$PHANTOMJS_VERSION-linux-x86_64.tar.bz2 -O $PWD/travis_phantomjs/phantomjs-$PHANTOMJS_VERSION-linux-x86_64.tar.bz2; fi"
   - "if [ $(phantomjs --version) != $PHANTOMJS_VERSION ]; then tar -xvf $PWD/travis_phantomjs/phantomjs-$PHANTOMJS_VERSION-linux-x86_64.tar.bz2 -C $PWD/travis_phantomjs; fi"
   - "phantomjs --version"
+
+  # package-lock.json was introduced in npm@5
+  - npm install -g npm@5 # skip this if you are using node 9
+  - npm install -g greenkeeper-lockfile@1
+
+before_script:
   # update package-lock.json
   - greenkeeper-lockfile-update
   # run linter before the tests
