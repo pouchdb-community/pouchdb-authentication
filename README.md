@@ -5,7 +5,7 @@ PouchDB Authentication
 [![Greenkeeper badge](https://badges.greenkeeper.io/pouchdb-community/pouchdb-authentication.svg)](https://greenkeeper.io/)
 [![npm version](https://img.shields.io/npm/v/pouchdb-authentication.svg)](https://www.npmjs.com/package/pouchdb-authentication)
 
-<img alt="PouchDB Authentication logo by nickcolley" title="PouchDB Authentication logo by nickcolley" width="150px" src="https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/logo.png"/>
+<img alt="PouchDB Authentication logo by nickcolley" title="PouchDB Authentication logo by nickcolley" width="150px" src="https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/logo.png"/>
 
 Easy user authentication for PouchDB/CouchDB.
 
@@ -89,7 +89,7 @@ PouchDB.plugin(require('pouchdb-authentication'));
 
 Static :
 
-Or, just grab the latest `pouchdb.authentication.min.js` from [the releases page](https://github.com/nolanlawson/pouchdb-authentication/releases) and declare it after PouchDB:
+Or, just grab the latest `pouchdb.authentication.min.js` from [the releases page](https://github.com/pouchdb-community/pouchdb-authentication/releases) and declare it after PouchDB:
 
 ```html
 <script src="pouchdb-XXX.min.js"></script>
@@ -610,12 +610,12 @@ License
 
 Apache 2.0
 
-[admin party]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/admin_party.png
-[blogger]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/blogger.png
-[blogger ddoc]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/blogger_ddoc.png
-[new doc button]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/new_doc_button.png
-[security button]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/security_button.png
-[employee]: https://raw.githubusercontent.com/nolanlawson/pouchdb-authentication/master/docs/employee.png
+[admin party]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/admin_party.png
+[blogger]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/blogger.png
+[blogger ddoc]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/blogger_ddoc.png
+[new doc button]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/new_doc_button.png
+[security button]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/security_button.png
+[employee]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/employee.png
 [cloudant-100k]: https://mail-archives.apache.org/mod_mbox/couchdb-user/201401.mbox/%3C52CEB873.7080404@ironicdesign.com%3E
 [couchperuser-gist]: https://gist.github.com/nolanlawson/9676093
 [ssl]: https://wiki.apache.org/couchdb/How_to_enable_SSL
