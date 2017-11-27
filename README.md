@@ -599,11 +599,11 @@ First off:
 
 To test in the browser (locally):
 
-    npm run dev
+    npm run test-local
 
 To test in PhantomJS:
 
-    npm test
+    npm run test-phantom
 
 License
 ----------
