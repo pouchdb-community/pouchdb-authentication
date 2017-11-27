@@ -2,6 +2,23 @@
   "name": "pouchdb-authentication",
   "version": "0.5.5",
   "description": "PouchDB Authentication",
+  "keywords": [
+    "pouch",
+    "pouchdb",
+    "authentication",
+    "couch",
+    "couchdb"
+  ],
+  "bugs": {
+    "url": "https://github.com/pouchdb-community/pouchdb-authentication/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Nolan Lawson <nolan@nolanlawson.com",
+  "files": [
+    "src",
+    "lib",
+    "dist"
+  ],
   "main": "lib/index.js",
   "jsnext:main": "lib/index.es.js",
   "module": "lib/index.es.js",
@@ -25,18 +42,6 @@
     "test-node": "CLIENT=node npm run test",
     "test-phantom": "CLIENT=phantom npm run test",
     "release": "standard-version"
-  },
-  "keywords": [
-    "pouch",
-    "pouchdb",
-    "authentication",
-    "couch",
-    "couchdb"
-  ],
-  "author": "Nolan Lawson <nolan@nolanlawson.com",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/pouchdb-community/pouchdb-authentication/issues"
   },
   "dependencies": {
     "inherits": "2.0.3",
@@ -91,10 +96,5 @@
     "scripts": {
       "postbump": "git checkout -- bower.json"
     }
-  },
-  "files": [
-    "src",
-    "lib",
-    "dist"
-  ]
+  }
 }
