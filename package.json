@@ -13,7 +13,17 @@
     "url": "https://github.com/pouchdb-community/pouchdb-authentication/issues"
   },
   "license": "Apache-2.0",
-  "author": "Nolan Lawson <nolan@nolanlawson.com",
+  "author": {
+    "name": "Nolan Lawson",
+    "email": "nolan@nolanlawson.com",
+    "url": "https://nolanlawson.com/"
+  },
+  "contributors": [
+    {
+      "name": "Didier Villevalois",
+      "email": "ptitjes@free.fr"
+    }
+  ],
   "files": [
     "src",
     "lib",
