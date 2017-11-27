@@ -7,7 +7,7 @@
   "module": "lib/index.es.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/nolanlawson/pouchdb-authentication.git"
+    "url": "git@github.com:pouchdb-community/pouchdb-authentication.git"
   },
   "scripts": {
     "clean": "rimraf lib dist && mkdirp lib dist",
@@ -36,7 +36,7 @@
   "author": "Nolan Lawson <nolan@nolanlawson.com",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/nolanlawson/pouchdb-authentication/issues"
+    "url": "https://github.com/pouchdb-community/pouchdb-authentication/issues"
   },
   "dependencies": {
     "inherits": "2.0.3",
