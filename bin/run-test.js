@@ -66,14 +66,13 @@ function buildKarmaConf(client) {
       platform: tmp[3] || null,
     };
 
-    if (process.env.TRAVIS &&
-      client.runner === 'saucelabs' &&
-      process.env.TRAVIS_SECURE_ENV_VARS === 'false') {
-      console.error('Not running test, cannot connect to saucelabs');
-      return null;
-    }
-
     if (client.runner === 'saucelabs') {
+
+      // This should already be handled in .travis.yml
+      if (process.env.TRAVIS && process.env.TRAVIS_SECURE_ENV_VARS === 'false') {
+        console.error('Not running test, cannot connect to SauceLabs in Pull Request');
+        return null;
+      }
 
       // Standard SauceLabs configuration
       options.sauceLabs = {

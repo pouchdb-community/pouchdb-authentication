@@ -9,6 +9,13 @@ node_js:
 sudo: false
 
 before_install:
+  # Skip SauceLabs tests in Pull Request
+  - |
+    if [[ $TRAVIS_SECURE_ENV_VARS == "false"  ]] && [[ $CLIENT == saucelabs:* ]]; then
+      echo "Not running test, cannot connect to SauceLabs in Pull Request"
+      travis_terminate 0
+    fi
+
   # Install PhantomJS and cache it
   # See https://github.com/Medium/phantomjs#continuous-integration
   - "export PHANTOMJS_VERSION=2.1.1"
