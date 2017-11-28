@@ -32,6 +32,7 @@
   "main": "lib/index.js",
   "jsnext:main": "lib/index.es.js",
   "module": "lib/index.es.js",
+  "types": "types/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git@github.com:pouchdb-community/pouchdb-authentication.git"
@@ -51,6 +52,7 @@
     "test-local": "CLIENT=local npm run test",
     "test-node": "CLIENT=node npm run test",
     "test-phantom": "CLIENT=phantom npm run test",
+    "test-types": "tsc --noEmit -p types",
     "release": "standard-version"
   },
   "dependencies": {
@@ -63,6 +65,7 @@
     "url-parse": "1.2.0"
   },
   "devDependencies": {
+    "@types/pouchdb-core": "^6.1.9",
     "add-cors-to-couchdb": "0.0.6",
     "brfs": "^1.4.3",
     "browserify": "^14.5.0",
@@ -91,6 +94,7 @@
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-replace": "^2.0.0",
     "standard-version": "^4.2.0",
+    "typescript": "^2.6.2",
     "uglify-js": "^3.1.9",
     "watchify": "^3.9.0"
   },

@@ -45,6 +45,8 @@ env:
   - SAUCE_USERNAME=ptitjes
 
   matrix:
+  - COMMAND=test-types
+
   - SERVER=couchdb:latest CLIENT=node COMMAND=test
   - SERVER=couchdb:latest CLIENT=phantom COMMAND=test
 
