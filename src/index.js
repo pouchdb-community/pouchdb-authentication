@@ -34,7 +34,7 @@ plugin.changePassword = changePassword;
 plugin.changeUsername = changeUsername;
 
 if (typeof window !== 'undefined' && window.PouchDB) {
-  window.PouchDB.plugin(exports);
+  window.PouchDB.plugin(plugin);
 }
 
 export default plugin;
