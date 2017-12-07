@@ -12,6 +12,7 @@ function runServer(serverName, runTests) {
   return Promise.resolve().then(function () {
     if (!server) {
       return {
+        handlePromise: Promise.resolve(null),
         serverHost: process.env.SERVER_HOST || 'http://localhost:5984',
       };
     }
