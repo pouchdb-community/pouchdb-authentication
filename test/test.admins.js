@@ -8,9 +8,11 @@ var utils = require('./test-utils');
 var chai = require('chai');
 var should = chai.should();
 
+var serverHost = utils.getConfig().serverHost;
+
 describe('admins', function () {
 
-  var dbHost = 'http://localhost:5984';
+  var dbHost = serverHost;
   var dbName = dbHost + '/testdb';
 
   var db;

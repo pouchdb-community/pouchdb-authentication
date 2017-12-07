@@ -3,12 +3,16 @@
 var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
+
+var utils = require('./test-utils');
 var chai = require('chai');
 chai.should();
 
+var serverHost = utils.getConfig().serverHost;
+
 describe('urls', function () {
 
-  var hostUrl = 'http://localhost:5984';
+  var hostUrl = serverHost;
   var dbName = 'testdb';
   var dbUrl = hostUrl + '/' + dbName;
 

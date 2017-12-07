@@ -1,5 +1,9 @@
 var PouchDB = require('pouchdb-memory');
 
+module.exports.getConfig = function () {
+  return typeof window !== 'undefined' ? window.__karma__.config : global.__testConfig__;
+};
+
 module.exports.ensureUsersDatabaseExists = function (db) {
   var usersUrl = db.getUsersDatabaseUrl();
   var usersDb = new PouchDB(usersUrl);

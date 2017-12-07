@@ -7,16 +7,20 @@ var runServer = require('./run-server');
 var server = process.env.SERVER;
 var client = process.env.CLIENT || 'phantom';
 
-runServer(server, function () {
-  return runTests(client);
+runServer(server, function (serverHost) {
+  return runTests(client, serverHost);
 });
 
-function runTests(client) {
+function runTests(client, serverHost) {
   if (client === 'node') {
+    global.__testConfig__ = {
+      serverHost: serverHost,
+    };
+
     console.log('\nRunning mocha tests on Node.js');
-    return utils.npmRun('mocha', ['--ui', 'bdd', 'test/*']);
+    return utils.mochaRun({ui: 'bdd'}, 'test');
   } else {
-    var options = buildKarmaConf(client);
+    var options = buildKarmaConf(client, serverHost);
 
     // buildKarmaConf returns null if we can't run the tests
     // e.g. SauceLabs with no credentials on Travis
@@ -28,7 +32,7 @@ function runTests(client) {
   }
 }
 
-function buildKarmaConf(client) {
+function buildKarmaConf(client, serverHost) {
   // Karma base configuration
   var options = {
     basePath: '',
@@ -48,6 +52,9 @@ function buildKarmaConf(client) {
     reporters: ['mocha'],
     concurrency: 1,
     singleRun: client !== 'local',
+    client: {
+      serverHost: serverHost,
+    },
   };
 
   if (client === 'phantom') {
@@ -100,10 +107,8 @@ function buildKarmaConf(client) {
       options.browserDisconnectTimeout = 30 * 60 * 1000;
 
       // To account for distance between SauceLabs and CouchDB at Travis
-      options.client = {
-        mocha: {
-          timeout: 30 * 60 * 1000,
-        },
+      options.client.mocha = {
+        timeout: 30 * 60 * 1000,
       };
     }
   }

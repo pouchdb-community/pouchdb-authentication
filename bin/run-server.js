@@ -1,59 +1,67 @@
 var http = require('http');
 var utils = require('./utils');
 
-function runServer(server, runTests) {
+function runServer(serverName, runTests) {
+
+  var tmp = serverName == null ? null : serverName.split(':');
+  var server = serverName == null ? null : {
+    name: tmp[0] || 'couchdb',
+    version: tmp[1] || 'latest',
+  };
 
   return Promise.resolve().then(function () {
     if (!server) {
-      return null;
+      return {
+        serverHost: process.env.SERVER_HOST || 'http://localhost:5984',
+      };
     }
-
-    var tmp = server.split(':');
-    server = {
-      name: tmp[0] || 'couchdb',
-      version: tmp[1] || 'latest',
-    };
 
     // CouchDB
     if (server.name === 'couchdb') {
       var dockerImage = 'couchdb:' + server.version;
-
-      return utils.dockerRun(dockerImage, ['5984:5984']);
+      return {
+        handlePromise: utils.dockerRun(dockerImage, ['3000:5984']),
+        serverHost: 'http://localhost:3000',
+      };
     }
 
     // PouchDB Server
     else if (server.name === 'pouchdb-server') {
-      return utils.npmRunDaemon('pouchdb-server', ['--in-memory']);
+      return {
+        handlePromise: utils.npmRunDaemon('pouchdb-server', ['--in-memory', '--port', '3000']),
+        serverHost: 'http://localhost:3000',
+      };
     }
 
     // Unknown
-    else {
-      console.log('Unknown SERVER \'' + server.name + '\'. Did you mean pouchdb-server?');
-    }
+    throw new Error('Unknown SERVER \'' + server.name + '\'. Did you mean pouchdb-server?');
+  }).then(function (result) {
+    var handlePromise = result.handlePromise;
+    var serverHost = result.serverHost;
 
-    return null;
-  }).then(function (handle) {
-    return waitForCouch('http://localhost:5984/')
-    .then(function () {
-      // To workaround pouchdb/add-cors-to-couchdb#24
-      if (server.name !== 'pouchdb-server') {
-        console.log('\nExecuting add-cors-to-couchdb');
-        return utils.npmRun('add-cors-to-couchdb');
-      }
-    }).then(function () {
-      return runTests();
-    }).catch(function (exitCode) {
-      return Promise.resolve().then(function () {
+    return handlePromise.then(function (handle) {
+      return waitForCouch(serverHost)
+      .then(function () {
+        // To workaround pouchdb/add-cors-to-couchdb#24
+        if (server && server.name !== 'pouchdb-server') {
+          console.log('\nExecuting add-cors-to-couchdb');
+          return utils.npmRun('add-cors-to-couchdb', [serverHost]);
+        }
+      }).then(function () {
+        return runTests(serverHost);
+      }).catch(function (exitCode) {
+        return Promise.resolve().then(function () {
+          if (handle) {
+            return handle.destroy();
+          }
+        }).then(function () {
+          process.exit(exitCode);
+        });
+      }).then(function () {
         if (handle) {
           return handle.destroy();
         }
-      }).then(function () {
-        process.exit(exitCode);
       });
-    }).then(function () {
-      if (handle) {
-        return handle.destroy();
-      }
     });
   });
 }

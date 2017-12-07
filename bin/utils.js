@@ -1,5 +1,8 @@
 var childProcess = require('child_process');
 var karma = require('karma');
+var Mocha = require('mocha');
+var fs = require('fs');
+var path = require('path');
 
 function npmRun(bin, args, stdio) {
   return run('node_modules/.bin/' + bin, args, stdio);
@@ -7,6 +10,26 @@ function npmRun(bin, args, stdio) {
 
 function npmRunDaemon(bin, args, stdio) {
   return runDaemon('node_modules/.bin/' + bin, args, stdio);
+}
+
+function mochaRun(options, testDir) {
+  return new Promise(function (resolve, reject) {
+    var mocha = new Mocha(options);
+
+    fs.readdirSync(testDir).filter(function (file) {
+      return file.substr(-3) === '.js';
+    }).forEach(function (file) {
+      mocha.addFile(path.join(testDir, file));
+    });
+
+    mocha.run(function (failures) {
+      if (!failures) {
+        resolve();
+      } else {
+        reject(failures);
+      }
+    });
+  });
 }
 
 function karmaRun(options) {
@@ -92,4 +115,5 @@ module.exports = {
   npmRunDaemon,
   dockerRun,
   karmaRun,
+  mochaRun,
 };
