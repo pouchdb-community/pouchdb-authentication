@@ -64,15 +64,6 @@ env:
   - SERVER=couchdb:latest CLIENT="saucelabs:Internet Explorer:10:Windows 8" COMMAND=test
   - SERVER=couchdb:latest CLIENT="saucelabs:Internet Explorer:11:Windows 10" COMMAND=test
 
-matrix:
-  allow_failures:
-    # Waiting for pouchdb/pouchdb#6814
-    - env: SERVER=couchdb:latest CLIENT=node COMMAND=test
-    - env: SERVER=couchdb:1.7.1 CLIENT=node COMMAND=test
-    - env: SERVER=pouchdb-server CLIENT=node COMMAND=test
-    # Waiting for pouchdb/pouchdb#6855
-    - env: SERVER=couchdb:latest CLIENT="saucelabs:Internet Explorer:11:Windows 10" COMMAND=test
-
 branches:
   only:
   - master
