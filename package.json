@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "inherits": "2.0.3",
-    "pouchdb-ajax": "6.3.4",
+    "pouchdb-ajax": "6.4.0",
     "pouchdb-binary-utils": "6.3.4",
     "pouchdb-promise": "6.3.4",
     "pouchdb-utils": "6.3.4",
