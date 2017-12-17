@@ -58,7 +58,7 @@
     "pouchdb-ajax": "6.3.4",
     "pouchdb-binary-utils": "6.3.4",
     "pouchdb-promise": "6.3.4",
-    "pouchdb-utils": "6.3.4",
+    "pouchdb-utils": "6.4.0",
     "url-join": "2.0.2",
     "url-parse": "1.2.0"
   },
