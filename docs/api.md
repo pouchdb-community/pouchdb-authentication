@@ -10,6 +10,8 @@ API
 * [db.deleteUser()](#dbdeleteuserusername-opts--callback)
 * [db.changePassword()](#user-content-dbchangepasswordusername-password--opts-callback)
 * [db.changeUsername()](#user-content-dbchangeusernameoldusername-newusername-opts-callback)
+* [db.signUpAdmin()](#dbsignupadminusername-password--options--callback)
+* [db.deleteAdmin()](#dbdeleteadminusername-opts--callback)
 
 Like PouchDB, every function takes a Node-style callback of the form `function(error, response)`. Or you can use promises:
 
@@ -270,3 +272,23 @@ db.changeUsername('spiderman', 'batman', function(err) {
 ```
 
 **Note:** Only server admins change a username. Otherwise you will get a 404 `not_found` error.
+
+#### db.signUpAdmin(username, password [, options] [, callback])
+
+Sign up a new admin.
+
+```js
+db.signUpAdmin('batman', 'brucewayne', function (err, response) {
+  // etc.
+});
+```
+
+#### db.deleteAdmin(username, opts [, callback])
+
+Delete an admin.
+
+```js
+db.deleteAdmin('batman', function (err, response) {
+  // etc.
+});
+```
