@@ -7,6 +7,7 @@ API
 * [db.getSession()](#dbgetsessionopts--callback)
 * [db.getUser()](#dbgetuserusername--opts-callback)
 * [db.putUser()](#dbputuserusername-opts--callback)
+* [db.deleteUser()](#dbdeleteuserusername-opts--callback)
 * [db.changePassword()](#user-content-dbchangepasswordusername-password--opts-callback)
 * [db.changeUsername()](#user-content-dbchangeusernameoldusername-newusername-opts-callback)
 
@@ -205,6 +206,16 @@ db.putUser('robin', {
     likes : ['acrobatics', 'short pants', 'sidekickin\''],
   }
 }, function (err, response) {
+  // etc.
+});
+```
+
+#### db.deleteUser(username, opts [, callback])
+
+Delete a user.
+
+```js
+db.deleteUser('robin', function (err, response) {
   // etc.
 });
 ```
