@@ -8,14 +8,12 @@ node_js:
 
 sudo: false
 
-before_install:
-  # Skip SauceLabs tests in Pull Request
-  - |
-    if [[ $TRAVIS_SECURE_ENV_VARS == "false"  ]] && [[ $CLIENT == saucelabs:* ]]; then
-      echo "Not running test, cannot connect to SauceLabs in Pull Request"
-      travis_terminate 0
-    fi
+addons:
+  jwt:
+    # SAUCE_ACCESS_KEY
+    - secure: PUcJWxBQJ/uGdDzcoI7PcASKJUGujmBRrwCylMHCaygxt2OSwHt7aMaa5phfAfDU/VWG+FAMruDajPsTztXichj94QUqhnTGHeFnv7V0DGJloZVGFz/svzbW2feeDq1enj2lkJUWEHxRIfV8tH7xDBHC16R/WV7g9UFa69GXSXg=
 
+before_install:
   # Install PhantomJS and cache it
   # See https://github.com/Medium/phantomjs#continuous-integration
   - "export PHANTOMJS_VERSION=2.1.1"
@@ -44,9 +42,7 @@ script: npm run $COMMAND
 env:
   global:
   - NPM_CONFIG_PROGRESS="false"
-  - secure: "U7yqHtQrvzNob8YMh9iH34piyr4N0ZoX/G45VUuGlOoXe2gjhwHMAERRISZLtdzHawYu780SZ7g42HP2jsgwXqGGUmxLNMTFY44V19030Fn2QFEIZ30Ni/t0VRpvt1gwiAwRQJlVyKxS4B6qctf6HGm+hS2gQHnGuj4uX9WMZ8A="
-  - secure: "LjHjFT855IQ66dfXDroe5fmsBNohyO7j5M0sEHOaNvtqnVYVAfMgwW3JpESXhXY0mEgSSKSOtCEGK2iqhsGL1ou4nYP0TarV/aKBjclNotMWcBI+VdgvooCtV4D2LCmFWqJ8agxZnmkeqX+VmnMieEttZAcagXslcNARq96m9v0="
-  - secure: "UqQRT/Fn3cIHWXd9quN0mFD4BG8WeyxJKlghPXF+q3BZOeRyXe4FpG7RJBQohGHvJYzPY27Yi7mIlEOLCICFtC0Os/qNueK11/D+J6Zhr8rPqi/JTUJth0ybwhSBXyb6Vfm4Ce4m8hfKfLHTbo5FP533RuIUhPrThO3+APpxdCo="
+  - SAUCE_USERNAME=ptitjes
 
   matrix:
   - SERVER=couchdb:latest CLIENT=node COMMAND=test
