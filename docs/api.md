@@ -1,9 +1,9 @@
 API
 -------
 
-* [db.signup()](#dbsignupusername-password--options--callback)
-* [db.login()](#dbloginusername-password--options--callback)
-* [db.logout()](#dblogoutcallback)
+* [db.signUp()](#dbsignupusername-password--options--callback)
+* [db.logIn()](#dbloginusername-password--options--callback)
+* [db.logOut()](#dblogoutcallback)
 * [db.getSession()](#dbgetsessionopts--callback)
 * [db.getUser()](#dbgetuserusername--opts-callback)
 * [db.putUser()](#dbputuserusername-opts--callback)
@@ -24,12 +24,12 @@ db.doSomething(args).then(function (response){
 
 Every function also takes a set of `options`.  Unless otherwise noted, the only available option is `ajax`, which corresponds to the standard PouchDB ajax options. (See [the PouchDB API](http://pouchdb.com/api.html) for details.)  Currently the only ajax option is `ajax.cache`, which can be set to `true` to disable cache-busting on IE.
 
-#### db.signup(username, password [, options] [, callback])
+#### db.signUp(username, password [, options] [, callback])
 
 Sign up a new user who doesn't exist yet.  Throws an error if the user already exists or if the username is invalid, or if some network error occurred.  CouchDB has some limitations on user names (e.g. they cannot contain the character `:`).
 
 ```js
-db.signup('batman', 'brucewayne', function (err, response) {
+db.signUp('batman', 'brucewayne', function (err, response) {
   if (err) {
     if (err.name === 'conflict') {
       // "batman" already exists, choose another username
@@ -52,7 +52,7 @@ db.signup('batman', 'brucewayne', function (err, response) {
 }
 ```
 
-**Note:** Signing up does not automatically log in a user; you will need to call `db.login()` afterwards.
+**Note:** Signing up does not automatically log in a user; you will need to call `db.logIn()` afterwards.
 
 ##### Options
 
@@ -61,7 +61,7 @@ db.signup('batman', 'brucewayne', function (err, response) {
 ##### Example:
 
 ```js
-db.signup('robin', 'dickgrayson', {
+db.signUp('robin', 'dickgrayson', {
   metadata : {
     email : 'robin@boywonder.com',
     birthday : '1932-03-27T00:00:00.000Z',
@@ -74,14 +74,12 @@ db.signup('robin', 'dickgrayson', {
 
 Note that CouchDB does not enforce a password policy or a username policy, unless you add a security doc to the `_users` database.
 
-You can also type `signUp()`.
-
-#### db.login(username, password [, options] [ callback])
+#### db.logIn(username, password [, options] [ callback])
 
 Log in an existing user. Throws an error if the user doesn't exist yet, the password is wrong, the HTTP server is unreachable, or a meteor struck your computer.
 
 ```js
-db.login('superman', 'clarkkent', function (err, response) {
+db.logIn('superman', 'clarkkent', function (err, response) {
   if (err) {
     if (err.name === 'unauthorized' || err.name === 'forbidden') {
       // name or password incorrect
@@ -98,16 +96,14 @@ db.login('superman', 'clarkkent', function (err, response) {
 {"ok":true,"name":"david","roles":[]}
 ```
 
-You can also type `logIn()`.
-
-#### db.logout([callback])
+#### db.logOut([callback])
 
 Logs out whichever user is currently logged in. If nobody's logged in, it does nothing and just returns `{"ok" : true}`.
 
 ##### Example:
 
 ```js
-db.logout(function (err, response) {
+db.logOut(function (err, response) {
   if (err) {
     // network error
   }
@@ -119,8 +115,6 @@ db.logout(function (err, response) {
 ```js
 {"ok":true}
 ```
-
-You can also type `logOut()`.
 
 #### db.getSession([opts] [, callback])
 
