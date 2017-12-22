@@ -39,7 +39,7 @@ This plugin uses vanilla CouchDB.  The goal is to give you a lightweight authent
 
 So this is more of a reference implementation than an all-in-one solution. If there's a feature missing that you need, you will probably need to write a custom server (see the [CouchDB Authentication recipes][recipes] section for details).
 
-This plugin **does not work in Node.js. It's designed for the browser**.
+Since version 1.0.0, this plugin **does support Node.js**.
 
 
 Using PouchDB Authentication
