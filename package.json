@@ -25,9 +25,8 @@
     }
   ],
   "files": [
-    "src",
     "lib",
-    "dist"
+    "types/index.d.ts"
   ],
   "main": "lib/index.js",
   "jsnext:main": "lib/index.es.js",
