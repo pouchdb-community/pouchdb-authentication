@@ -45,8 +45,8 @@ Since version 1.0.0, this plugin **does support Node.js**.
 Using PouchDB Authentication
 ------
 
-* [Setup](docs/setup.md)
-* [API](docs/api.md)
+* [Setup](https://github.com/pouchdb-community/pouchdb-authentication/blob/master/docs/setup.md)
+* [API](https://github.com/pouchdb-community/pouchdb-authentication/blob/master/docs/api.md)
 * [CouchDB Authentication recipes][recipes]
 
 
@@ -63,4 +63,4 @@ We use [standard-version](https://github.com/conventional-changelog/standard-ver
 
 PouchDB Authentication is heavily tested, so you'll also want to check out the [testing guide](https://github.com/pouchdb-community/pouchdb-authentication/blob/master/TESTING.md).
 
-[recipes]: docs/recipes.md
+[recipes]: https://github.com/pouchdb-community/pouchdb-authentication/blob/master/docs/recipes.md
