@@ -28,12 +28,22 @@ function getSessionUrl(db) {
 }
 
 function getBasicAuthHeaders(db) {
-  var url = urlParse(db.name);
-  if (!url.auth) {
+  var auth;
+
+  if (db.__opts.auth) {
+    auth = db.__opts.auth;
+  } else {
+    var url = urlParse(db.name);
+    if (url.auth) {
+      auth = url;
+    }
+  }
+
+  if (!auth) {
     return {};
   }
 
-  var str = url.username + ':' + url.password;
+  var str = auth.username + ':' + auth.password;
   var token = btoa(unescape(encodeURIComponent(str)));
   return {Authorization: 'Basic ' + token};
 }
