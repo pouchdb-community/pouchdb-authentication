@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.1.1"></a>
+## [1.1.1](https://github.com/pouchdb-community/pouchdb-authentication/compare/v1.1.0...v1.1.1) (2018-01-20)
+
+
+### Bug Fixes
+
+* **auth:** also use Basic Authentication information database opts ([8b1d191](https://github.com/pouchdb-community/pouchdb-authentication/commit/8b1d191)), closes [#204](https://github.com/pouchdb-community/pouchdb-authentication/issues/204)
+* **package:** update url-join to version 2.0.5 ([6a627d1](https://github.com/pouchdb-community/pouchdb-authentication/commit/6a627d1)), closes [#205](https://github.com/pouchdb-community/pouchdb-authentication/issues/205)
+* **package:** update url-join to version 3.0.0 ([d7b27ae](https://github.com/pouchdb-community/pouchdb-authentication/commit/d7b27ae))
+
+
+
 <a name="1.1.0"></a>
 # [1.1.0](https://github.com/pouchdb-community/pouchdb-authentication/compare/v1.0.0...v1.1.0) (2017-12-25)
 
