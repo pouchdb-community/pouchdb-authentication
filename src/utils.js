@@ -6,13 +6,22 @@ import inherits from 'inherits';
 import { btoa } from 'pouchdb-binary-utils';
 
 function getBaseUrl(db) {
+  // Parse database url
+  let url;
   if (typeof db.getUrl === 'function') { // pouchdb pre-6.0.0
-    return urlParse(db.getUrl()).origin;
-  } else if (db.__opts && db.__opts.prefix) { // PouchDB.defaults
-    return db.__opts.prefix;
+    url = urlParse(db.getUrl());
   } else { // pouchdb post-6.0.0
-    return urlParse(db.name).origin;
+    // Use PouchDB.defaults' prefix, if any
+    let prefix = db.__opts && db.__opts.prefix ? db.__opts.prefix + '/' : '';
+    url = urlParse(prefix + db.name);
   }
+
+  // Compute parent path for databases not hosted on domain root (see #215)
+  let path = url.pathname;
+  path = path.substr(-1, 1) === '/' ? path.substr(0, -1) : path;
+  let parentPath = path.split('/').slice(0, -1).join('/');
+
+  return url.origin + parentPath;
 }
 
 function getConfigUrl(db, nodeName) {

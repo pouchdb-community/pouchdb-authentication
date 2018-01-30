@@ -4,15 +4,12 @@ var PouchDB = require('pouchdb-memory');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
 
-var utils = require('./test-utils');
 var chai = require('chai');
 chai.should();
 
-var serverHost = utils.getConfig().serverHost;
-
 describe('urls', function () {
 
-  var hostUrl = serverHost;
+  var hostUrl = 'http://example.com';
   var dbName = 'testdb';
   var dbUrl = hostUrl + '/' + dbName;
 
@@ -46,5 +43,11 @@ describe('urls', function () {
     var db = new PouchDB(hostUrl + '/');
     var usersUrl = db.getUsersDatabaseUrl();
     usersUrl.should.equal(hostUrl + '/_users');
+  });
+
+  it('Correct users database url for proxied database urls (issue-215)', function () {
+    var db = new PouchDB(hostUrl + '/db/' + dbName);
+    var usersUrl = db.getUsersDatabaseUrl();
+    usersUrl.should.equal(hostUrl + '/db/_users');
   });
 });
