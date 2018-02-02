@@ -60,7 +60,7 @@
     "pouchdb-binary-utils": "~6.4.0",
     "pouchdb-promise": "~6.4.0",
     "pouchdb-utils": "~6.4.0",
-    "url-join": "3.0.0",
+    "url-join": "4.0.0",
     "url-parse": "1.2.0"
   },
   "devDependencies": {
