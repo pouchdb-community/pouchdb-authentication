@@ -128,6 +128,10 @@ Then, you just need to set the database to be read-only/write-only for people wi
 
 There are a few different ways to accomplish this, and unfortunately you can't do it with CouchDB alone (as of this writing).  But here are a few different third-party options you can try:
 
+### [couch_peruser configuration](http://docs.couchdb.org/en/2.1.0/config/couch-peruser.html)
+
+As of CouchDB 2.0, CouchDB supports couch_peruser configuration options.
+
 #### [CouchPerUser](https://github.com/etrepum/couchperuser)
 
 Native CouchDB Erlang plugin that automatically creates one database per user.  The database name is just a hex-encoded hash of the user name, and it completely predictable.
@@ -150,7 +154,7 @@ PHP library that provides some sugar over the CouchDB API, e.g. for admin stuff.
 
 Batteries-included no-backend framework.  Currently (as of January 2016) being [ported to use PouchDB](https://github.com/hoodiehq/hoodie-client-store).
 
-#### [PouchBase](https://github.com/pouchdb/pouchbase/) (formerly pouch.host)
+#### [PouchBase (deprecated)](https://github.com/pouchdb/pouchbase/) (formerly pouch.host)
 
 (Work in progress as of January 2015.) Hosted PouchDB Server with per-user read-write access.
 
