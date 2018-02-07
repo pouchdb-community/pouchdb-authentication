@@ -130,7 +130,7 @@ There are a few different ways to accomplish this, and unfortunately you can't d
 
 ### [couch_peruser configuration](http://docs.couchdb.org/en/2.1.0/config/couch-peruser.html)
 
-As of CouchDB 2.0, CouchDB supports couch_peruser configuration options.
+As of CouchDB 2.1, CouchDB supports couch_peruser configuration options.
 
 #### [CouchPerUser](https://github.com/etrepum/couchperuser)
 
