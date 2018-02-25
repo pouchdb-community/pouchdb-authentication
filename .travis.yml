@@ -58,7 +58,7 @@ env:
 
   - SERVER=couchdb:latest CLIENT=saucelabs:Chrome COMMAND=test
   - SERVER=couchdb:latest CLIENT=saucelabs:Firefox COMMAND=test
-  - SERVER=couchdb:latest CLIENT=saucelabs:Safari:7 COMMAND=test
+  - SERVER=couchdb:latest CLIENT=saucelabs:Safari COMMAND=test
   - SERVER=couchdb:latest CLIENT="saucelabs:Internet Explorer:10:Windows 8" COMMAND=test
   - SERVER=couchdb:latest CLIENT="saucelabs:Internet Explorer:11:Windows 10" COMMAND=test
 
