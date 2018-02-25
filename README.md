@@ -11,7 +11,7 @@ Easy user authentication for PouchDB/CouchDB.
 
 ```js
 var db = new PouchDB('http://mysite:5984/mydb', {skip_setup: true});
-db.login('batman', 'brucewayne').then(function (batman) {
+db.logIn('batman', 'brucewayne').then(function (batman) {
   console.log("I'm Batman.");
   return db.logout();
 });
