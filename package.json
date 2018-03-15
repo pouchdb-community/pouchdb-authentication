@@ -86,7 +86,7 @@
     "pouchdb-memory": "^6.0.0",
     "pouchdb-server": "^4.0.0",
     "rimraf": "^2.5.4",
-    "rollup": "^0.56.2",
+    "rollup": "^0.57.0",
     "rollup-plugin-buble": "^0.19.2",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-inject": "^2.0.0",
