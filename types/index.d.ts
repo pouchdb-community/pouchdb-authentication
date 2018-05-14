@@ -177,5 +177,5 @@ declare namespace PouchDB {
 
 declare module 'pouchdb-authentication' {
   const plugin: PouchDB.Plugin;
-  export = plugin;
+  export default plugin;
 }
