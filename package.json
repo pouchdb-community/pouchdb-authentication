@@ -56,13 +56,13 @@
     "release": "standard-version"
   },
   "dependencies": {
-    "inherits": "2.0.3",
-    "pouchdb-ajax": "~6.4.0",
-    "pouchdb-binary-utils": "~6.4.0",
-    "pouchdb-promise": "~6.4.0",
-    "pouchdb-utils": "~6.4.0",
-    "url-join": "4.0.0",
-    "url-parse": "1.2.0"
+    "inherits": "^2.0.3",
+    "pouchdb-ajax": "^6.4.0",
+    "pouchdb-binary-utils": "^6.4.0",
+    "pouchdb-promise": "^6.4.0",
+    "pouchdb-utils": "^6.4.0",
+    "url-join": "^4.0.0",
+    "url-parse": "^1.2.0"
   },
   "devDependencies": {
     "@types/pouchdb-core": "^6.1.9",
