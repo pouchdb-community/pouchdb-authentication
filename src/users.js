@@ -1,10 +1,6 @@
 'use strict';
 
-import { AuthError, getBasicAuthHeaders, getUsersUrl, axios } from './utils';
-
-// import Promise from 'pouchdb-promise';
-// import ajaxCore from 'pouchdb-ajax';
-import { clone } from 'pouchdb-utils';
+import { AuthError, getBasicAuthHeaders, getUsersUrl, axios, clone } from './utils';
 
 var getUsersDatabaseUrl = function () {
   var db = this;
