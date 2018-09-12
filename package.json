@@ -60,7 +60,7 @@
     "@babel/polyfill": "^7.0.0",
     "axios": "^0.18.0",
     "inherits": "2.0.3",
-    "pouchdb-binary-utils": "~6.4.0",
+    "pouchdb-binary-utils": "^7.0.0",
     "url-join": "4.0.0",
     "url-parse": "^1.4.3"
   },
