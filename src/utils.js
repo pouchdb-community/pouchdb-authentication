@@ -9,20 +9,20 @@ import Axios from 'axios';
 function axios(opts) {
   opts = Object.assign({ withCredentials: true }, opts);
   return Axios(opts)
-  .then(function(res){
-    return res.data
+  .then(function (res) {
+    return res.data;
   })
-  .catch(function(err){
+  .catch(function (err) {
     if (err.response.data) {
       Object.assign(err, err.response.data);
       if (err.response.statusText)
-        Object.assign(err, {
+        {Object.assign(err, {
           name: err.response.statusText.toLowerCase(),
           status: err.response.status
-        })
+        });}
     }
     throw err;
-  })
+  });
 }
 
 function getBaseUrl(db) {
@@ -110,9 +110,19 @@ function isBinaryObject(object) {
 // https://github.com/fis-components/lodash.isplainobject/
 // blob/29c358140a74f252aeb08c9eb28bef86f2217d4a/index.js
 
-var funcToString = Function.prototype.toString;
-var objectCtorString = funcToString.call(Object);
+const funcToString = Function.prototype.toString;
+const objectCtorString = funcToString.call(Object);
 
+function cloneBuffer(buf) {
+  let result;
+  if ((Buffer.hasOwnProperty('from') && typeof Buffer.from === 'function')) {
+    result = Buffer.from(buf);
+  } else {
+    result = new Buffer(buf.length);
+    buf.copy(result);
+  }
+  return result;
+}
 function isPlainObject(value) {
   var proto = Object.getPrototypeOf(value);
   /* istanbul ignore if */
