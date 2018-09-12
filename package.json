@@ -27,6 +27,7 @@
   "files": [
     "dist",
     "lib",
+    "src",
     "types/index.d.ts"
   ],
   "main": "lib/index.js",
@@ -56,6 +57,7 @@
     "release": "standard-version"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.0.0",
     "axios": "^0.18.0",
     "inherits": "2.0.3",
     "pouchdb-ajax": "~6.4.0",
@@ -66,6 +68,12 @@
     "url-parse": "^1.4.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.1",
+    "@babel/plugin-external-helpers": "^7.0.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/runtime": "^7.0.0",
     "@types/pouchdb-core": "^6.1.9",
     "add-cors-to-couchdb": "0.0.6",
     "brfs": "^1.4.3",
@@ -89,10 +97,10 @@
     "pouchdb-server": "^4.0.0",
     "rimraf": "^2.5.4",
     "rollup": "^0.57.1",
-    "rollup-plugin-buble": "^0.19.2",
-    "rollup-plugin-commonjs": "^9.1.0",
+    "rollup-plugin-babel": "^4.0.3",
+    "rollup-plugin-commonjs": "^9.1.6",
     "rollup-plugin-inject": "^2.0.0",
-    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-replace": "^2.0.0",
     "standard-version": "^4.2.0",
     "typescript": "^2.6.2",
@@ -111,5 +119,10 @@
     "scripts": {
       "postbump": "git checkout -- bower.json"
     }
-  }
+  },
+  "browserslist": [
+    "last 1 version",
+    "> 0.2%",
+    "not dead"
+  ]
 }
