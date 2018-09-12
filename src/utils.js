@@ -4,6 +4,26 @@ import urlJoin from 'url-join';
 import urlParse from 'url-parse';
 import inherits from 'inherits';
 import { btoa } from 'pouchdb-binary-utils';
+import Axios from 'axios';
+
+function axios(opts) {
+  opts = Object.assign({ withCredentials: true }, opts);
+  return Axios(opts)
+  .then(function(res){
+    return res.data
+  })
+  .catch(function(err){
+    if (err.response.data) {
+      Object.assign(err, err.response.data);
+      if (err.response.statusText)
+        Object.assign(err, {
+          name: err.response.statusText.toLowerCase(),
+          status: err.response.status
+        })
+    }
+    throw err;
+  })
+}
 
 function getBaseUrl(db) {
   // Parse database url
@@ -90,4 +110,5 @@ export {
   getSessionUrl,
   getUsersUrl,
   wrapError,
+  axios,
 };

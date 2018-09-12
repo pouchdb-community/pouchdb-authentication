@@ -1,63 +1,61 @@
 'use strict';
 
-import { AuthError, getBasicAuthHeaders, getSessionUrl, wrapError } from './utils';
+import { AuthError, getBasicAuthHeaders, getSessionUrl, axios } from './utils';
 
-import ajaxCore from 'pouchdb-ajax';
-import { assign, toPromise } from 'pouchdb-utils';
-
-var logIn = toPromise(function (username, password, opts, callback) {
+function logIn(username, password, opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = opts;
+  if (!opts) {
     opts = {};
   }
+
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('this plugin only works for the http/https adapter'));
+    return Promise.reject(new AuthError('this plugin only works for the http/https adapter'));
   }
 
   if (!username) {
-    return callback(new AuthError('you must provide a username'));
+    return Promise.reject(new AuthError('you must provide a username'));
   } else if (!password) {
-    return callback(new AuthError('you must provide a password'));
+    return Promise.reject(new AuthError('you must provide a password'));
   }
 
-  var ajaxOpts = assign({
+  var ajaxOpts = Object.assign({
     method: 'POST',
     url: getSessionUrl(db),
-    headers: assign({'Content-Type': 'application/json'}, getBasicAuthHeaders(db)),
-    body: {name: username, password: password},
+    headers: Object.assign({'Content-Type': 'application/json'}, getBasicAuthHeaders(db)),
+    data: {name: username, password: password},
   }, opts.ajax || {});
-  ajaxCore(ajaxOpts, wrapError(callback));
-});
+  // ajaxCore(ajaxOpts, wrapError(callback));
+  return axios(ajaxOpts);
+};
 
-var logOut = toPromise(function (opts, callback) {
+function logOut(opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = opts;
+  if (!opts) {
     opts = {};
   }
-  var ajaxOpts = assign({
+  var ajaxOpts = Object.assign({
     method: 'DELETE',
     url: getSessionUrl(db),
     headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
-  ajaxCore(ajaxOpts, wrapError(callback));
-});
+  // ajaxCore(ajaxOpts, wrapError(callback));
+  return axios(ajaxOpts);
+};
 
-var getSession = toPromise(function (opts, callback) {
+function getSession(opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = opts;
+  if (!opts) {
     opts = {};
   }
   var url = getSessionUrl(db);
 
-  var ajaxOpts = assign({
+  var ajaxOpts = Object.assign({
     method: 'GET',
     url: url,
     headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
-  ajaxCore(ajaxOpts, wrapError(callback));
-});
+  // ajaxCore(ajaxOpts, wrapError(callback));
+  return axios(ajaxOpts);
+};
 
 export { logIn, logOut, getSession };

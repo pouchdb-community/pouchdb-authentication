@@ -1,17 +1,17 @@
 'use strict';
 
-import { AuthError, getBasicAuthHeaders, getUsersUrl, wrapError } from './utils';
+import { AuthError, getBasicAuthHeaders, getUsersUrl, axios } from './utils';
 
-import Promise from 'pouchdb-promise';
-import ajaxCore from 'pouchdb-ajax';
-import { assign, clone, toPromise } from 'pouchdb-utils';
+// import Promise from 'pouchdb-promise';
+// import ajaxCore from 'pouchdb-ajax';
+import { clone } from 'pouchdb-utils';
 
 var getUsersDatabaseUrl = function () {
   var db = this;
   return getUsersUrl(db);
 };
 
-function updateUser(db, user, opts, callback) {
+function updateUser(db, user, opts) {
   var reservedWords = [
     '_id',
     '_rev',
@@ -28,40 +28,39 @@ function updateUser(db, user, opts, callback) {
   if (opts.metadata) {
     for (var key in opts.metadata) {
       if (opts.metadata.hasOwnProperty(key) && reservedWords.indexOf(key) !== -1) {
-        return callback(new AuthError('cannot use reserved word in metadata: "' + key + '"'));
+        return Promise.reject(new AuthError('cannot use reserved word in metadata: "' + key + '"'));
       }
     }
-    user = assign(user, opts.metadata);
+    user = Object.assign(user, opts.metadata);
   }
 
   if (opts.roles) {
-    user = assign(user, {roles: opts.roles});
+    user = Object.assign(user, {roles: opts.roles});
   }
 
   var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
-  var ajaxOpts = assign({
+  var ajaxOpts = Object.assign({
     method: 'PUT',
     url: url,
-    body: user,
+    data: user,
     headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
-  ajaxCore(ajaxOpts, wrapError(callback));
+  // ajaxCore(ajaxOpts, wrapError(callback));
+  return axios(ajaxOpts);
 }
 
-var signUp = toPromise(function (username, password, opts, callback) {
+function signUp(username, password, opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
-      username : password) : opts;
+  if (!opts) {
     opts = {};
   }
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('This plugin only works for the http/https adapter. ' +
+    return Promise.reject(new AuthError('This plugin only works for the http/https adapter. ' +
       'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   } else if (!username) {
-    return callback(new AuthError('You must provide a username'));
+    return Promise.reject(new AuthError('You must provide a username'));
   } else if (!password) {
-    return callback(new AuthError('You must provide a password'));
+    return Promise.reject(new AuthError('You must provide a password'));
   }
 
   var userId = 'org.couchdb.user:' + username;
@@ -73,152 +72,127 @@ var signUp = toPromise(function (username, password, opts, callback) {
     _id: userId,
   };
 
-  updateUser(db, user, opts, callback);
-});
+  return updateUser(db, user, opts);
+};
 
-var getUser = toPromise(function (username, opts, callback) {
+function getUser(username, opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = typeof opts === 'undefined' ? username : opts;
+  if (!opts) {
     opts = {};
   }
   if (!username) {
-    return callback(new AuthError('you must provide a username'));
+    return Promise.reject(new AuthError('you must provide a username'));
   }
 
   var url = getUsersUrl(db);
-  var ajaxOpts = assign({
+  var ajaxOpts = Object.assign({
     method: 'GET',
     url: url + '/' + encodeURIComponent('org.couchdb.user:' + username),
     headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
-  ajaxCore(ajaxOpts, wrapError(callback));
-});
+  // ajaxCore(ajaxOpts, wrapError(callback));
+  return axios(ajaxOpts);
+};
 
-var putUser = toPromise(function (username, opts, callback) {
+function putUser(username, opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = typeof opts === 'undefined' ? username : opts;
+  if (!opts) {
     opts = {};
   }
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('This plugin only works for the http/https adapter. ' +
+    return Promise.reject(new AuthError('This plugin only works for the http/https adapter. ' +
       'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   } else if (!username) {
-    return callback(new AuthError('You must provide a username'));
+    return Promise.reject(new AuthError('You must provide a username'));
   }
 
-  db.getUser(username, opts, function (error, user) {
-    if (error) {
-      return callback(error);
-    }
-
-    updateUser(db, user, opts, callback);
+  return db.getUser(username, opts).then(function(user) {
+    return updateUser(db, user, opts);
   });
-});
+};
 
-var deleteUser = toPromise(function (username, opts, callback) {
+function deleteUser(username, opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = typeof opts === 'undefined' ? username : opts;
+  if (!opts) {
     opts = {};
   }
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('This plugin only works for the http/https adapter. ' +
+    return Promise.reject(new AuthError('This plugin only works for the http/https adapter. ' +
       'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   } else if (!username) {
-    return callback(new AuthError('You must provide a username'));
+    return Promise.reject(new AuthError('You must provide a username'));
   }
 
-  db.getUser(username, opts, function (error, user) {
-    if (error) {
-      return callback(error);
-    }
-
+  return db.getUser(username, opts).then(function (user) {
     var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id) + '?rev=' + user._rev;
-    var ajaxOpts = assign({
+    var ajaxOpts = Object.assign({
       method: 'DELETE',
       url: url,
       headers: getBasicAuthHeaders(db),
     }, opts.ajax || {});
-    ajaxCore(ajaxOpts, wrapError(callback));
+    // ajaxCore(ajaxOpts, wrapError(callback));
+    return axios(ajaxOpts);
   });
-});
+};
 
-var changePassword = toPromise(function (username, password, opts, callback) {
+function changePassword(username, password, opts) {
   var db = this;
-  if (typeof callback === 'undefined') {
-    callback = typeof opts === 'undefined' ? (typeof password === 'undefined' ?
-      username : password) : opts;
+  if (!opts) {
     opts = {};
   }
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('This plugin only works for the http/https adapter. ' +
+    return Promise.reject(new AuthError('This plugin only works for the http/https adapter. ' +
       'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   } else if (!username) {
-    return callback(new AuthError('You must provide a username'));
+    return Promise.reject(new AuthError('You must provide a username'));
   } else if (!password) {
-    return callback(new AuthError('You must provide a password'));
+    return caPromise.rejectllback(new AuthError('You must provide a password'));
   }
 
-  db.getUser(username, opts, function (error, user) {
-    if (error) {
-      return callback(error);
-    }
-
+  return db.getUser(username, opts).then(function (user) {
     user.password = password;
 
     var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
-    var ajaxOpts = assign({
+    var ajaxOpts = Object.assign({
       method: 'PUT',
       url: url,
       headers: getBasicAuthHeaders(db),
-      body: user,
+      data: user,
     }, opts.ajax || {});
-    ajaxCore(ajaxOpts, wrapError(callback));
+    // ajaxCore(ajaxOpts, wrapError(callback));
+    return axios(ajaxOpts);
   });
-});
+};
 
-var changeUsername = toPromise(function (oldUsername, newUsername, opts, callback) {
+function changeUsername(oldUsername, newUsername, opts) {
   var db = this;
   var USERNAME_PREFIX = 'org.couchdb.user:';
-  var ajax = function (opts) {
-    return new Promise(function (resolve, reject) {
-      ajaxCore(opts, wrapError(function (err, res) {
-        if (err) {
-          return reject(err);
-        }
-        resolve(res);
-      }));
-    });
-  };
   var updateUser = function (user, opts) {
     var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
-    var updateOpts = assign({
+    var updateOpts = Object.assign({
       method: 'PUT',
       url: url,
       headers: getBasicAuthHeaders(db),
-      body: user,
+      data: user,
     }, opts.ajax);
-    return ajax(updateOpts);
+    return axios(updateOpts);
   };
-  if (typeof callback === 'undefined') {
-    callback = opts;
+  if (!opts) {
     opts = {};
   }
   opts.ajax = opts.ajax || {};
   if (['http', 'https'].indexOf(db.type()) === -1) {
-    return callback(new AuthError('This plugin only works for the http/https adapter. ' +
+    return Promise.reject(new AuthError('This plugin only works for the http/https adapter. ' +
       'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   }
   if (!newUsername) {
     return callback(new AuthError('You must provide a new username'));
   }
   if (!oldUsername) {
-    return callback(new AuthError('You must provide a username to rename'));
+    return Promise.reject(new AuthError('You must provide a username to rename'));
   }
 
-  db.getUser(newUsername, opts)
+  return db.getUser(newUsername, opts)
   .then(function () {
     var error = new AuthError('user already exists');
     error.taken = true;
@@ -236,10 +210,12 @@ var changeUsername = toPromise(function (oldUsername, newUsername, opts, callbac
       user._deleted = true;
       return updateUser(user, opts);
     });
-  }).then(function (res) {
-    callback(null, res);
-  }).catch(callback);
-});
+  })
+  // .then(function (res) {
+  //   callback(null, res);
+  // })
+  // .catch(callback);
+};
 
 export {
   getUsersDatabaseUrl,
