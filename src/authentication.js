@@ -26,7 +26,7 @@ function logIn(username, password, opts) {
   }, opts.ajax || {});
   // ajaxCore(ajaxOpts, wrapError(callback));
   return axios(ajaxOpts);
-};
+}
 
 function logOut(opts) {
   var db = this;
@@ -40,7 +40,7 @@ function logOut(opts) {
   }, opts.ajax || {});
   // ajaxCore(ajaxOpts, wrapError(callback));
   return axios(ajaxOpts);
-};
+}
 
 function getSession(opts) {
   var db = this;
@@ -56,6 +56,6 @@ function getSession(opts) {
   }, opts.ajax || {});
   // ajaxCore(ajaxOpts, wrapError(callback));
   return axios(ajaxOpts);
-};
+}
 
 export { logIn, logOut, getSession };

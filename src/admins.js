@@ -12,10 +12,8 @@ function getMembership(opts) {
     url: url,
     headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
-  return axios(ajaxOpts)
-
-  // ajaxCore(ajaxOpts, wrapError(callback));
-};
+  return axios(ajaxOpts);
+}
 
 function signUpAdmin(username, password, opts) {
   var db = this;
@@ -33,8 +31,8 @@ function signUpAdmin(username, password, opts) {
   }
 
   return db.getMembership(opts)
-  .catch(function(error){
-    if (error.error !== 'illegal_database_name') throw error;
+  .catch(function (error) {
+    if (error.error !== 'illegal_database_name') {throw error;}
     return error;
   })
   .then(function (membership) {
@@ -56,10 +54,9 @@ function signUpAdmin(username, password, opts) {
       headers: getBasicAuthHeaders(db),
       data: '"' + password + '"',
     }, opts.ajax || {});
-    // ajaxCore(ajaxOpts, wrapError(callback));
-    return axios(ajaxOpts)
+    return axios(ajaxOpts);
   });
-};
+}
 
 function deleteAdmin(username, opts) {
   var db = this;
@@ -74,8 +71,8 @@ function deleteAdmin(username, opts) {
   }
 
   return db.getMembership(opts)
-  .catch(function(error){
-    if (error.error !== 'illegal_database_name') throw error;
+  .catch(function (error) {
+    if (error.error !== 'illegal_database_name') {throw error;}
     return error;
   })
   .then(function (membership) {
@@ -96,9 +93,8 @@ function deleteAdmin(username, opts) {
       processData: false,
       headers: getBasicAuthHeaders(db),
     }, opts.ajax || {});
-    // ajaxCore(ajaxOpts, wrapError(callback));
-    return axios(ajaxOpts)
+    return axios(ajaxOpts);
   });
-};
+}
 
 export { getMembership, deleteAdmin, signUpAdmin };

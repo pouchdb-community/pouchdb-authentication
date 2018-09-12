@@ -69,7 +69,7 @@ function signUp(username, password, opts) {
   };
 
   return updateUser(db, user, opts);
-};
+}
 
 function getUser(username, opts) {
   var db = this;
@@ -88,7 +88,7 @@ function getUser(username, opts) {
   }, opts.ajax || {});
   // ajaxCore(ajaxOpts, wrapError(callback));
   return axios(ajaxOpts);
-};
+}
 
 function putUser(username, opts) {
   var db = this;
@@ -102,10 +102,10 @@ function putUser(username, opts) {
     return Promise.reject(new AuthError('You must provide a username'));
   }
 
-  return db.getUser(username, opts).then(function(user) {
+  return db.getUser(username, opts).then(function (user) {
     return updateUser(db, user, opts);
   });
-};
+}
 
 function deleteUser(username, opts) {
   var db = this;
@@ -129,7 +129,7 @@ function deleteUser(username, opts) {
     // ajaxCore(ajaxOpts, wrapError(callback));
     return axios(ajaxOpts);
   });
-};
+}
 
 function changePassword(username, password, opts) {
   var db = this;
@@ -142,7 +142,7 @@ function changePassword(username, password, opts) {
   } else if (!username) {
     return Promise.reject(new AuthError('You must provide a username'));
   } else if (!password) {
-    return caPromise.rejectllback(new AuthError('You must provide a password'));
+    return Promise.reject(new AuthError('You must provide a password'));
   }
 
   return db.getUser(username, opts).then(function (user) {
@@ -158,7 +158,7 @@ function changePassword(username, password, opts) {
     // ajaxCore(ajaxOpts, wrapError(callback));
     return axios(ajaxOpts);
   });
-};
+}
 
 function changeUsername(oldUsername, newUsername, opts) {
   var db = this;
@@ -182,7 +182,7 @@ function changeUsername(oldUsername, newUsername, opts) {
       'So you should use new PouchDB("http://mysite.com:5984/mydb") instead.'));
   }
   if (!newUsername) {
-    return callback(new AuthError('You must provide a new username'));
+    return Promise.reject(new AuthError('You must provide a new username'));
   }
   if (!oldUsername) {
     return Promise.reject(new AuthError('You must provide a username to rename'));
@@ -206,12 +206,12 @@ function changeUsername(oldUsername, newUsername, opts) {
       user._deleted = true;
       return updateUser(user, opts);
     });
-  })
+  });
   // .then(function (res) {
   //   callback(null, res);
   // })
   // .catch(callback);
-};
+}
 
 export {
   getUsersDatabaseUrl,
