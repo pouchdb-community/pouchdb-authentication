@@ -81,6 +81,10 @@ Note that CouchDB does not enforce a password policy or a username policy, unles
 
 Log in an existing user. Throws an error if the user doesn't exist yet, the password is wrong, the HTTP server is unreachable, or a meteor struck your computer.
 
+options:
+
+* `basicAuth`: boolean, use the http basic access authentication. defaults to true.
+
 ```js
 db.logIn('superman', 'clarkkent', function (err, response) {
   if (err) {
