@@ -120,6 +120,7 @@
   "browserslist": [
     "last 1 version",
     "> 0.2%",
-    "not dead"
+    "not dead",
+    "IE 10"
   ]
 }
