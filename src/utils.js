@@ -13,6 +13,7 @@ function axios(opts) {
     return res.data;
   })
   .catch(function (err) {
+    // console.log('err', err.message, err.request.method, err.request._header)
     if (err.response.data) {
       Object.assign(err, err.response.data);
       if (err.response.statusText)
