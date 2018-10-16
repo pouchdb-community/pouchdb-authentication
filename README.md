@@ -64,3 +64,13 @@ We use [standard-version](https://github.com/conventional-changelog/standard-ver
 PouchDB Authentication is heavily tested, so you'll also want to check out the [testing guide](https://github.com/pouchdb-community/pouchdb-authentication/blob/master/TESTING.md).
 
 [recipes]: https://github.com/pouchdb-community/pouchdb-authentication/blob/master/docs/recipes.md
+
+Big Thanks
+------
+
+Cross-browser Testing Platform and Open Source <3 Provided by [Sauce Labs][sauce labs homepage].
+
+![sauce labs logo][]
+
+[sauce labs homepage]: https://saucelabs.com
+[sauce labs logo]: https://raw.githubusercontent.com/pouchdb-community/pouchdb-authentication/master/docs/sauce_labs.png
