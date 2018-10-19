@@ -45,7 +45,7 @@
     "browserify": "browserify -t brfs -p bundle-collapser/plugin -s PouchAuthentication lib/index.browser.js > dist/pouchdb.authentication.js",
     "minify": "uglifyjs -mc < dist/pouchdb.authentication.js > dist/pouchdb.authentication.min.js",
     "build": "npm-run-all clean rollup browserify minify",
-    "prepublishOnly": "npm run build",
+    "prepare": "npm run build",
     "lint": "eslint bin/ src/ test/",
     "dev": "npm run test-local",
     "test": "npm run rollup-cjs && node bin/run-test.js",
@@ -56,13 +56,13 @@
     "release": "standard-version"
   },
   "dependencies": {
-    "inherits": "2.0.3",
-    "pouchdb-ajax": "~6.4.0",
-    "pouchdb-binary-utils": "~6.4.0",
-    "pouchdb-promise": "~6.4.0",
-    "pouchdb-utils": "~6.4.0",
-    "url-join": "4.0.0",
-    "url-parse": "1.2.0"
+    "inherits": "^2.0.3",
+    "pouchdb-ajax": "^6.4.0",
+    "pouchdb-binary-utils": "^6.4.0",
+    "pouchdb-promise": "^6.4.0",
+    "pouchdb-utils": "^6.4.0",
+    "url-join": "^4.0.0",
+    "url-parse": "^1.2.0"
   },
   "devDependencies": {
     "@types/pouchdb-core": "^6.1.9",
