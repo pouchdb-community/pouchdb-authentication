@@ -62,7 +62,7 @@
     "pouchdb-promise": "~6.4.0",
     "pouchdb-utils": "~6.4.0",
     "url-join": "4.0.0",
-    "url-parse": "1.2.0"
+    "url-parse": "1.4.3"
   },
   "devDependencies": {
     "@types/pouchdb-core": "^6.1.9",
