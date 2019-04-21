@@ -114,7 +114,7 @@ function toCallback(func) {
     } else {
       return func.apply(this, args);
     }
-  }
+  };
 }
 
 function AuthError(message) {
