@@ -1,6 +1,6 @@
 'use strict';
 
-var PouchDB = require('pouchdb-memory');
+var PouchDB = require('pouchdb-browser');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
 
@@ -44,7 +44,7 @@ describe('users', function () {
       return db.signup('superman', 'notclarkkent').then(function (res) {
         should.not.exist(res);
       }).catch(function (err) {
-        err.name.should.equal('conflict');
+        err.error.should.equal('conflict');
       });
     });
   });

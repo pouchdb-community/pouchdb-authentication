@@ -4,6 +4,7 @@ import urlJoin from 'url-join';
 import urlParse from 'url-parse';
 import inherits from 'inherits';
 import { btoa } from 'pouchdb-binary-utils';
+import { assign } from 'pouchdb-utils';
 
 function getBaseUrl(db) {
   // Parse database url
@@ -57,17 +58,63 @@ function getBasicAuthHeaders(db) {
   return {Authorization: 'Basic ' + token};
 }
 
-function wrapError(callback) {
-  // provide more helpful error message
-  return function (err, res) {
-    if (err) {
-      if (err.name === 'unknown_error') {
-        err.message = (err.message || '') +
-            ' Unknown error!  Did you remember to enable CORS?';
-      }
-    }
-    return callback(err, res);
+function wrapError(err) {
+  if (err.name === 'unknown_error') {
+    err.message = (err.message || '') +
+        ' Unknown error!  Did you remember to enable CORS?';
+  }
+  throw err;
+}
+
+// Injects `fetch` with instructions to pass and receive cookies
+function makeFetchWithCredentials(fetchFunc) {
+  return function fetchWithCredentials(url, args) {
+    return fetchFunc(url, assign(args, { credentials: 'include' }));
   };
+}
+
+// Wrapper around the fetch API to send and receive JSON objects
+// Similar to fetchJSON in pouchdb-adapter-http, but both functions are private.
+// Consider extracting them to a common library.
+function fetchJSON(fetchWithCredentials, url, args) {
+  if (args.body) {
+    args = assign(args, {
+      body: JSON.stringify(args.body),
+      headers: assign(
+        {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        args.headers || {}
+      ),
+    });
+  }
+
+  return fetchWithCredentials(url, args).then(response => {
+    if (response.ok) {
+      return response.json();
+    } else {
+      return response.json().then(responseError => {
+        throw responseError;
+      });
+    }
+  }).catch(wrapError);
+}
+
+// toCallback takes a function that returns a promise,
+// and returns a function that can be used with a callback as the last argument,
+// but still retains the ability to be used without a callback and return a promise.
+// (Roughly speaking, the opposite of `toPromise` from pouchdb-utils,
+// but more suited for `fetch`, that returns a promise by default.)
+function toCallback(func) {
+  return function (...args) {
+    if (typeof args[-1] === 'function') {
+      var callback = args[-1];
+      return func.apply(this, args.slice(0, -2)).then(
+        res => callback(null, res),
+        err => callback(err)
+      );
+    } else {
+      return func.apply(this, args);
+    }
+  }
 }
 
 function AuthError(message) {
@@ -89,5 +136,7 @@ export {
   getConfigUrl,
   getSessionUrl,
   getUsersUrl,
-  wrapError,
+  makeFetchWithCredentials,
+  fetchJSON,
+  toCallback
 };
