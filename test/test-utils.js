@@ -1,4 +1,4 @@
-var PouchDB = require('pouchdb-browser');
+var PouchDB = require('./test-pouchdb');
 
 module.exports.getConfig = function () {
   return typeof window !== 'undefined' ? window.__karma__.config : global.__testConfig__;
