@@ -1,40 +1,48 @@
 'use strict';
 
-import { deleteAdmin, getMembership, signUpAdmin } from "./admins";
-import { getSession, logIn, logOut } from "./authentication";
-import {
-  changePassword,
-  changeUsername,
-  deleteUser,
-  getUser,
-  getUsersDatabaseUrl,
-  putUser,
-  signUp,
-} from "./users";
+import makeAdminsAPI from "./admins";
+import makeAuthenticationAPI from "./authentication";
+import makeUsersAPI from "./users";
+import { makeFetchWithCredentials } from "./utils";
 
-var plugin = {};
+function initPlugin(PouchDB) {
+  var fetchWithCredentials = makeFetchWithCredentials(PouchDB.fetch);
+  var { deleteAdmin, getMembership, signUpAdmin } = makeAdminsAPI(fetchWithCredentials);
+  var { getSession, logIn, logOut } = makeAuthenticationAPI(fetchWithCredentials);
+  var {
+    changePassword,
+    changeUsername,
+    deleteUser,
+    getUser,
+    getUsersDatabaseUrl,
+    putUser,
+    signUp,
+  } = makeUsersAPI(fetchWithCredentials);
 
-plugin.login = logIn;
-plugin.logIn = logIn;
-plugin.logout = logOut;
-plugin.logOut = logOut;
-plugin.getSession = getSession;
+  PouchDB.fetch = fetchWithCredentials;
 
-plugin.getMembership = getMembership;
-plugin.signUpAdmin = signUpAdmin;
-plugin.deleteAdmin = deleteAdmin;
+  PouchDB.prototype.login = logIn;
+  PouchDB.prototype.logIn = logIn;
+  PouchDB.prototype.logout = logOut;
+  PouchDB.prototype.logOut = logOut;
+  PouchDB.prototype.getSession = getSession;
 
-plugin.getUsersDatabaseUrl = getUsersDatabaseUrl;
-plugin.signup = signUp;
-plugin.signUp = signUp;
-plugin.getUser = getUser;
-plugin.putUser = putUser;
-plugin.deleteUser = deleteUser;
-plugin.changePassword = changePassword;
-plugin.changeUsername = changeUsername;
+  PouchDB.prototype.getMembership = getMembership;
+  PouchDB.prototype.signUpAdmin = signUpAdmin;
+  PouchDB.prototype.deleteAdmin = deleteAdmin;
 
-if (typeof window !== 'undefined' && window.PouchDB) {
-  window.PouchDB.plugin(plugin);
+  PouchDB.prototype.getUsersDatabaseUrl = getUsersDatabaseUrl;
+  PouchDB.prototype.signup = signUp;
+  PouchDB.prototype.signUp = signUp;
+  PouchDB.prototype.getUser = getUser;
+  PouchDB.prototype.putUser = putUser;
+  PouchDB.prototype.deleteUser = deleteUser;
+  PouchDB.prototype.changePassword = changePassword;
+  PouchDB.prototype.changeUsername = changeUsername;
 }
 
-export default plugin;
+if (typeof window !== 'undefined' && window.PouchDB) {
+  window.PouchDB.plugin(initPlugin);
+}
+
+export default initPlugin;

@@ -1,6 +1,6 @@
 'use strict';
 
-var PouchDB = require('pouchdb-memory');
+var PouchDB = require('pouchdb-browser');
 var Authentication = require('../lib');
 PouchDB.plugin(Authentication);
 
