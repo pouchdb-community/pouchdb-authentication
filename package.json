@@ -85,6 +85,7 @@
     "pouchdb-browser": "^7.0.0",
     "pouchdb-node": "^7.0.0",
     "pouchdb-server": "^4.0.0",
+    "promise-polyfill": "^8.1.0",
     "rimraf": "^2.5.4",
     "rollup": "^0.57.1",
     "rollup-plugin-buble": "^0.19.2",
@@ -95,7 +96,8 @@
     "standard-version": "^4.2.0",
     "typescript": "^2.6.2",
     "uglify-js": "^3.1.9",
-    "watchify": "^3.9.0"
+    "watchify": "^3.9.0",
+    "whatwg-fetch": "^3.0.0"
   },
   "// greenkeeper": [
     "// chai-as-promised is pinned because of breaking changes in 6.0.0 which make phantomjs crash"
