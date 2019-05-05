@@ -54,9 +54,8 @@ var signUpAdmin = toCallback(function (username, password, opts) {
     var url = (opts.configUrl || configUrl) + '/admins/' + encodeURIComponent(username);
     var ajaxOpts = assign({
       method: 'PUT',
-      processData: false,
       headers: getBasicAuthHeaders(db),
-      body: '"' + password + '"',
+      body: password,
     }, opts.ajax || {});
     return fetchJSON(fetchFun, url, ajaxOpts);
   });
