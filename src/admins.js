@@ -1,8 +1,6 @@
-import { AuthError, getBaseUrl, getBasicAuthHeaders, getConfigUrl, fetchJSON, toCallback } from './utils';
+import { AuthError, getConfigUrl, fetchJSON, toCallback } from './utils';
 
 import { assign } from 'pouchdb-utils';
-
-export default function makeAdminsAPI(fetchFun) {
 
 var getMembership = toCallback(function (opts) {
   var db = this;
@@ -10,12 +8,11 @@ var getMembership = toCallback(function (opts) {
     opts = {};
   }
 
-  var url = getBaseUrl(db) + '/_membership';
+  var path = '/_membership';
   var ajaxOpts = assign({
     method: 'GET',
-    headers: getBasicAuthHeaders(db),
   }, opts.ajax || {});
-  return fetchJSON(fetchFun, url, ajaxOpts);
+  return fetchJSON(db.fetch, path, ajaxOpts);
 });
 
 var getNodeName = function (db, opts) {
@@ -50,14 +47,13 @@ var signUpAdmin = toCallback(function (username, password, opts) {
   }
 
   return getNodeName(db, opts).then(nodeName => {
-    var configUrl = getConfigUrl(db, nodeName);
+    var configUrl = getConfigUrl(nodeName);
     var url = (opts.configUrl || configUrl) + '/admins/' + encodeURIComponent(username);
     var ajaxOpts = assign({
       method: 'PUT',
-      headers: getBasicAuthHeaders(db),
-      body: password,
+      body: password
     }, opts.ajax || {});
-    return fetchJSON(fetchFun, url, ajaxOpts);
+    return fetchJSON(db.fetch, url, ajaxOpts);
   });
 });
 
@@ -74,17 +70,14 @@ var deleteAdmin = toCallback(function (username, opts) {
   }
 
   return getNodeName(db, opts).then(nodeName => {
-    var configUrl = getConfigUrl(db, nodeName);
+    var configUrl = getConfigUrl(nodeName);
     var url = (opts.configUrl || configUrl) + '/admins/' + encodeURIComponent(username);
     var ajaxOpts = assign({
       method: 'DELETE',
-      processData: false,
-      headers: getBasicAuthHeaders(db),
+      processData: false
     }, opts.ajax || {});
-    return fetchJSON(fetchFun, url, ajaxOpts);
+    return fetchJSON(db.fetch, url, ajaxOpts);
   });
 });
 
-return { getMembership, deleteAdmin, signUpAdmin };
-
-}
+export { getMembership, deleteAdmin, signUpAdmin };

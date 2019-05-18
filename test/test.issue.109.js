@@ -18,7 +18,7 @@ describe('issue-109', function () {
 
   beforeEach(function () {
     db = new PouchDB(dbName);
-    return utils.ensureUsersDatabaseExists(db).then(function () {
+    return utils.ensureUsersDatabaseExists().then(function () {
       return db.signUpAdmin('anna', 'secret');
     }).then(function () {
       return db.signUp('spiderman', 'will-forget');
