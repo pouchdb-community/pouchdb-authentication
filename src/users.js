@@ -1,14 +1,9 @@
 'use strict';
 
-import { AuthError, getBasicAuthHeaders, getUsersUrl, fetchJSON, toCallback } from './utils';
+import { AuthError, fetchJSON, toCallback } from './utils';
 import { assign, clone } from 'pouchdb-utils';
 
-export default function makeUsersAPI(fetchFun) {
-
-var getUsersDatabaseUrl = function () {
-  var db = this;
-  return getUsersUrl(db);
-};
+var usersPath = '/_users';
 
 function updateUser(db, user, opts) {
   var reservedWords = [
@@ -36,14 +31,13 @@ function updateUser(db, user, opts) {
   if (opts.roles) {
     user = assign(user, {roles: opts.roles});
   }
-  var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+  var path = usersPath + '/' + encodeURIComponent(user._id);
   var ajaxOpts = assign({
     method: 'PUT',
-    body: user,
-    headers: getBasicAuthHeaders(db),
+    body: user
   }, opts.ajax || {});
 
-  return fetchJSON(fetchFun, url, ajaxOpts);
+  return fetchJSON(db.fetch, path, ajaxOpts);
 }
 
 var signUp = toCallback(function (username, password, opts) {
@@ -81,13 +75,11 @@ var getUser = toCallback(function (username, opts) {
     return Promise.reject(new AuthError('you must provide a username'));
   }
 
-  var url = getUsersUrl(db) + '/' + encodeURIComponent('org.couchdb.user:' + username);
+  var path = usersPath + '/' + encodeURIComponent('org.couchdb.user:' + username);
   var ajaxOpts = assign({
-    method: 'GET',
-    headers: getBasicAuthHeaders(db),
+    method: 'GET'
   }, opts.ajax || {});
-
-  return fetchJSON(fetchFun, url, ajaxOpts);
+  return fetchJSON(db.fetch, path, ajaxOpts).then(x => { console.log(x); return x});
 });
 
 var putUser = toCallback(function (username, opts) {
@@ -118,12 +110,11 @@ var deleteUser = toCallback(function (username, opts) {
   }
 
   return db.getUser(username, opts).then(user => {
-    var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id) + '?rev=' + user._rev;
+    var path = usersPath + '/' + encodeURIComponent(user._id) + '?rev=' + user._rev;
     var ajaxOpts = assign({
-      method: 'DELETE',
-      headers: getBasicAuthHeaders(db),
+      method: 'DELETE'
     }, opts.ajax || {});
-    return fetchJSON(fetchFun, url, ajaxOpts);
+    return fetchJSON(db.fetch, path, ajaxOpts);
   });
 });
 
@@ -140,18 +131,15 @@ var changePassword = toCallback(function (username, password, opts) {
   } else if (!password) {
     return Promise.reject(new AuthError('You must provide a password'));
   }
-
   return db.getUser(username, opts).then(user => {
     user.password = password;
-
-    var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+    var path = usersPath + '/' + encodeURIComponent(user._id);
     var ajaxOpts = assign({
       method: 'PUT',
-      headers: getBasicAuthHeaders(db),
       body: user,
     }, opts.ajax || {});
 
-    return fetchJSON(fetchFun, url, ajaxOpts);
+    return fetchJSON(db.fetch, path, ajaxOpts);
   });
 });
 
@@ -159,13 +147,12 @@ var changeUsername = toCallback(function (oldUsername, newUsername, opts) {
   var db = this;
   var USERNAME_PREFIX = 'org.couchdb.user:';
   var updateUser = function (user, opts) {
-    var url = getUsersUrl(db) + '/' + encodeURIComponent(user._id);
+    var path = usersPath + '/' + encodeURIComponent(user._id);
     var updateOpts = assign({
       method: 'PUT',
-      headers: getBasicAuthHeaders(db),
-      body: user,
+      body: user
     }, opts.ajax);
-    return fetchJSON(fetchFun, url, updateOpts);
+    return fetchJSON(db.fetch, path, updateOpts);
   };
   if (typeof opts === 'undefined') {
     opts = {};
@@ -203,8 +190,7 @@ var changeUsername = toCallback(function (oldUsername, newUsername, opts) {
   });
 });
 
-return {
-  getUsersDatabaseUrl,
+export {
   signUp,
   getUser,
   putUser,
@@ -212,5 +198,3 @@ return {
   changePassword,
   changeUsername,
 };
-
-}

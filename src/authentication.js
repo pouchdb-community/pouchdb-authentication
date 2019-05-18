@@ -1,9 +1,9 @@
 'use strict';
 
-import { AuthError, getBasicAuthHeaders, getSessionUrl, fetchJSON, toCallback } from './utils';
+import { AuthError, fetchJSON, toCallback } from './utils';
 import { assign } from 'pouchdb-utils';
 
-export default function makeAuthenticationAPI(fetchFun) {
+var sessionPath = '/_session';
 
 var logIn = toCallback(function (username, password, opts) {
   var db = this;
@@ -20,13 +20,12 @@ var logIn = toCallback(function (username, password, opts) {
     return Promise.reject(new AuthError('you must provide a password'));
   }
 
-  var url = getSessionUrl(db);
+  var path = sessionPath;
   var ajaxOpts = assign({
     method: 'POST',
-    headers: getBasicAuthHeaders(db),
     body: {name: username, password: password},
   }, opts.ajax || {});
-  return fetchJSON(fetchFun, url, ajaxOpts);
+  return fetchJSON(db.fetch, path, ajaxOpts);
 });
 
 var logOut = toCallback(function (opts) {
@@ -35,12 +34,11 @@ var logOut = toCallback(function (opts) {
     opts = {};
   }
 
-  var url = getSessionUrl(db);
+  var path = sessionPath;
   var ajaxOpts = assign({
-    method: 'DELETE',
-    headers: getBasicAuthHeaders(db),
+    method: 'DELETE'
   }, opts.ajax || {});
-  return fetchJSON(fetchFun, url, ajaxOpts);
+  return fetchJSON(db.fetch, path, ajaxOpts);
 });
 
 var getSession = toCallback(function (opts) {
@@ -49,14 +47,11 @@ var getSession = toCallback(function (opts) {
     opts = {};
   }
 
-  var url = getSessionUrl(db);
+  var path = sessionPath;
   var ajaxOpts = assign({
-    method: 'GET',
-    headers: getBasicAuthHeaders(db),
+    method: 'GET'
   }, opts.ajax || {});
-  return fetchJSON(fetchFun, url, ajaxOpts);
+  return fetchJSON(db.fetch, path, ajaxOpts);
 });
 
-return { logIn, logOut, getSession };
-
-}
+export { logIn, logOut, getSession };

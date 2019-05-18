@@ -1,61 +1,11 @@
 'use strict';
 
-import urlJoin from 'url-join';
-import urlParse from 'url-parse';
 import inherits from 'inherits';
-import { btoa } from 'pouchdb-binary-utils';
-import { assign } from 'pouchdb-utils';
+import { Headers } from 'pouchdb-fetch';
 
-function getBaseUrl(db) {
-  // Parse database url
-  let url;
-  if (typeof db.getUrl === 'function') { // pouchdb pre-6.0.0
-    url = urlParse(db.getUrl());
-  } else { // pouchdb post-6.0.0
-    // Use PouchDB.defaults' prefix, if any
-    let prefix = db.__opts && db.__opts.prefix ? db.__opts.prefix + '/' : '';
-    url = urlParse(prefix + db.name);
-  }
 
-  // Compute parent path for databases not hosted on domain root (see #215)
-  let path = url.pathname;
-  path = path.substr(-1, 1) === '/' ? path.substr(0, -1) : path;
-  let parentPath = path.split('/').slice(0, -1).join('/');
-
-  return url.origin + parentPath;
-}
-
-function getConfigUrl(db, nodeName) {
-  return urlJoin(getBaseUrl(db), (nodeName ? '/_node/' + nodeName : '') + '/_config');
-}
-
-function getUsersUrl(db) {
-  return urlJoin(getBaseUrl(db), '/_users');
-}
-
-function getSessionUrl(db) {
-  return urlJoin(getBaseUrl(db), '/_session');
-}
-
-function getBasicAuthHeaders(db) {
-  var auth;
-
-  if (db.__opts.auth) {
-    auth = db.__opts.auth;
-  } else {
-    var url = urlParse(db.name);
-    if (url.auth) {
-      auth = url;
-    }
-  }
-
-  if (!auth) {
-    return {};
-  }
-
-  var str = auth.username + ':' + auth.password;
-  var token = btoa(unescape(encodeURIComponent(str)));
-  return {Authorization: 'Basic ' + token};
+function getConfigUrl(nodeName) {
+  return (nodeName ? '/_node/' + nodeName  : '') + '/_config';
 }
 
 function wrapError(err) {
@@ -66,28 +16,21 @@ function wrapError(err) {
   throw err;
 }
 
-// Injects `fetch` with instructions to pass and receive cookies
-function makeFetchWithCredentials(fetchFunc) {
-  return function fetchWithCredentials(url, args) {
-    return fetchFunc(url, assign(args, { credentials: 'include' }));
-  };
-}
-
 // Wrapper around the fetch API to send and receive JSON objects
 // Similar to fetchJSON in pouchdb-adapter-http, but both functions are private.
 // Consider extracting them to a common library.
-function fetchJSON(fetchWithCredentials, url, args) {
-  if (args.body) {
-    args = assign(args, {
-      body: JSON.stringify(args.body),
-      headers: assign(
-        {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        args.headers || {}
-      ),
-    });
+function fetchJSON(dbFetch, path, options) {
+  options = options || {}
+
+  if (options.body) {
+    options.body = JSON.stringify(options.body);
   }
 
-  return fetchWithCredentials(url, args).then(response => {
+  options.headers = options.headers || new Headers();
+  options.headers.set('Content-Type', 'application/json');
+  options.headers.set('Accept', 'application/json');
+
+  return dbFetch(path, options).then(response => {
     if (response.ok) {
       return response.json();
     } else {
@@ -131,12 +74,7 @@ inherits(AuthError, Error);
 
 export {
   AuthError,
-  getBaseUrl,
-  getBasicAuthHeaders,
   getConfigUrl,
-  getSessionUrl,
-  getUsersUrl,
-  makeFetchWithCredentials,
   fetchJSON,
   toCallback
 };

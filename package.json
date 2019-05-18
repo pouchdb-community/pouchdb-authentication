@@ -57,10 +57,8 @@
   },
   "dependencies": {
     "inherits": "2.0.3",
-    "pouchdb-binary-utils": "~7.0.0",
     "pouchdb-utils": "~7.0.0",
-    "url-join": "4.0.0",
-    "url-parse": "1.4.3"
+    "pouchdb-fetch": "^7.0.0"
   },
   "devDependencies": {
     "@types/pouchdb-core": "^7.0.2",
