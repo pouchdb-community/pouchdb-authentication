@@ -77,7 +77,7 @@ db.signUp('robin', 'dickgrayson', {
 
 Note that CouchDB does not enforce a password policy or a username policy, unless you add a security doc to the `_users` database.
 
-#### db.logIn(username, password [, options] [ callback])
+#### db.logIn(username, password [, options] [, callback])
 
 Log in an existing user. Throws an error if the user doesn't exist yet, the password is wrong, the HTTP server is unreachable, or a meteor struck your computer.
 
@@ -119,7 +119,7 @@ db.logOut(function (err, response) {
 {"ok":true}
 ```
 
-#### db.getSession([opts] [, callback])
+#### db.getSession([options] [, callback])
 
 Returns information about the current session.  In other words, this tells you which user is currently logged in.
 
@@ -157,7 +157,7 @@ db.getSession(function (err, response) {
 
 **Note:** `getSession()` returns basic user information, like name and roles, but doesn't return metadata.  If you need the metadata, use `getUser()`.
 
-#### db.getUser(username [, opts][, callback])
+#### db.getUser(username [, options] [, callback])
 
 Returns the user document associated with a username.  (CouchDB, in a pleasing show of consistency, stores users as JSON documents in the special `_users` database.) This is the primary way to get metadata about a user.
 
@@ -196,7 +196,7 @@ db.getUser('aquaman', function (err, response) {
 **Note:** Only server admins or the user themselves can fetch user data. Otherwise you will get a 404 `not_found` error.
 
 
-#### db.putUser(username, opts [, callback])
+#### db.putUser(username [, options] [, callback])
 
 Update the metadata of a user.
 
@@ -212,7 +212,7 @@ db.putUser('robin', {
 });
 ```
 
-#### db.deleteUser(username, opts [, callback])
+#### db.deleteUser(username [, options] [, callback])
 
 Delete a user.
 
@@ -222,7 +222,7 @@ db.deleteUser('robin', function (err, response) {
 });
 ```
 
-#### db.changePassword(username, password [, opts][, callback])
+#### db.changePassword(username, password [, options] [, callback])
 
 Set new `password` for user `username`.
 
@@ -249,7 +249,7 @@ db.changePassword('spiderman', 'will-remember', function(err, response) {
 
 **Note:** Only server admins or the user themselves can change user data. Otherwise you will get a 404 `not_found` error.
 
-#### db.changeUsername(oldUsername, newUsername[, opts][, callback])
+#### db.changeUsername(oldUsername, newUsername [, options] [, callback])
 
 Renames `oldUsername` to `newUsername`.
 
@@ -283,7 +283,7 @@ db.signUpAdmin('batman', 'brucewayne', function (err, response) {
 });
 ```
 
-#### db.deleteAdmin(username, opts [, callback])
+#### db.deleteAdmin(username [, options] [, callback])
 
 Delete an admin.
 
