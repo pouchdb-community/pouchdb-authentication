@@ -16,9 +16,9 @@ API
 Like PouchDB, every function takes a Node-style callback of the form `function(error, response)`. Or you can use promises:
 
 ```js
-db.doSomething(args).then(function (response){
+db.doSomething(args).then(function (response) {
   return db.doSomethingElse(args);
-}).then(function response) {
+}).then(function (response) {
   // handle response
 }).catch(function (error) {
   // handle error
@@ -244,7 +244,7 @@ db.changePassword('spiderman', 'will-remember', function(err, response) {
     //   "rev": "2-09310a62dcc7eea42bf3d4f67e8ff8c4"
     // }
   }
-})
+});
 ```
 
 **Note:** Only server admins or the user themselves can change user data. Otherwise you will get a 404 `not_found` error.
@@ -268,7 +268,7 @@ db.changeUsername('spiderman', 'batman', function(err) {
   } else {
     // succeeded
   }
-})
+});
 ```
 
 **Note:** Only server admins change a username. Otherwise you will get a 404 `not_found` error.
