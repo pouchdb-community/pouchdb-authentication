@@ -37,4 +37,9 @@ if (typeof window !== 'undefined' && window.PouchDB) {
   window.PouchDB.plugin(plugin);
 }
 
+// Make it available at service workers too!
+if (self.PouchDB) {
+  self.PouchDB.plugin(plugin);
+}
+  
 export default plugin;
