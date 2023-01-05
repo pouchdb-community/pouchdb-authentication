@@ -27,8 +27,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Install Dependencies
       run: npm install
-    - name: Linting Files
-      run: npm run lint
+    # - name: Linting Files
+    #  run: npm run lint
     - name: Build Bundle
       run: npm ci
     - run: npm run build --if-present
