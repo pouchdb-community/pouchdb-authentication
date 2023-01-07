@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [11.x,12.x,14.x, 16.x, 18.x]
+        node-version: [11.13.6, 12.x, 14.x, 16.x, 18.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: TrivediHeena-patch-2/package-lock.json
+        cache-dependency-path: '**/package-lock.json'
     #- name: Install Dependencies
     #  run: npm install
     # - name: Linting Files
