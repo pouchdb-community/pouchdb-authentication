@@ -50,7 +50,12 @@ jobs:
     - name: Test auth
       run: |
           curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "password"}' http://127.0.0.1:5984/_session
-          
-    - run: npm test
+  #  - run: npm run test
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Script
+        run: npm run test
     
 
