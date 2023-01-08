@@ -50,7 +50,9 @@ jobs:
     - name: Test auth
       run: |
           curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "password"}' http://127.0.0.1:5984/_session
-    - run: npm run test-local
+    - run: |
+          npm run test
+          #curl -f http://127.0.0.1:9876/
     
     #test:
     #needs: build
