@@ -57,6 +57,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Test Script
-        run: npm run test-local
+        run: npm run dev
     
 
