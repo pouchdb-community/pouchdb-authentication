@@ -55,7 +55,7 @@ jobs:
       working-directory: ./test
       run: |
           CI=true npm run dev
-          #curl -f http://127.0.0.1:9876/
+          curl -f http://127.0.0.1:9876/
       env:
         CI: true
     
