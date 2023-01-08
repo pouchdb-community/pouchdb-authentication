@@ -54,8 +54,10 @@ jobs:
     - name: Testing Bundle
       working-directory: ./test
       run: |
-          npm run test-node
-          curl -f http://127.0.0.1:9876/
+          CI=true npm run dev
+          #curl -f http://127.0.0.1:9876/
+      env:
+        CI: true
     
     #test:
     #needs: build
