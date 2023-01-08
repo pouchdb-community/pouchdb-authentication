@@ -54,7 +54,7 @@ jobs:
     - name: Testing Bundle
       working-directory: ./test
       run: |
-          npm run test
+          npm run test-node
           curl -f http://127.0.0.1:9876/
     
     #test:
