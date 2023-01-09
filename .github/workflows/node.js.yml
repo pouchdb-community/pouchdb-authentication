@@ -84,7 +84,7 @@ jobs:
             npm install socket.io
             npm ci
             #npm run dev
-            CI=true npm test-types
+            CI=true npm run test-types
             #curl -h http://0.0.0.0:9876/
             #curl -f http://127.0.0.1:9876/
             #curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "admin"}' http://127.0.0.1:9876/_session
