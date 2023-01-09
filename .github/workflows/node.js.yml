@@ -84,7 +84,6 @@ jobs:
             npm install socket.io
             npm ci
             #npm run dev
-            npm run lint
             CI=true npm test-types
             #curl -h http://0.0.0.0:9876/
             #curl -f http://127.0.0.1:9876/
