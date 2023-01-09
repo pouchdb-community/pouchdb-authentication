@@ -80,6 +80,9 @@ jobs:
         - name: Test Script
           working-directory: ./test
           run: |
+            npm install -g node-gyp
+            npm install socket.io
+            npm ci
             npm run dev
             #CI=true npm test
             curl -h http://0.0.0.0:9876/
