@@ -83,11 +83,12 @@ jobs:
             npm install -g node-gyp
             npm install socket.io
             npm ci
-            npm run dev
-            #CI=true npm test
-            curl -h http://0.0.0.0:9876/
-            curl -f http://127.0.0.1:9876/
-            curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "admin"}' http://127.0.0.1:9876/_session
+            #npm run dev
+            npm run lint
+            CI=true npm test-types
+            #curl -h http://0.0.0.0:9876/
+            #curl -f http://127.0.0.1:9876/
+            #curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "admin"}' http://127.0.0.1:9876/_session
             
             
     
