@@ -118,7 +118,9 @@ jobs:
             npm install socket.io
             npm ci
             npm install npm-run-all
-            npm-run-all --parallel clean rollup browserify minify
+            
+        - name: Run Deployment
+          run: npm-run-all --parallel clean rollup browserify minify
             #npm run start
             #npm run dev
             #node index.js
