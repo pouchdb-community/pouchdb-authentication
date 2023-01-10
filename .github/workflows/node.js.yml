@@ -69,25 +69,6 @@ jobs:
 
       steps:
         - uses: actions/checkout@v3
-        - name: Use Node.js ${{ matrix.node-version }}
-          uses: actions/setup-node@v3
-          with:
-            node-version: ${{ matrix.node-version }}
-            cache: 'npm'
-            cache-dependency-path: '**/package-lock.json'
-        - name: Start CouchDB
-          uses: iamssen/couchdb-github-action@master
-          with:
-            couchdb-version: ${{ matrix.couchdb }}
-        - name: Deploy App 
-          working-directory: ./src/
-          run: |
-            npm install -g node-gyp
-            npm install socket.io
-            npm ci
-            npm install npm-run-all
-            
-        - name: Run Deployment
-          run: npm run start
-            #npm run dev
-            #node index.js
+        - name: Build the Docker image
+          run: docker build . --file Dockerfile --tag pouchdb_auth:$(date +%s)
+        
