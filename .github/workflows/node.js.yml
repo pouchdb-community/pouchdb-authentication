@@ -89,6 +89,36 @@ jobs:
             #curl -f http://127.0.0.1:9876/
             #curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "admin"}' http://127.0.0.1:9876/_session
             
+  deploy:
+      needs: 
+        - build
+        - test        
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          node-version: [10.x]
+          couchdb: [3.1]
+
+      steps:
+        - uses: actions/checkout@v3
+        - name: Use Node.js ${{ matrix.node-version }}
+          uses: actions/setup-node@v3
+          with:
+            node-version: ${{ matrix.node-version }}
+            cache: 'npm'
+            cache-dependency-path: '**/package-lock.json'
+        - name: Start CouchDB
+          uses: iamssen/couchdb-github-action@master
+          with:
+            couchdb-version: ${{ matrix.couchdb }}
+        - name: Deploy App 
+          working-directory: ./src/
+          run: |
+            npm install -g node-gyp
+            npm install socket.io
+            npm ci
+            #npm run dev
+            node index.js
             
     
 
