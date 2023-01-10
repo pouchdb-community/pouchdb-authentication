@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x,12.x]
+        node-version: [10.x]
         couchdb: [3.1]
         #couchdb: ["3.1", "3.0", "2.3"]
         #node-version: [10.x, 14.x, 16.x, 18.x]
